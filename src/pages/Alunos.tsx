@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -9,12 +8,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import { AlunoForm } from "@/components/AlunoForm";
+import { DeleteDialog } from "@/components/DeleteDialog";
 
 interface Aluno {
   id: string;
@@ -47,7 +47,6 @@ export default function Alunos() {
       setAlunos(data || []);
     } catch (error) {
       console.error("Erro ao buscar alunos:", error);
-      toast.error("Erro ao carregar alunos");
     } finally {
       setLoading(false);
     }
@@ -66,10 +65,7 @@ export default function Alunos() {
           <h2 className="text-3xl font-bold tracking-tight">Alunos</h2>
           <p className="text-muted-foreground">Gerencie os alunos cadastrados</p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Aluno
-        </Button>
+        <AlunoForm onSuccess={fetchAlunos} />
       </div>
 
       <Card className="shadow-card">
@@ -132,12 +128,13 @@ export default function Alunos() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <AlunoForm aluno={aluno} onSuccess={fetchAlunos} />
+                        <DeleteDialog
+                          table="alunos"
+                          id={aluno.id}
+                          name="Aluno"
+                          onSuccess={fetchAlunos}
+                        />
                       </div>
                     </TableCell>
                   </TableRow>
