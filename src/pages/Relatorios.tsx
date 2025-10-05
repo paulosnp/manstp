@@ -141,7 +141,7 @@ export default function Relatorios() {
                 <SelectContent>
                   <SelectItem value="">Todos os tipos</SelectItem>
                   <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
-                  <SelectItem value="Não Fuzileiro">Não Fuzileiro</SelectItem>
+                  <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
                 </SelectContent>
               </Select>
             </div>

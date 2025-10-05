@@ -26,12 +26,12 @@ export default function Estatisticas() {
         const graduacaoStats = graduacaoData.reduce((acc: any, aluno) => {
           const grad = aluno.graduacao;
           if (!acc[grad]) {
-            acc[grad] = { graduacao: grad, Fuzileiro: 0, "Não Fuzileiro": 0 };
+            acc[grad] = { graduacao: grad, Fuzileiro: 0, "Guarda Costeiro": 0 };
           }
           if (aluno.tipo_militar === "Fuzileiro Naval") {
             acc[grad].Fuzileiro++;
           } else {
-            acc[grad]["Não Fuzileiro"]++;
+            acc[grad]["Guarda Costeiro"]++;
           }
           return acc;
         }, {});
@@ -105,7 +105,7 @@ export default function Estatisticas() {
                 <Tooltip />
                 <Legend />
                 <Bar dataKey="Fuzileiro" fill={COLORS[0]} />
-                <Bar dataKey="Não Fuzileiro" fill={COLORS[1]} />
+                <Bar dataKey="Guarda Costeiro" fill={COLORS[1]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

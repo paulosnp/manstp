@@ -92,6 +92,7 @@ export type Database = {
           email: string | null
           graduacao: Database["public"]["Enums"]["graduacao_militar"]
           id: string
+          local_servico: string | null
           nome_completo: string
           observacoes: string | null
           telefone: string | null
@@ -104,6 +105,7 @@ export type Database = {
           email?: string | null
           graduacao: Database["public"]["Enums"]["graduacao_militar"]
           id?: string
+          local_servico?: string | null
           nome_completo: string
           observacoes?: string | null
           telefone?: string | null
@@ -116,6 +118,7 @@ export type Database = {
           email?: string | null
           graduacao?: Database["public"]["Enums"]["graduacao_militar"]
           id?: string
+          local_servico?: string | null
           nome_completo?: string
           observacoes?: string | null
           telefone?: string | null
@@ -286,8 +289,14 @@ export type Database = {
         | "Major"
         | "Tenente Coronel"
         | "Coronel"
+        | "1º Tenente"
+        | "2º Tenente"
+        | "Tenente-Coronel"
+        | "1º Sargento"
+        | "2º Sargento"
+        | "3º Sargento"
       situacao_curso: "Em Andamento" | "Concluído" | "Cancelado"
-      tipo_militar: "Fuzileiro Naval" | "Não Fuzileiro"
+      tipo_militar: "Fuzileiro Naval" | "Guarda Costeiro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -429,9 +438,15 @@ export const Constants = {
         "Major",
         "Tenente Coronel",
         "Coronel",
+        "1º Tenente",
+        "2º Tenente",
+        "Tenente-Coronel",
+        "1º Sargento",
+        "2º Sargento",
+        "3º Sargento",
       ],
       situacao_curso: ["Em Andamento", "Concluído", "Cancelado"],
-      tipo_militar: ["Fuzileiro Naval", "Não Fuzileiro"],
+      tipo_militar: ["Fuzileiro Naval", "Guarda Costeiro"],
     },
   },
 } as const

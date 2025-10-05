@@ -10,7 +10,7 @@ interface Stats {
   totalTurmas: number;
   cursosEmAndamento: number;
   fuzieiros: number;
-  naoFuzieiros: number;
+  guardaCosteiros: number;
 }
 
 export default function Dashboard() {
@@ -21,19 +21,19 @@ export default function Dashboard() {
     totalTurmas: 0,
     cursosEmAndamento: 0,
     fuzieiros: 0,
-    naoFuzieiros: 0,
+    guardaCosteiros: 0,
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [alunosRes, cursosRes, turmasRes, fuzileirosRes, naoFuzileirosRes, emAndamentoRes] = await Promise.all([
+        const [alunosRes, cursosRes, turmasRes, fuzileirosRes, guardaCosteirosRes, emAndamentoRes] = await Promise.all([
           supabase.from("alunos").select("id", { count: "exact", head: true }),
           supabase.from("cursos").select("id", { count: "exact", head: true }),
           supabase.from("turmas").select("id", { count: "exact", head: true }),
           supabase.from("alunos").select("id", { count: "exact", head: true }).eq("tipo_militar", "Fuzileiro Naval"),
-          supabase.from("alunos").select("id", { count: "exact", head: true }).eq("tipo_militar", "Não Fuzileiro"),
+          supabase.from("alunos").select("id", { count: "exact", head: true }).eq("tipo_militar", "Guarda Costeiro"),
           supabase.from("cursos").select("id", { count: "exact", head: true }).eq("situacao", "Em Andamento"),
         ]);
 
@@ -43,7 +43,7 @@ export default function Dashboard() {
           totalTurmas: turmasRes.count || 0,
           cursosEmAndamento: emAndamentoRes.count || 0,
           fuzieiros: fuzileirosRes.count || 0,
-          naoFuzieiros: naoFuzileirosRes.count || 0,
+          guardaCosteiros: guardaCosteirosRes.count || 0,
         });
       } catch (error) {
         console.error("Erro ao buscar estatísticas:", error);
@@ -70,7 +70,7 @@ export default function Dashboard() {
       title: "Total de Alunos",
       value: stats.totalAlunos,
       icon: Users,
-      description: `${stats.fuzieiros} Fuzileiros | ${stats.naoFuzieiros} Não Fuzileiros`,
+      description: `${stats.fuzieiros} Fuzileiros | ${stats.guardaCosteiros} Guardas Costeiros`,
     },
     {
       title: "Total de Cursos",

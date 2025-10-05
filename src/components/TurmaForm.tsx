@@ -172,7 +172,7 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
-                  <SelectItem value="Não Fuzileiro">Não Fuzileiro</SelectItem>
+                  <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
                 </SelectContent>
               </Select>
             </div>

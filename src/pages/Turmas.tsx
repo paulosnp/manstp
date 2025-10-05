@@ -8,9 +8,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { TurmaForm } from "@/components/TurmaForm";
@@ -26,11 +28,24 @@ interface Turma {
   cursos?: { nome: string };
 }
 
+interface Aluno {
+  id: string;
+  nome_completo: string;
+  graduacao: string;
+  tipo_militar: string;
+  local_servico?: string;
+  email: string | null;
+  telefone: string | null;
+}
+
 export default function Turmas() {
   const { user } = useAuth();
   const [turmas, setTurmas] = useState<Turma[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTurma, setSelectedTurma] = useState<Turma | null>(null);
+  const [alunosTurma, setAlunosTurma] = useState<Aluno[]>([]);
+  const [loadingAlunos, setLoadingAlunos] = useState(false);
 
   useEffect(() => {
     fetchTurmas();
@@ -50,6 +65,28 @@ export default function Turmas() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchAlunosTurma = async (turmaId: string) => {
+    setLoadingAlunos(true);
+    try {
+      const { data, error } = await supabase
+        .from("aluno_turma")
+        .select("aluno_id, alunos(id, nome_completo, graduacao, tipo_militar, local_servico, email, telefone)")
+        .eq("turma_id", turmaId);
+
+      if (error) throw error;
+      setAlunosTurma(data?.map((item: any) => item.alunos) || []);
+    } catch (error) {
+      console.error("Erro ao buscar alunos da turma:", error);
+    } finally {
+      setLoadingAlunos(false);
+    }
+  };
+
+  const handleViewAlunos = (turma: Turma) => {
+    setSelectedTurma(turma);
+    fetchAlunosTurma(turma.id);
   };
 
   const filteredTurmas = turmas.filter((turma) =>
@@ -99,6 +136,7 @@ export default function Turmas() {
                   <TableHead>Curso</TableHead>
                   <TableHead>Ano</TableHead>
                   <TableHead>Tipo</TableHead>
+                  <TableHead>Alunos</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -119,6 +157,17 @@ export default function Turmas() {
                         {turma.tipo_militar}
                       </Badge>
                     </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewAlunos(turma)}
+                        className="gap-2"
+                      >
+                        <Users className="h-4 w-4" />
+                        Ver Alunos
+                      </Button>
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <TurmaForm turma={turma} onSuccess={fetchTurmas} />
@@ -137,6 +186,63 @@ export default function Turmas() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!selectedTurma} onOpenChange={() => setSelectedTurma(null)}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Alunos da Turma: {selectedTurma?.nome} ({selectedTurma?.ano})
+            </DialogTitle>
+          </DialogHeader>
+          {loadingAlunos ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            </div>
+          ) : alunosTurma.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-muted-foreground">Nenhum aluno vinculado a esta turma</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Graduação</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Local de Serviço</TableHead>
+                  <TableHead>Contato</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {alunosTurma.map((aluno) => (
+                  <TableRow key={aluno.id}>
+                    <TableCell className="font-medium">{aluno.nome_completo}</TableCell>
+                    <TableCell>{aluno.graduacao}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          aluno.tipo_militar === "Fuzileiro Naval"
+                            ? "default"
+                            : "secondary"
+                        }
+                      >
+                        {aluno.tipo_militar}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{aluno.local_servico || "-"}</TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        {aluno.email && <div>{aluno.email}</div>}
+                        {aluno.telefone && <div className="text-muted-foreground">{aluno.telefone}</div>}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

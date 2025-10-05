@@ -21,6 +21,7 @@ interface Aluno {
   nome_completo: string;
   graduacao: string;
   tipo_militar: string;
+  local_servico?: string;
   telefone: string | null;
   email: string | null;
   observacoes: string | null;
@@ -100,6 +101,7 @@ export default function Alunos() {
                   <TableHead>Nome</TableHead>
                   <TableHead>Graduação</TableHead>
                   <TableHead>Tipo</TableHead>
+                  <TableHead>Local de Serviço</TableHead>
                   <TableHead>Contato</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -120,6 +122,7 @@ export default function Alunos() {
                         {aluno.tipo_militar}
                       </Badge>
                     </TableCell>
+                    <TableCell>{aluno.local_servico || "-"}</TableCell>
                     <TableCell>
                       <div className="text-sm">
                         {aluno.email && <div>{aluno.email}</div>}

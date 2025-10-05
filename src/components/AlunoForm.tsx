@@ -33,6 +33,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
     nome_completo: string;
     graduacao: string;
     tipo_militar: string;
+    local_servico: string;
     telefone: string;
     email: string;
     observacoes: string;
@@ -40,6 +41,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
     nome_completo: aluno?.nome_completo || "",
     graduacao: aluno?.graduacao || "",
     tipo_militar: aluno?.tipo_militar || "",
+    local_servico: (aluno as any)?.local_servico || "",
     telefone: aluno?.telefone || "",
     email: aluno?.email || "",
     observacoes: aluno?.observacoes || "",
@@ -75,6 +77,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
           nome_completo: "",
           graduacao: "",
           tipo_militar: "",
+          local_servico: "",
           telefone: "",
           email: "",
           observacoes: "",
@@ -131,9 +134,16 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
                 <SelectContent>
                   <SelectItem value="Soldado">Soldado</SelectItem>
                   <SelectItem value="Cabo">Cabo</SelectItem>
-                  <SelectItem value="Sargento">Sargento</SelectItem>
+                  <SelectItem value="3º Sargento">3º Sargento</SelectItem>
+                  <SelectItem value="2º Sargento">2º Sargento</SelectItem>
+                  <SelectItem value="1º Sargento">1º Sargento</SelectItem>
                   <SelectItem value="Subtenente">Subtenente</SelectItem>
-                  <SelectItem value="Oficial">Oficial</SelectItem>
+                  <SelectItem value="2º Tenente">2º Tenente</SelectItem>
+                  <SelectItem value="1º Tenente">1º Tenente</SelectItem>
+                  <SelectItem value="Capitão">Capitão</SelectItem>
+                  <SelectItem value="Major">Major</SelectItem>
+                  <SelectItem value="Tenente-Coronel">Tenente-Coronel</SelectItem>
+                  <SelectItem value="Coronel">Coronel</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -150,7 +160,27 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
-                  <SelectItem value="Não Fuzileiro">Não Fuzileiro</SelectItem>
+                  <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="local_servico">Local de Serviço *</Label>
+              <Select
+                required
+                value={formData.local_servico}
+                onValueChange={(value) => setFormData({ ...formData, local_servico: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o local" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Guarda Costeira">Guarda Costeira</SelectItem>
+                  <SelectItem value="Exército">Exército</SelectItem>
+                  <SelectItem value="Palácio do Governo">Palácio do Governo</SelectItem>
+                  <SelectItem value="Bombeiros">Bombeiros</SelectItem>
+                  <SelectItem value="Polícia">Polícia</SelectItem>
                 </SelectContent>
               </Select>
             </div>
