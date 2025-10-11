@@ -176,18 +176,12 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
 
             <div className="space-y-2">
               <Label htmlFor="local_realizacao">País onde é Realizado</Label>
-              <Select
+              <Input
+                id="local_realizacao"
+                placeholder="Digite o país"
                 value={formData.local_realizacao}
-                onValueChange={(value) => setFormData({ ...formData, local_realizacao: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o país" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="São Tomé e Príncipe">São Tomé e Príncipe</SelectItem>
-                  <SelectItem value="Brasil">Brasil</SelectItem>
-                </SelectContent>
-              </Select>
+                onChange={(e) => setFormData({ ...formData, local_realizacao: e.target.value })}
+              />
             </div>
 
             <div className="space-y-2">
