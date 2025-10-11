@@ -184,7 +184,7 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
                   <SelectValue placeholder="Selecione o país" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="São Tomé">São Tomé</SelectItem>
+                  <SelectItem value="São Tomé e Príncipe">São Tomé e Príncipe</SelectItem>
                   <SelectItem value="Brasil">Brasil</SelectItem>
                 </SelectContent>
               </Select>

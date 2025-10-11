@@ -179,7 +179,7 @@ export default function Estatisticas() {
       const locationData = locationMap.get(ano)!;
       locationData.TOTAL++;
       
-      if (local === "São Tomé") {
+      if (local === "São Tomé e Príncipe") {
         locationData.CIABA++;
       } else if (local === "Brasil") {
         locationData.CIAGA++;
@@ -341,7 +341,7 @@ export default function Estatisticas() {
 
   const locationChartConfig = {
     TOTAL: { label: "TOTAL", color: "hsl(142, 76%, 36%)" },
-    CIABA: { label: "CIABA (São Tomé)", color: "hsl(210, 100%, 50%)" },
+    CIABA: { label: "CIABA (São Tomé e Príncipe)", color: "hsl(210, 100%, 50%)" },
     CIAGA: { label: "CIAGA (Brasil)", color: "hsl(25, 95%, 53%)" },
   };
 
