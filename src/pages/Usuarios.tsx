@@ -55,7 +55,8 @@ export default function Usuarios() {
     try {
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, nome_completo, email, created_at");
+        .select("id, nome_completo, email, created_at")
+        .order("created_at", { ascending: false });
 
       if (profilesError) throw profilesError;
 
@@ -65,7 +66,7 @@ export default function Usuarios() {
 
       if (rolesError) throw rolesError;
 
-      const usersWithRoles = profiles?.map((profile) => {
+      const usersWithRoles = (profiles || []).map((profile) => {
         const userRole = roles?.find((r) => r.user_id === profile.id);
         return {
           id: profile.id,
@@ -74,8 +75,9 @@ export default function Usuarios() {
           role: userRole?.role || "visualizador",
           created_at: profile.created_at,
         };
-      }) || [];
+      });
 
+      console.log("Usuários carregados:", usersWithRoles.length);
       setUsers(usersWithRoles);
     } catch (error) {
       console.error("Erro ao buscar usuários:", error);
