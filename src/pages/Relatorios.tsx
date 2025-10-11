@@ -28,7 +28,7 @@ export default function Relatorios() {
   }, []);
 
   const fetchData = async () => {
-    const { data: cursosData } = await supabase.from("cursos").select("id, nome").order("nome");
+    const { data: cursosData } = await supabase.from("cursos").select("id, nome, coordenador").order("nome");
     const { data: turmasData } = await supabase.from("turmas").select("id, nome").order("nome");
     const { data: alunosData } = await supabase.from("alunos").select("id, nome_completo").order("nome_completo");
     if (cursosData) setCursos(cursosData);
@@ -60,7 +60,7 @@ export default function Relatorios() {
   const fetchCursosStats = async () => {
     const { data: cursosData } = await supabase
       .from("cursos")
-      .select("id, nome, instituicao, ano:data_inicio, turmas(tipo_militar, aluno_turma(aluno_id, alunos(tipo_militar)))");
+      .select("id, nome, instituicao, coordenador, ano:data_inicio, turmas(tipo_militar, aluno_turma(aluno_id, alunos(tipo_militar)))");
     
     if (!cursosData) return null;
 
@@ -174,7 +174,7 @@ export default function Relatorios() {
       }
 
       if (incluirCursos) {
-        let query = supabase.from("cursos").select("*");
+        let query = supabase.from("cursos").select("nome, instituicao, coordenador, local_realizacao, tipo_curso, modalidade, data_inicio, data_fim, situacao, categoria");
         if (selectedCurso && selectedCurso !== "all") query = query.eq("id", selectedCurso);
         const { data: cursosData } = await query;
         if (cursosData) data = [...data, ...cursosData];
@@ -386,7 +386,7 @@ export default function Relatorios() {
 
       const { data: turmasData } = await supabase
         .from("aluno_turma")
-        .select("status, turmas(nome, ano, cursos(nome, modalidade))")
+        .select("status, turmas(nome, ano, cursos(nome, modalidade, coordenador))")
         .eq("aluno_id", selectedAluno);
 
       if (!alunoData) {
@@ -442,12 +442,15 @@ export default function Relatorios() {
           const status = item.status || 'Cursando';
           const ano = turma?.ano || 'Não informado';
           const modalidade = turma?.cursos?.modalidade || 'Não informado';
+          const coordenador = turma?.cursos?.coordenador || 'Não informado';
           
           pdf.text(`• Curso: ${turma?.cursos?.nome}`, 14, yPosition);
           yPosition += 6;
           pdf.text(`  Turma: ${turma?.nome} | Ano: ${ano}`, 14, yPosition);
           yPosition += 6;
           pdf.text(`  Modalidade: ${modalidade}`, 14, yPosition);
+          yPosition += 6;
+          pdf.text(`  Coordenador: ${coordenador}`, 14, yPosition);
           yPosition += 6;
           pdf.text(`  Status: ${status}`, 14, yPosition);
           yPosition += 8;

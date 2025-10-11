@@ -29,6 +29,7 @@ interface Curso {
   situacao: string | null;
   categoria: string | null;
   observacoes: string | null;
+  coordenador: string | null;
 }
 
 export default function Cursos() {

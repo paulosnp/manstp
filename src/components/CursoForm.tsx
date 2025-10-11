@@ -23,6 +23,7 @@ interface Curso {
   situacao: string | null;
   categoria: string | null;
   observacoes: string | null;
+  coordenador: string | null;
 }
 
 interface CursoFormProps {
@@ -45,6 +46,7 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
     situacao: string;
     categoria: string;
     observacoes: string;
+    coordenador: string;
   }>({
     nome: curso?.nome || "",
     instituicao: curso?.instituicao || "",
@@ -56,6 +58,7 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
     situacao: curso?.situacao || "Em Andamento",
     categoria: curso?.categoria || "",
     observacoes: curso?.observacoes || "",
+    coordenador: curso?.coordenador || "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,6 +106,7 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
           situacao: "Em Andamento",
           categoria: "",
           observacoes: "",
+          coordenador: "",
         });
       }
     } catch (error) {
@@ -158,6 +162,15 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
                 id="categoria"
                 value={formData.categoria}
                 onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="coordenador">Coordenador</Label>
+              <Input
+                id="coordenador"
+                value={formData.coordenador}
+                onChange={(e) => setFormData({ ...formData, coordenador: e.target.value })}
               />
             </div>
 

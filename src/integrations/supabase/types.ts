@@ -170,6 +170,7 @@ export type Database = {
       cursos: {
         Row: {
           categoria: string | null
+          coordenador: string | null
           created_at: string | null
           data_fim: string | null
           data_inicio: string | null
@@ -186,6 +187,7 @@ export type Database = {
         }
         Insert: {
           categoria?: string | null
+          coordenador?: string | null
           created_at?: string | null
           data_fim?: string | null
           data_inicio?: string | null
@@ -202,6 +204,7 @@ export type Database = {
         }
         Update: {
           categoria?: string | null
+          coordenador?: string | null
           created_at?: string | null
           data_fim?: string | null
           data_inicio?: string | null
