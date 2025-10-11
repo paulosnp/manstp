@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AlunoForm } from "@/components/AlunoForm";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { ImportarAlunos } from "@/components/ImportarAlunos";
 
 interface Aluno {
   id: string;
@@ -68,7 +69,12 @@ export default function Alunos() {
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Alunos</h2>
           <p className="text-sm sm:text-base text-muted-foreground">Gerencie os alunos cadastrados</p>
         </div>
-        {isCoordenador && <AlunoForm onSuccess={fetchAlunos} />}
+        {isCoordenador && (
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <ImportarAlunos onSuccess={fetchAlunos} />
+            <AlunoForm onSuccess={fetchAlunos} />
+          </div>
+        )}
       </div>
 
       <Card className="shadow-card">

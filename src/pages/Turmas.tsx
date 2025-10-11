@@ -21,6 +21,7 @@ import { TurmaForm } from "@/components/TurmaForm";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { VincularAlunoTurma } from "@/components/VincularAlunoTurma";
 import { VincularInstrutorTurma } from "@/components/VincularInstrutorTurma";
+import { ImportarAlunos } from "@/components/ImportarAlunos";
 import { toast } from "sonner";
 
 interface Turma {
@@ -334,6 +335,37 @@ export default function Turmas() {
               {viewType === 'alunos' ? 'Alunos' : 'Instrutores'} da Turma: {selectedTurma?.nome} ({selectedTurma?.ano})
             </DialogTitle>
           </DialogHeader>
+          
+          {viewType === 'alunos' && isCoordenador && (
+            <div className="flex gap-2 pb-4 border-b">
+              <VincularAlunoTurma
+                turmaId={selectedTurma?.id || ""}
+                turmaNome={selectedTurma?.nome || ""}
+                onSuccess={() => {
+                  fetchTurmas();
+                  if (selectedTurma?.id) {
+                    fetchAlunosTurma(selectedTurma.id);
+                  }
+                }}
+              />
+              <ImportarAlunos
+                turmaId={selectedTurma?.id}
+                onSuccess={() => {
+                  fetchTurmas();
+                  if (selectedTurma?.id) {
+                    fetchAlunosTurma(selectedTurma.id);
+                  }
+                }}
+                trigger={
+                  <Button variant="outline" size="sm">
+                    <Users className="h-4 w-4 mr-2" />
+                    Importar Lista
+                  </Button>
+                }
+              />
+            </div>
+          )}
+          
           {viewType === 'alunos' ? (
             loadingAlunos ? (
               <div className="flex items-center justify-center py-12">
