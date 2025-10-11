@@ -224,8 +224,8 @@ export default function Estatisticas() {
             <p className="text-muted-foreground mb-6">
               Nenhum dado disponível. Cadastre alunos e vincule-os a turmas para visualizar estatísticas.
             </p>
-            <a
-              href="/"
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               className="inline-flex items-center gap-2 text-primary hover:underline"
             >
               <svg
@@ -239,11 +239,10 @@ export default function Estatisticas() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="m12 19-7-7 7-7" />
-                <path d="M19 12H5" />
+                <path d="m18 15-6-6-6 6" />
               </svg>
               Voltar ao início
-            </a>
+            </button>
           </CardContent>
         </Card>
       </div>
