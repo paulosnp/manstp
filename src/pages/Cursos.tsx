@@ -43,28 +43,17 @@ export default function Cursos() {
 
   const fetchCursos = async () => {
     try {
-      setLoading(true);
-      console.log("Iniciando busca de cursos...");
-      
       const { data, error } = await supabase
         .from("cursos")
         .select("*")
         .order("nome");
 
-      console.log("Resposta:", { data, error });
-
-      if (error) {
-        console.error("Erro Supabase:", error);
-        throw error;
-      }
-      
+      if (error) throw error;
       setCursos(data || []);
-      console.log("Cursos carregados:", data?.length || 0);
     } catch (error) {
       console.error("Erro ao buscar cursos:", error);
     } finally {
       setLoading(false);
-      console.log("Busca finalizada");
     }
   };
 

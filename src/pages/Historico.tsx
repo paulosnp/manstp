@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
@@ -63,6 +63,7 @@ const tableLabels: Record<string, string> = {
 export default function Historico() {
   const { isCoordenador, loading: roleLoading } = useUserRole();
   const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [filteredLogs, setFilteredLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
@@ -71,14 +72,14 @@ export default function Historico() {
   const [showClearDialog, setShowClearDialog] = useState(false);
 
   useEffect(() => {
-    if (!roleLoading) {
-      if (isCoordenador) {
-        fetchLogs();
-      } else {
-        setLoading(false);
-      }
+    if (!roleLoading && isCoordenador) {
+      fetchLogs();
     }
   }, [isCoordenador, roleLoading]);
+
+  useEffect(() => {
+    filterLogs();
+  }, [logs, searchTerm, actionFilter, tableFilter, hiddenUsers]);
 
   const fetchLogs = async () => {
     try {
@@ -87,7 +88,7 @@ export default function Historico() {
         .from("audit_logs")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(500);
 
       if (error) throw error;
       setLogs(data || []);
@@ -99,8 +100,7 @@ export default function Historico() {
     }
   };
 
-  // Usar useMemo para otimizar filtragem
-  const filteredLogs = useMemo(() => {
+  const filterLogs = () => {
     let filtered = logs;
 
     // Filtrar por termo de busca (email)
@@ -123,8 +123,8 @@ export default function Historico() {
     // Filtrar usuários ocultos
     filtered = filtered.filter((log) => !hiddenUsers.has(log.user_email));
 
-    return filtered;
-  }, [logs, searchTerm, actionFilter, tableFilter, hiddenUsers]);
+    setFilteredLogs(filtered);
+  };
 
   const handleClearHistory = async () => {
     try {
@@ -153,9 +153,9 @@ export default function Historico() {
     setHiddenUsers(newHiddenUsers);
   };
 
-  const uniqueEmails = useMemo(() => {
+  const getUniqueEmails = () => {
     return Array.from(new Set(logs.map((log) => log.user_email).filter(Boolean)));
-  }, [logs]);
+  };
 
   if (roleLoading) {
     return (
@@ -240,7 +240,7 @@ export default function Historico() {
             <SelectValue placeholder="Ocultar usuário" />
           </SelectTrigger>
           <SelectContent>
-            {uniqueEmails.map((email) => (
+            {getUniqueEmails().map((email) => (
               <SelectItem key={email} value={email}>
                 {hiddenUsers.has(email) ? "✓ " : ""}
                 {email}

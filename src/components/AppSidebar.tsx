@@ -34,15 +34,11 @@ export function AppSidebar() {
 
   const handleSignOut = async () => {
     try {
-      console.log("Iniciando logout...");
       await signOut();
-      console.log("Logout realizado com sucesso");
       toast.success("Logout realizado com sucesso!");
-      // Força navegação para auth
-      window.location.href = "/auth";
+      navigate("/auth");
     } catch (error: any) {
-      console.error("Erro ao fazer logout:", error);
-      toast.error("Erro ao fazer logout: " + error.message);
+      toast.error("Erro ao fazer logout");
     }
   };
 

@@ -46,7 +46,6 @@ interface CourseTypeChartData {
 
 export default function Estatisticas() {
   const [loading, setLoading] = useState(true);
-  const [rawData, setRawData] = useState<any[]>([]);
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [tableData, setTableData] = useState<TableData[]>([]);
   const [yearChartData, setYearChartData] = useState<YearChartData[]>([]);
@@ -60,7 +59,6 @@ export default function Estatisticas() {
   const [selectedCategoria, setSelectedCategoria] = useState<string>("todos");
   const [selectedAno, setSelectedAno] = useState<string>("todos");
 
-  // Fetch data only once on mount
   useEffect(() => {
     fetchStats();
   }, []);
@@ -82,9 +80,6 @@ export default function Estatisticas() {
 
       if (error) throw error;
 
-      // Store raw data for filtering
-      setRawData(data || []);
-
       // Extract unique values for filters
       const cursosSet = new Set<string>();
       const categoriasSet = new Set<string>();
@@ -100,7 +95,7 @@ export default function Estatisticas() {
       setCategorias(Array.from(categoriasSet).sort());
       setAnos(Array.from(anosSet).sort((a, b) => b - a));
 
-      processData(data || []);
+      processData(data);
     } catch (error) {
       console.error("Erro ao buscar estatísticas:", error);
     } finally {
@@ -256,12 +251,31 @@ export default function Estatisticas() {
     setTableData(tableArray);
   };
 
-  // Reprocess data when filters change
   useEffect(() => {
-    if (rawData.length > 0) {
-      processData(rawData);
+    fetchStats();
+  }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      // Re-fetch to get raw data and process with filters
+      const refetch = async () => {
+        const { data } = await supabase
+          .from("aluno_turma")
+          .select(`
+            aluno_id,
+            status,
+            alunos!inner(tipo_militar),
+            turmas!inner(
+              ano,
+              curso_id,
+              cursos!inner(nome, local_realizacao, tipo_curso)
+            )
+          `);
+        if (data) processData(data);
+      };
+      refetch();
     }
-  }, [selectedCurso, selectedCategoria, selectedAno, rawData]);
+  }, [selectedCurso, selectedCategoria, selectedAno]);
 
   if (loading) {
     return (
