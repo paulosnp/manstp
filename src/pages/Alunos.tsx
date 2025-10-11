@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlunoForm } from "@/components/AlunoForm";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { ImportarAlunos } from "@/components/ImportarAlunos";
+import { useTranslation } from "react-i18next";
 
 interface Aluno {
   id: string;
@@ -32,9 +33,122 @@ interface Aluno {
 export default function Alunos() {
   const { user } = useAuth();
   const { isCoordenador } = useUserRole();
+  const { t } = useTranslation();
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Mapeamento reverso de graduações portuguesas para chaves de tradução
+  const rankToKeyMap: { [key: string]: string } = {
+    "Brigadeiro": "brigadeiro",
+    "Coronel": "coronel",
+    "Capitão de Mar e Guerra": "capitao_mar_guerra",
+    "Tenente Coronel": "tenente_coronel",
+    "Tenente-Coronel": "tenente_coronel",
+    "Capitão de Fragata": "capitao_fragata",
+    "Major": "major",
+    "Capitão Tenente": "capitao_tenente",
+    "Capitão-Tenente": "capitao_tenente",
+    "Capitão": "capitao",
+    "Primeiro Tenente": "primeiro_tenente",
+    "Primeiro-Tenente": "primeiro_tenente",
+    "Tenente": "tenente",
+    "Segundo Tenente": "segundo_tenente",
+    "Segundo-Tenente": "segundo_tenente",
+    "Alferes": "alferes",
+    "Guarda Marinha": "guarda_marinha",
+    "Guarda-Marinha": "guarda_marinha",
+    "Aspirante": "aspirante",
+    "Sargento Mor": "sargento_mor",
+    "Sargento-Mor": "sargento_mor",
+    "Sargento Chefe": "sargento_chefe",
+    "Sargento-Chefe": "sargento_chefe",
+    "Sargento Ajudante": "sargento_ajudante",
+    "Sargento-Ajudante": "sargento_ajudante",
+    "Primeiro Sargento": "primeiro_sargento",
+    "Primeiro-Sargento": "primeiro_sargento",
+    "Segundo Sargento": "segundo_sargento",
+    "Segundo-Sargento": "segundo_sargento",
+    "Furriel": "furriel",
+    "Primeiro Subsargento": "primeiro_subsargento",
+    "Primeiro-Subsargento": "primeiro_subsargento",
+    "Segundo Furriel": "segundo_furriel",
+    "Segundo-Furriel": "segundo_furriel",
+    "Subsargento": "subsargento",
+    "Cabo de Seção": "cabo_secao",
+    "Cabo de Secção": "cabo_secao",
+    "Cabo": "cabo",
+    "Segundo Cabo": "segundo_cabo",
+    "Segundo-Cabo": "segundo_cabo",
+    "Segundo Marinheiro": "segundo_marinheiro",
+    "Segundo-Marinheiro": "segundo_marinheiro",
+    "Soldado": "soldado",
+    "Grumete": "grumete",
+    // Traduções em inglês
+    "Brigadier General": "brigadeiro",
+    "Lieutenant Colonel": "tenente_coronel",
+    "Commander": "capitao_fragata",
+    "Lieutenant Commander": "capitao_tenente",
+    "First Lieutenant": "primeiro_tenente",
+    "Second Lieutenant": "segundo_tenente",
+    "Ensign": "alferes",
+    "Midshipman": "guarda_marinha",
+    "Cadet": "aspirante",
+    "Sergeant Major": "sargento_mor",
+    "Master Sergeant": "sargento_chefe",
+    "Staff Sergeant": "sargento_ajudante",
+    "First Sergeant": "primeiro_sargento",
+    "Senior Corporal": "primeiro_subsargento",
+    "Lance Corporal": "segundo_cabo",
+    "Seaman": "segundo_marinheiro",
+    "Private": "soldado",
+    "Seaman Recruit": "grumete",
+    // Traduções em espanhol
+    "General de Brigada": "brigadeiro",
+    "Capitán de Navío": "capitao_mar_guerra",
+    "Teniente Coronel": "tenente_coronel",
+    "Capitán de Fragata": "capitao_fragata",
+    "Comandante": "major",
+    "Capitán de Corbeta": "capitao_tenente",
+    "Capitán": "capitao",
+    "Teniente": "tenente",
+    "Alférez": "alferes",
+    "Guardiamarina": "guarda_marinha",
+    "Suboficial Mayor": "sargento_mor",
+    "Subteniente": "sargento_chefe",
+    "Brigada": "sargento_ajudante",
+    "Sargento Primero": "primeiro_sargento",
+    "Sargento": "segundo_sargento",
+    "Cabo Primero": "furriel",
+    "Cabo Mayor": "primeiro_subsargento",
+    "Marinero": "grumete",
+    // Traduções em francês
+    "Général de Brigade": "brigadeiro",
+    "Capitaine de Vaisseau": "capitao_mar_guerra",
+    "Lieutenant-Colonel": "tenente_coronel",
+    "Capitaine de Frégate": "capitao_fragata",
+    "Commandant": "major",
+    "Capitaine de Corvette": "capitao_tenente",
+    "Capitaine": "capitao",
+    "Sous-Lieutenant": "segundo_tenente",
+    "Enseigne": "alferes",
+    "Adjudant-Chef": "sargento_chefe",
+    "Adjudant": "sargento_ajudante",
+    "Sergent-Chef": "primeiro_sargento",
+    "Sergent": "segundo_sargento",
+    "Caporal-Chef": "primeiro_subsargento",
+    "Caporal": "cabo",
+    "Matelot": "grumete",
+    "Soldat": "soldado"
+  };
+
+  const translateRank = (rank: string) => {
+    const key = rankToKeyMap[rank];
+    if (key) {
+      return t(`ranks.${key}`);
+    }
+    return rank; // Retorna o valor original se não encontrar tradução
+  };
 
   useEffect(() => {
     fetchAlunos();
@@ -119,7 +233,7 @@ export default function Alunos() {
                 {filteredAlunos.map((aluno) => (
                   <TableRow key={aluno.id}>
                     <TableCell className="font-medium text-sm">{aluno.nome_completo}</TableCell>
-                    <TableCell className="text-sm">{aluno.graduacao}</TableCell>
+                    <TableCell className="text-sm">{translateRank(aluno.graduacao)}</TableCell>
                     <TableCell>
                       <Badge
                         className="text-xs"
