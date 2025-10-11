@@ -15,7 +15,6 @@ import Instrutores from "./pages/Instrutores";
 import Estatisticas from "./pages/Estatisticas";
 import Relatorios from "./pages/Relatorios";
 import Usuarios from "./pages/Usuarios";
-import Historico from "./pages/Historico";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -105,16 +104,6 @@ const App = () => (
                 <ProtectedRoute>
                   <MainLayout>
                     <Usuarios />
-                  </MainLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/historico"
-              element={
-                <ProtectedRoute>
-                  <MainLayout>
-                    <Historico />
                   </MainLayout>
                 </ProtectedRoute>
               }

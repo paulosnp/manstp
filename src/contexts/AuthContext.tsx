@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -40,14 +40,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (event === "SIGNED_OUT") {
           navigate("/auth");
         } else if (event === "SIGNED_IN") {
-          // Registrar login no histórico de auditoria
-          if (session?.user) {
-            await supabase.from("audit_logs").insert({
-              user_id: session.user.id,
-              user_email: session.user.email,
-              action_type: "login",
-            });
-          }
           navigate("/");
         }
       }
