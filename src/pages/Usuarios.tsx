@@ -48,10 +48,8 @@ export default function Usuarios() {
   const [updatingRoleId, setUpdatingRoleId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isCoordenador) {
-      fetchUsers();
-    }
-  }, [isCoordenador]);
+    fetchUsers();
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -208,28 +206,23 @@ export default function Usuarios() {
       user.nome_completo.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (!isCoordenador) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-muted-foreground">Acesso restrito a coordenadores</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Usuários</h2>
-          <p className="text-sm sm:text-base text-muted-foreground">Gerencie os usuários do sistema</p>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            {isCoordenador ? "Gerencie os usuários do sistema" : "Lista de usuários do sistema"}
+          </p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 w-full sm:w-auto">
-              <UserPlus className="h-4 w-4" />
-              Novo Usuário
-            </Button>
-          </DialogTrigger>
+        {isCoordenador && (
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 w-full sm:w-auto">
+                <UserPlus className="h-4 w-4" />
+                Novo Usuário
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Cadastrar Novo Usuário</DialogTitle>
@@ -290,6 +283,7 @@ export default function Usuarios() {
             </form>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <Card className="shadow-card">
@@ -323,7 +317,7 @@ export default function Usuarios() {
                     <TableHead>Nome</TableHead>
                     <TableHead className="hidden sm:table-cell">Email</TableHead>
                     <TableHead>Nível de Acesso</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    {isCoordenador && <TableHead className="text-right">Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -337,46 +331,54 @@ export default function Usuarios() {
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">{user.email}</TableCell>
                       <TableCell>
-                        <Select
-                          value={user.role}
-                          onValueChange={(value: "coordenador" | "visualizador") => 
-                            handleChangeRole(user.id, value)
-                          }
-                          disabled={user.id === currentUser?.id || updatingRoleId === user.id}
-                        >
-                          <SelectTrigger className="w-[160px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="coordenador">Admin</SelectItem>
-                            <SelectItem value="visualizador">Visualizador</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleSendPasswordReset(user.email)}
-                            className="gap-2"
-                            disabled={!user.email}
-                            title={!user.email ? "Email não disponível" : "Enviar email de recuperação"}
+                        {isCoordenador ? (
+                          <Select
+                            value={user.role}
+                            onValueChange={(value: "coordenador" | "visualizador") => 
+                              handleChangeRole(user.id, value)
+                            }
+                            disabled={user.id === currentUser?.id || updatingRoleId === user.id}
                           >
-                            <Mail className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setDeleteUserId(user.id)}
-                            className="gap-2 text-destructive hover:text-destructive"
-                            disabled={user.id === currentUser?.id}
-                            title={user.id === currentUser?.id ? "Você não pode deletar sua própria conta" : "Deletar usuário"}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                            <SelectTrigger className="w-[160px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="coordenador">Admin</SelectItem>
+                              <SelectItem value="visualizador">Visualizador</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Badge variant={user.role === "coordenador" ? "default" : "secondary"}>
+                            {user.role === "coordenador" ? "Admin" : "Visualizador"}
+                          </Badge>
+                        )}
                       </TableCell>
+                      {isCoordenador && (
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleSendPasswordReset(user.email)}
+                              className="gap-2"
+                              disabled={!user.email}
+                              title={!user.email ? "Email não disponível" : "Enviar email de recuperação"}
+                            >
+                              <Mail className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeleteUserId(user.id)}
+                              className="gap-2 text-destructive hover:text-destructive"
+                              disabled={user.id === currentUser?.id}
+                              title={user.id === currentUser?.id ? "Você não pode deletar sua própria conta" : "Deletar usuário"}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -386,24 +388,26 @@ export default function Usuarios() {
         </CardContent>
       </Card>
 
-      <AlertDialog open={deleteUserId !== null} onOpenChange={(open) => !open && setDeleteUserId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Deletar Usuário</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita e todos os dados associados serão permanentemente removidos.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button variant="outline" onClick={() => setDeleteUserId(null)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteUser}>
-              Deletar
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {isCoordenador && (
+        <AlertDialog open={deleteUserId !== null} onOpenChange={(open) => !open && setDeleteUserId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Deletar Usuário</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita e todos os dados associados serão permanentemente removidos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <Button variant="outline" onClick={() => setDeleteUserId(null)}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteUser}>
+                Deletar
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }
