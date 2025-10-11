@@ -220,8 +220,30 @@ export default function Estatisticas() {
           <p className="text-muted-foreground">Visualize estatísticas e métricas do sistema</p>
         </div>
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            Nenhum dado disponível. Cadastre alunos e vincule-os a turmas para visualizar estatísticas.
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground mb-6">
+              Nenhum dado disponível. Cadastre alunos e vincule-os a turmas para visualizar estatísticas.
+            </p>
+            <a
+              href="/"
+              className="inline-flex items-center gap-2 text-primary hover:underline"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m12 19-7-7 7-7" />
+                <path d="M19 12H5" />
+              </svg>
+              Voltar ao início
+            </a>
           </CardContent>
         </Card>
       </div>
