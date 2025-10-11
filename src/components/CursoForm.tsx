@@ -16,6 +16,7 @@ interface Curso {
   nome: string;
   instituicao: string | null;
   local_realizacao: string | null;
+  tipo_curso: string | null;
   data_inicio: string | null;
   data_fim: string | null;
   situacao: string | null;
@@ -36,6 +37,7 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
     nome: string;
     instituicao: string;
     local_realizacao: string;
+    tipo_curso: string;
     data_inicio: string;
     data_fim: string;
     situacao: string;
@@ -45,6 +47,7 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
     nome: curso?.nome || "",
     instituicao: curso?.instituicao || "",
     local_realizacao: curso?.local_realizacao || "",
+    tipo_curso: curso?.tipo_curso || "",
     data_inicio: curso?.data_inicio || "",
     data_fim: curso?.data_fim || "",
     situacao: curso?.situacao || "Em Andamento",
@@ -90,6 +93,7 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
           nome: "",
           instituicao: "",
           local_realizacao: "",
+          tipo_curso: "",
           data_inicio: "",
           data_fim: "",
           situacao: "Em Andamento",
@@ -165,6 +169,22 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
                 <SelectContent>
                   <SelectItem value="São Tomé">São Tomé</SelectItem>
                   <SelectItem value="Brasil">Brasil</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tipo_curso">Tipo de Curso</Label>
+              <Select
+                value={formData.tipo_curso}
+                onValueChange={(value) => setFormData({ ...formData, tipo_curso: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Expedito">Expedito</SelectItem>
+                  <SelectItem value="Carreira">Carreira</SelectItem>
                 </SelectContent>
               </Select>
             </div>

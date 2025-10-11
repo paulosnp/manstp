@@ -143,6 +143,7 @@ export type Database = {
           nome: string
           observacoes: string | null
           situacao: Database["public"]["Enums"]["situacao_curso"] | null
+          tipo_curso: string | null
           updated_at: string | null
           user_id: string
         }
@@ -157,6 +158,7 @@ export type Database = {
           nome: string
           observacoes?: string | null
           situacao?: Database["public"]["Enums"]["situacao_curso"] | null
+          tipo_curso?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -171,6 +173,7 @@ export type Database = {
           nome?: string
           observacoes?: string | null
           situacao?: Database["public"]["Enums"]["situacao_curso"] | null
+          tipo_curso?: string | null
           updated_at?: string | null
           user_id?: string
         }

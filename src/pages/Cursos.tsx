@@ -22,6 +22,7 @@ interface Curso {
   nome: string;
   instituicao: string | null;
   local_realizacao: string | null;
+  tipo_curso: string | null;
   data_inicio: string | null;
   data_fim: string | null;
   situacao: string | null;
@@ -102,6 +103,7 @@ export default function Cursos() {
                   <TableHead>Nome</TableHead>
                   <TableHead>Instituição</TableHead>
                   <TableHead>Local</TableHead>
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Período</TableHead>
                   <TableHead>Situação</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -115,6 +117,13 @@ export default function Cursos() {
                     <TableCell>
                       {curso.local_realizacao ? (
                         <Badge variant="outline">{curso.local_realizacao}</Badge>
+                      ) : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {curso.tipo_curso ? (
+                        <Badge variant={curso.tipo_curso === "Carreira" ? "default" : "secondary"}>
+                          {curso.tipo_curso}
+                        </Badge>
                       ) : "-"}
                     </TableCell>
                     <TableCell>

@@ -37,12 +37,20 @@ interface LocationChartData {
   TOTAL: number;
 }
 
+interface CourseTypeChartData {
+  ano: number;
+  Expedito: number;
+  Carreira: number;
+  TOTAL: number;
+}
+
 export default function Estatisticas() {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [tableData, setTableData] = useState<TableData[]>([]);
   const [yearChartData, setYearChartData] = useState<YearChartData[]>([]);
   const [locationChartData, setLocationChartData] = useState<LocationChartData[]>([]);
+  const [courseTypeChartData, setCourseTypeChartData] = useState<CourseTypeChartData[]>([]);
   const [cursos, setCursos] = useState<string[]>([]);
   const [categorias, setCategorias] = useState<string[]>([]);
   const [anos, setAnos] = useState<number[]>([]);
@@ -65,7 +73,7 @@ export default function Estatisticas() {
           turmas!inner(
             ano,
             curso_id,
-            cursos!inner(nome, local_realizacao)
+            cursos!inner(nome, local_realizacao, tipo_curso)
           )
         `);
 
@@ -179,6 +187,33 @@ export default function Estatisticas() {
       .sort((a, b) => a.ano - b.ano);
 
     setLocationChartData(locationArray);
+
+    // Course type chart data - group by year and course type (Expedito/Carreira)
+    const courseTypeMap = new Map<number, { Expedito: number; Carreira: number; TOTAL: number }>();
+
+    filteredData.forEach((item: any) => {
+      const ano = item.turmas.ano;
+      const tipo = item.turmas.cursos.tipo_curso;
+
+      if (!courseTypeMap.has(ano)) {
+        courseTypeMap.set(ano, { Expedito: 0, Carreira: 0, TOTAL: 0 });
+      }
+
+      const typeData = courseTypeMap.get(ano)!;
+      typeData.TOTAL++;
+      
+      if (tipo === "Expedito") {
+        typeData.Expedito++;
+      } else if (tipo === "Carreira") {
+        typeData.Carreira++;
+      }
+    });
+
+    const courseTypeArray: CourseTypeChartData[] = Array.from(courseTypeMap.entries())
+      .map(([ano, counts]) => ({ ano, ...counts }))
+      .sort((a, b) => a.ano - b.ano);
+
+    setCourseTypeChartData(courseTypeArray);
 
     // Table data - group by curso and categoria
     const tableMap = new Map<string, TableData>();
@@ -304,6 +339,12 @@ export default function Estatisticas() {
     CIAGA: { label: "CIAGA (Brasil)", color: "hsl(25, 95%, 53%)" },
   };
 
+  const courseTypeChartConfig = {
+    TOTAL: { label: "TOTAL", color: "hsl(142, 76%, 36%)" },
+    Expedito: { label: "Expedito", color: "hsl(280, 100%, 50%)" },
+    Carreira: { label: "Carreira", color: "hsl(160, 84%, 39%)" },
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -411,6 +452,29 @@ export default function Estatisticas() {
                 <Bar dataKey="TOTAL" fill={locationChartConfig.TOTAL.color} label={{ position: 'top' }} />
                 <Bar dataKey="CIABA" fill={locationChartConfig.CIABA.color} label={{ position: 'top' }} />
                 <Bar dataKey="CIAGA" fill={locationChartConfig.CIAGA.color} label={{ position: 'top' }} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      {/* Course Type Chart - Cursos Expeditos e Carreira */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cursos Expeditos e de Carreira</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={courseTypeChartConfig} className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={courseTypeChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="ano" />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Legend />
+                <Bar dataKey="TOTAL" fill={courseTypeChartConfig.TOTAL.color} label={{ position: 'top' }} />
+                <Bar dataKey="Expedito" fill={courseTypeChartConfig.Expedito.color} label={{ position: 'top' }} />
+                <Bar dataKey="Carreira" fill={courseTypeChartConfig.Carreira.color} label={{ position: 'top' }} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
