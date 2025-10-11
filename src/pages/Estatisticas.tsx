@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -224,8 +225,8 @@ export default function Estatisticas() {
             <p className="text-muted-foreground mb-6">
               Nenhum dado disponível. Cadastre alunos e vincule-os a turmas para visualizar estatísticas.
             </p>
-            <button
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            <Link
+              to="/"
               className="inline-flex items-center gap-2 text-primary hover:underline"
             >
               <svg
@@ -239,10 +240,11 @@ export default function Estatisticas() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="m18 15-6-6-6 6" />
+                <path d="m12 19-7-7 7-7" />
+                <path d="M19 12H5" />
               </svg>
               Voltar ao início
-            </button>
+            </Link>
           </CardContent>
         </Card>
       </div>
