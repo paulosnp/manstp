@@ -71,7 +71,7 @@ export default function Relatorios() {
 
       if (incluirAlunos) {
         let query = supabase.from("alunos").select("*");
-        if (selectedTipo) query = query.eq("tipo_militar", selectedTipo as "Fuzileiro Naval" | "Guarda Costeiro");
+        if (selectedTipo && selectedTipo !== "all") query = query.eq("tipo_militar", selectedTipo as "Fuzileiro Naval" | "Guarda Costeiro");
         const { data: alunosData } = await query;
         if (alunosData && alunosData.length > 0) {
           headers = Object.keys(alunosData[0]);
@@ -81,14 +81,14 @@ export default function Relatorios() {
 
       if (incluirCursos) {
         let query = supabase.from("cursos").select("*");
-        if (selectedCurso) query = query.eq("id", selectedCurso);
+        if (selectedCurso && selectedCurso !== "all") query = query.eq("id", selectedCurso);
         const { data: cursosData } = await query;
         if (cursosData) data = [...data, ...cursosData];
       }
 
       if (incluirTurmas) {
         let query = supabase.from("turmas").select("*");
-        if (selectedTurma) query = query.eq("id", selectedTurma);
+        if (selectedTurma && selectedTurma !== "all") query = query.eq("id", selectedTurma);
         const { data: turmasData } = await query;
         if (turmasData) data = [...data, ...turmasData];
       }
@@ -165,7 +165,7 @@ export default function Relatorios() {
       let data: any[] = [];
       if (incluirAlunos) {
         let query = supabase.from("alunos").select("*");
-        if (selectedTipo) query = query.eq("tipo_militar", selectedTipo as "Fuzileiro Naval" | "Guarda Costeiro");
+        if (selectedTipo && selectedTipo !== "all") query = query.eq("tipo_militar", selectedTipo as "Fuzileiro Naval" | "Guarda Costeiro");
         const { data: alunosData } = await query;
         if (alunosData) data = [...data, ...alunosData];
       }
@@ -404,7 +404,7 @@ export default function Relatorios() {
                   <SelectValue placeholder="Todos os cursos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os cursos</SelectItem>
+                  <SelectItem value="all">Todos os cursos</SelectItem>
                   {cursos.map((curso) => (
                     <SelectItem key={curso.id} value={curso.id}>
                       {curso.nome}
@@ -421,7 +421,7 @@ export default function Relatorios() {
                   <SelectValue placeholder="Todas as turmas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as turmas</SelectItem>
+                  <SelectItem value="all">Todas as turmas</SelectItem>
                   {turmas.map((turma) => (
                     <SelectItem key={turma.id} value={turma.id}>
                       {turma.nome}
@@ -438,7 +438,7 @@ export default function Relatorios() {
                   <SelectValue placeholder="Todos os tipos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os tipos</SelectItem>
+                  <SelectItem value="all">Todos os tipos</SelectItem>
                   <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
                   <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
                 </SelectContent>
