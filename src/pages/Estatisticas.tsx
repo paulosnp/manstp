@@ -387,6 +387,7 @@ export default function Estatisticas() {
               <TableRow>
                 <TableHead>Curso</TableHead>
                 <TableHead>Categoria</TableHead>
+                <TableHead className="text-right">Total Inscritos</TableHead>
                 <TableHead className="text-right">Aprovados</TableHead>
                 <TableHead className="text-right">Desligados</TableHead>
                 <TableHead className="text-right">Desertores</TableHead>
@@ -398,6 +399,7 @@ export default function Estatisticas() {
                 <TableRow key={index}>
                   <TableCell className="font-medium">{row.curso}</TableCell>
                   <TableCell>{row.categoria}</TableCell>
+                  <TableCell className="text-right font-semibold">{row.total}</TableCell>
                   <TableCell className="text-right">{row.aprovados}</TableCell>
                   <TableCell className="text-right">{row.desligados}</TableCell>
                   <TableCell className="text-right">{row.desertores}</TableCell>
