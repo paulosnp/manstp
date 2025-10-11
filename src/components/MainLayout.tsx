@@ -14,7 +14,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               backgroundImage: `url(${logoFundo})`,
               opacity: 0.05,
               backgroundSize: 'cover',
-              backgroundPosition: '60% center'
+              backgroundPosition: '70% 60%'
             }}
           />
           <header className="sticky top-0 z-10 flex h-14 items-center gap-2 sm:gap-4 border-b bg-card px-3 sm:px-4 shadow-sm">
