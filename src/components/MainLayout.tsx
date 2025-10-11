@@ -3,6 +3,7 @@ import { AppSidebar } from "./AppSidebar";
 import { useLocation } from "react-router-dom";
 import logoFundo from "@/assets/logo-fundo.png";
 import logoFundo2 from "@/assets/logo-fundo-2.png";
+import { LanguageSelector } from "./LanguageSelector";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -26,6 +27,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <header className="sticky top-0 z-10 flex h-14 items-center gap-2 sm:gap-4 border-b bg-card px-3 sm:px-4 shadow-sm">
             <SidebarTrigger />
             <h1 className="text-sm sm:text-base md:text-lg font-semibold truncate">Gestor de Cursos e Alunos Militares</h1>
+            <div className="ml-auto">
+              <LanguageSelector />
+            </div>
           </header>
           <main className="flex-1 p-3 sm:p-4 md:p-6 relative z-[1]">{children}</main>
         </div>
