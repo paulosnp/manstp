@@ -30,11 +30,19 @@ interface YearChartData {
   FUZILEIRO: number;
 }
 
+interface LocationChartData {
+  ano: number;
+  CIABA: number;
+  CIAGA: number;
+  TOTAL: number;
+}
+
 export default function Estatisticas() {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [tableData, setTableData] = useState<TableData[]>([]);
   const [yearChartData, setYearChartData] = useState<YearChartData[]>([]);
+  const [locationChartData, setLocationChartData] = useState<LocationChartData[]>([]);
   const [cursos, setCursos] = useState<string[]>([]);
   const [categorias, setCategorias] = useState<string[]>([]);
   const [anos, setAnos] = useState<number[]>([]);
@@ -57,7 +65,7 @@ export default function Estatisticas() {
           turmas!inner(
             ano,
             curso_id,
-            cursos!inner(nome)
+            cursos!inner(nome, local_realizacao)
           )
         `);
 
@@ -144,6 +152,33 @@ export default function Estatisticas() {
       .sort((a, b) => a.ano - b.ano);
 
     setYearChartData(yearArray);
+
+    // Location chart data - group by year and location (CIABA/CIAGA)
+    const locationMap = new Map<number, { CIABA: number; CIAGA: number; TOTAL: number }>();
+
+    filteredData.forEach((item: any) => {
+      const ano = item.turmas.ano;
+      const local = item.turmas.cursos.local_realizacao;
+
+      if (!locationMap.has(ano)) {
+        locationMap.set(ano, { CIABA: 0, CIAGA: 0, TOTAL: 0 });
+      }
+
+      const locationData = locationMap.get(ano)!;
+      locationData.TOTAL++;
+      
+      if (local === "São Tomé") {
+        locationData.CIABA++;
+      } else if (local === "Brasil") {
+        locationData.CIAGA++;
+      }
+    });
+
+    const locationArray: LocationChartData[] = Array.from(locationMap.entries())
+      .map(([ano, counts]) => ({ ano, ...counts }))
+      .sort((a, b) => a.ano - b.ano);
+
+    setLocationChartData(locationArray);
 
     // Table data - group by curso and categoria
     const tableMap = new Map<string, TableData>();
@@ -263,6 +298,12 @@ export default function Estatisticas() {
     FUZILEIRO: { label: "FUZILEIRO", color: "hsl(0, 84%, 60%)" },
   };
 
+  const locationChartConfig = {
+    TOTAL: { label: "TOTAL", color: "hsl(142, 76%, 36%)" },
+    CIABA: { label: "CIABA (São Tomé)", color: "hsl(210, 100%, 50%)" },
+    CIAGA: { label: "CIAGA (Brasil)", color: "hsl(25, 95%, 53%)" },
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -347,6 +388,29 @@ export default function Estatisticas() {
                 <Bar dataKey="CONCLUIDOS" fill={yearChartConfig.CONCLUIDOS.color} label={{ position: 'top' }} />
                 <Bar dataKey="GCSTP" fill={yearChartConfig.GCSTP.color} label={{ position: 'top' }} />
                 <Bar dataKey="FUZILEIRO" fill={yearChartConfig.FUZILEIRO.color} label={{ position: 'top' }} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      {/* Location Chart - Cursos por Local */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cursos por Ano - CIABA (São Tomé) e CIAGA (Brasil)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer config={locationChartConfig} className="h-[400px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={locationChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="ano" />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Legend />
+                <Bar dataKey="TOTAL" fill={locationChartConfig.TOTAL.color} label={{ position: 'top' }} />
+                <Bar dataKey="CIABA" fill={locationChartConfig.CIABA.color} label={{ position: 'top' }} />
+                <Bar dataKey="CIAGA" fill={locationChartConfig.CIAGA.color} label={{ position: 'top' }} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
