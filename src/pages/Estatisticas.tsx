@@ -28,6 +28,7 @@ interface YearChartData {
   CONCLUIDOS: number;
   GCSTP: number;
   FUZILEIRO: number;
+  EXERCITO: number;
 }
 
 interface LocationChartData {
@@ -135,15 +136,15 @@ export default function Estatisticas() {
 
     setChartData(chartArray);
 
-    // Year chart data - group by year and categoria (Fuzileiro Naval, Guarda Costeiro)
-    const yearMap = new Map<number, { CONCLUIDOS: number; GCSTP: number; FUZILEIRO: number }>();
+    // Year chart data - group by year and categoria (Fuzileiro Naval, Guarda Costeiro, Exercito)
+    const yearMap = new Map<number, { CONCLUIDOS: number; GCSTP: number; FUZILEIRO: number; EXERCITO: number }>();
 
     filteredData.forEach((item: any) => {
       const ano = item.turmas.ano;
       const categoria = item.alunos.tipo_militar;
 
       if (!yearMap.has(ano)) {
-        yearMap.set(ano, { CONCLUIDOS: 0, GCSTP: 0, FUZILEIRO: 0 });
+        yearMap.set(ano, { CONCLUIDOS: 0, GCSTP: 0, FUZILEIRO: 0, EXERCITO: 0 });
       }
 
       const yearData = yearMap.get(ano)!;
@@ -153,6 +154,8 @@ export default function Estatisticas() {
         yearData.GCSTP++;
       } else if (categoria === "Fuzileiro Naval") {
         yearData.FUZILEIRO++;
+      } else if (categoria === "Exercito") {
+        yearData.EXERCITO++;
       }
     });
 
@@ -333,6 +336,7 @@ export default function Estatisticas() {
     CONCLUIDOS: { label: "CONCLUIDOS", color: "hsl(142, 76%, 36%)" },
     GCSTP: { label: "GCSTP", color: "hsl(210, 100%, 50%)" },
     FUZILEIRO: { label: "FUZILEIRO", color: "hsl(0, 84%, 60%)" },
+    EXERCITO: { label: "EXERCITO", color: "url(#camouflagePattern)" },
   };
 
   const locationChartConfig = {
@@ -417,12 +421,22 @@ export default function Estatisticas() {
       {/* Year Chart - Inscritos por Categoria */}
       <Card>
         <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="text-base sm:text-lg">Inscritos por Ano - Fuzileiros Navais e Guarda Costeira</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Inscritos por Ano - Fuzileiros Navais, Guarda Costeira e Exército</CardTitle>
         </CardHeader>
         <CardContent className="p-4 sm:p-6 pt-0">
           <ChartContainer config={yearChartConfig} className="h-[300px] sm:h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={yearChartData}>
+                <defs>
+                  <pattern id="camouflagePattern" patternUnits="userSpaceOnUse" width="40" height="40">
+                    <rect width="40" height="40" fill="hsl(70, 35%, 35%)" />
+                    <circle cx="10" cy="10" r="8" fill="hsl(85, 40%, 25%)" opacity="0.8" />
+                    <circle cx="30" cy="15" r="6" fill="hsl(30, 40%, 35%)" opacity="0.7" />
+                    <circle cx="20" cy="30" r="7" fill="hsl(50, 30%, 40%)" opacity="0.6" />
+                    <ellipse cx="5" cy="35" rx="6" ry="4" fill="hsl(85, 40%, 25%)" opacity="0.8" />
+                    <ellipse cx="35" cy="28" rx="5" ry="7" fill="hsl(30, 40%, 35%)" opacity="0.7" />
+                  </pattern>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="ano" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
@@ -431,6 +445,7 @@ export default function Estatisticas() {
                 <Bar dataKey="CONCLUIDOS" fill={yearChartConfig.CONCLUIDOS.color} label={{ position: 'top', fontSize: 10 }} />
                 <Bar dataKey="GCSTP" fill={yearChartConfig.GCSTP.color} label={{ position: 'top', fontSize: 10 }} />
                 <Bar dataKey="FUZILEIRO" fill={yearChartConfig.FUZILEIRO.color} label={{ position: 'top', fontSize: 10 }} />
+                <Bar dataKey="EXERCITO" fill={yearChartConfig.EXERCITO.color} label={{ position: 'top', fontSize: 10 }} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
