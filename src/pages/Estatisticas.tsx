@@ -69,7 +69,8 @@ export default function Estatisticas() {
         .from("aluno_turma")
         .select(`
           aluno_id,
-          alunos!inner(tipo_militar, status),
+          status,
+          alunos!inner(tipo_militar),
           turmas!inner(
             ano,
             curso_id,
@@ -116,7 +117,7 @@ export default function Estatisticas() {
 
     filteredData.forEach((item: any) => {
       const curso = item.turmas.cursos.nome;
-      const status = item.alunos.status || "Aprovado";
+      const status = item.status || "Cursando";
 
       if (!chartMap.has(curso)) {
         chartMap.set(curso, { Aprovados: 0, Desligados: 0, Desertores: 0 });
@@ -221,7 +222,7 @@ export default function Estatisticas() {
     filteredData.forEach((item: any) => {
       const curso = item.turmas.cursos.nome;
       const categoria = item.alunos.tipo_militar;
-      const status = item.alunos.status || "Aprovado";
+      const status = item.status || "Cursando";
       const key = `${curso}-${categoria}`;
 
       if (!tableMap.has(key)) {
@@ -262,11 +263,12 @@ export default function Estatisticas() {
           .from("aluno_turma")
           .select(`
             aluno_id,
-            alunos!inner(tipo_militar, status),
+            status,
+            alunos!inner(tipo_militar),
             turmas!inner(
               ano,
               curso_id,
-              cursos!inner(nome)
+              cursos!inner(nome, local_realizacao, tipo_curso)
             )
           `);
         if (data) processData(data);
