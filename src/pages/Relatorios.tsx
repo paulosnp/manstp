@@ -57,18 +57,76 @@ export default function Relatorios() {
     });
   };
 
+  const fetchCursosStats = async () => {
+    const { data: cursosData } = await supabase
+      .from("cursos")
+      .select("id, nome, instituicao, ano:data_inicio, turmas(tipo_militar, aluno_turma(aluno_id, alunos(tipo_militar)))");
+    
+    if (!cursosData) return null;
+
+    const statsByYear: any = {};
+    
+    cursosData.forEach((curso: any) => {
+      const year = curso.ano ? new Date(curso.ano).getFullYear() : 'Sem data';
+      if (!statsByYear[year]) {
+        statsByYear[year] = {
+          fuzileiros: 0,
+          guardaCosteira: 0,
+          ciaga: 0,
+          ciaba: 0,
+          total: 0
+        };
+      }
+
+      curso.turmas?.forEach((turma: any) => {
+        const alunosCount = turma.aluno_turma?.length || 0;
+        statsByYear[year].total += alunosCount;
+
+        turma.aluno_turma?.forEach((at: any) => {
+          if (at.alunos?.tipo_militar === "Fuzileiro Naval") {
+            statsByYear[year].fuzileiros += 1;
+          } else if (at.alunos?.tipo_militar === "Guarda Costeiro") {
+            statsByYear[year].guardaCosteira += 1;
+          }
+        });
+      });
+
+      if (curso.instituicao?.toLowerCase().includes('ciaga')) {
+        statsByYear[year].ciaga += 1;
+      } else if (curso.instituicao?.toLowerCase().includes('ciaba')) {
+        statsByYear[year].ciaba += 1;
+      }
+    });
+
+    return statsByYear;
+  };
+
   const exportToCSV = async () => {
     try {
       let data: any[] = [];
       let headers: string[] = [];
+
+      // Adicionar estatísticas de cursos por ano
+      const cursosStats = await fetchCursosStats();
+      if (cursosStats) {
+        const statsRows = Object.entries(cursosStats).map(([year, stats]: [string, any]) => ({
+          Tipo: "Estatística por Ano",
+          Ano: year,
+          Fuzileiros: stats.fuzileiros,
+          "Guarda Costeira": stats.guardaCosteira,
+          CIAGA: stats.ciaga,
+          CIABA: stats.ciaba,
+          Total: stats.total
+        }));
+        data = [...data, ...statsRows];
+      }
 
       if (incluirAlunos) {
         let query = supabase.from("alunos").select("*");
         if (selectedTipo && selectedTipo !== "all") query = query.eq("tipo_militar", selectedTipo as "Fuzileiro Naval" | "Guarda Costeiro");
         const { data: alunosData } = await query;
         if (alunosData && alunosData.length > 0) {
-          headers = Object.keys(alunosData[0]);
-          data = alunosData;
+          data = [...data, ...alunosData];
         }
       }
 
@@ -125,8 +183,46 @@ export default function Relatorios() {
       pdf.text(`Gerado em: ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}`, pageWidth / 2, yPosition, { align: "center" });
       yPosition += 15;
 
+      // Cursos por Ano e Tipo Militar
+      const cursosStats = await fetchCursosStats();
+      if (cursosStats) {
+        pdf.setFontSize(14);
+        pdf.text("Cursos por Ano - Distribuição", 14, yPosition);
+        yPosition += 10;
+
+        pdf.setFontSize(10);
+        Object.entries(cursosStats).forEach(([year, stats]: [string, any]) => {
+          if (yPosition > pdf.internal.pageSize.getHeight() - 30) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+          
+          pdf.setFontSize(11);
+          pdf.text(`Ano: ${year}`, 14, yPosition);
+          yPosition += 7;
+          
+          pdf.setFontSize(9);
+          pdf.text(`  • Fuzileiros Navais: ${stats.fuzileiros}`, 14, yPosition);
+          yPosition += 6;
+          pdf.text(`  • Guarda Costeira: ${stats.guardaCosteira}`, 14, yPosition);
+          yPosition += 6;
+          pdf.text(`  • Cursos CIAGA: ${stats.ciaga}`, 14, yPosition);
+          yPosition += 6;
+          pdf.text(`  • Cursos CIABA: ${stats.ciaba}`, 14, yPosition);
+          yPosition += 6;
+          pdf.text(`  • Total de alunos: ${stats.total}`, 14, yPosition);
+          yPosition += 10;
+        });
+        yPosition += 5;
+      }
+
       // Estatísticas gerais
       if (statsData) {
+        if (yPosition > pdf.internal.pageSize.getHeight() - 40) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        
         pdf.setFontSize(14);
         pdf.text("Estatísticas Gerais", 14, yPosition);
         yPosition += 10;
