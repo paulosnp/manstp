@@ -54,6 +54,7 @@ export const cursoSchema = z.object({
   instituicao: z.string().trim().max(200).optional().or(z.literal("")),
   local_realizacao: z.enum(["São Tomé", "Brasil"]).optional(),
   tipo_curso: z.enum(["Expedito", "Carreira"]).optional(),
+  modalidade: z.enum(["Presencial", "Semipresencial", "A Distância"]).optional(),
   data_inicio: z.string().optional(),
   data_fim: z.string().optional(),
   situacao: z.string().optional(),

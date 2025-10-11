@@ -17,6 +17,7 @@ interface Curso {
   instituicao: string | null;
   local_realizacao: string | null;
   tipo_curso: string | null;
+  modalidade: string | null;
   data_inicio: string | null;
   data_fim: string | null;
   situacao: string | null;
@@ -38,6 +39,7 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
     instituicao: string;
     local_realizacao: string;
     tipo_curso: string;
+    modalidade: string;
     data_inicio: string;
     data_fim: string;
     situacao: string;
@@ -48,6 +50,7 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
     instituicao: curso?.instituicao || "",
     local_realizacao: curso?.local_realizacao || "",
     tipo_curso: curso?.tipo_curso || "",
+    modalidade: curso?.modalidade || "",
     data_inicio: curso?.data_inicio || "",
     data_fim: curso?.data_fim || "",
     situacao: curso?.situacao || "Em Andamento",
@@ -94,6 +97,7 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
           instituicao: "",
           local_realizacao: "",
           tipo_curso: "",
+          modalidade: "",
           data_inicio: "",
           data_fim: "",
           situacao: "Em Andamento",
@@ -185,6 +189,23 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
                 <SelectContent>
                   <SelectItem value="Expedito">Expedito</SelectItem>
                   <SelectItem value="Carreira">Carreira</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="modalidade">Modalidade</Label>
+              <Select
+                value={formData.modalidade}
+                onValueChange={(value) => setFormData({ ...formData, modalidade: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a modalidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Presencial">Presencial</SelectItem>
+                  <SelectItem value="Semipresencial">Semipresencial</SelectItem>
+                  <SelectItem value="A Distância">A Distância</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -23,6 +23,7 @@ interface Curso {
   instituicao: string | null;
   local_realizacao: string | null;
   tipo_curso: string | null;
+  modalidade: string | null;
   data_inicio: string | null;
   data_fim: string | null;
   situacao: string | null;

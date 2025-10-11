@@ -386,7 +386,7 @@ export default function Relatorios() {
 
       const { data: turmasData } = await supabase
         .from("aluno_turma")
-        .select("status, turmas(nome, ano, cursos(nome))")
+        .select("status, turmas(nome, ano, cursos(nome, modalidade))")
         .eq("aluno_id", selectedAluno);
 
       if (!alunoData) {
@@ -441,10 +441,13 @@ export default function Relatorios() {
           const turma = item.turmas;
           const status = item.status || 'Cursando';
           const ano = turma?.ano || 'Não informado';
+          const modalidade = turma?.cursos?.modalidade || 'Não informado';
           
           pdf.text(`• Curso: ${turma?.cursos?.nome}`, 14, yPosition);
           yPosition += 6;
           pdf.text(`  Turma: ${turma?.nome} | Ano: ${ano}`, 14, yPosition);
+          yPosition += 6;
+          pdf.text(`  Modalidade: ${modalidade}`, 14, yPosition);
           yPosition += 6;
           pdf.text(`  Status: ${status}`, 14, yPosition);
           yPosition += 8;
