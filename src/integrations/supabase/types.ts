@@ -131,6 +131,42 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_logs: {
+        Row: {
+          action_type: Database["public"]["Enums"]["audit_action"]
+          created_at: string
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string | null
+          table_name: string | null
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: Database["public"]["Enums"]["audit_action"]
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: Database["public"]["Enums"]["audit_action"]
+          created_at?: string
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       cursos: {
         Row: {
           categoria: string | null
@@ -399,6 +435,7 @@ export type Database = {
     }
     Enums: {
       app_role: "coordenador" | "visualizador"
+      audit_action: "login" | "insert" | "update" | "delete"
       graduacao_militar:
         | "Brigadeiro"
         | "Coronel"
@@ -564,6 +601,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["coordenador", "visualizador"],
+      audit_action: ["login", "insert", "update", "delete"],
       graduacao_militar: [
         "Brigadeiro",
         "Coronel",
