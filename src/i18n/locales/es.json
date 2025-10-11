@@ -94,5 +94,13 @@
   "userNotAuthenticated": "Usuario no autenticado",
   "onlineUsers": "Usuarios En Línea",
   "online": "en línea",
-  "noUsersOnline": "No hay usuarios en línea"
+  "noUsersOnline": "No hay usuarios en línea",
+  "backgroundSettings": "Configuración de Fondo",
+  "backgroundSettingsDescription": "Personaliza las imágenes de fondo del sistema",
+  "backgroundImage1": "Imagen de Fondo 1",
+  "backgroundImage2": "Imagen de Fondo 2",
+  "invalidImageFormat": "Formato de imagen inválido",
+  "backgroundUpdated": "Fondo actualizado exitosamente",
+  "errorUploadingBackground": "Error al subir el fondo",
+  "uploading": "Subiendo..."
 }

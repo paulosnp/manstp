@@ -131,6 +131,33 @@ export type Database = {
         }
         Relationships: []
       }
+      appearance_settings: {
+        Row: {
+          background_image_1: string | null
+          background_image_2: string | null
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          background_image_1?: string | null
+          background_image_2?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          background_image_1?: string | null
+          background_image_2?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action_type: Database["public"]["Enums"]["audit_action"]

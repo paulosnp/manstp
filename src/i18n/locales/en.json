@@ -94,5 +94,13 @@
   "userNotAuthenticated": "User not authenticated",
   "onlineUsers": "Online Users",
   "online": "online",
-  "noUsersOnline": "No users online"
+  "noUsersOnline": "No users online",
+  "backgroundSettings": "Background Settings",
+  "backgroundSettingsDescription": "Customize system background images",
+  "backgroundImage1": "Background Image 1",
+  "backgroundImage2": "Background Image 2",
+  "invalidImageFormat": "Invalid image format",
+  "backgroundUpdated": "Background updated successfully",
+  "errorUploadingBackground": "Error uploading background",
+  "uploading": "Uploading..."
 }

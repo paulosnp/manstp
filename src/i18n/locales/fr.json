@@ -94,5 +94,13 @@
   "userNotAuthenticated": "Utilisateur non authentifié",
   "onlineUsers": "Utilisateurs En Ligne",
   "online": "en ligne",
-  "noUsersOnline": "Aucun utilisateur en ligne"
+  "noUsersOnline": "Aucun utilisateur en ligne",
+  "backgroundSettings": "Paramètres d'Arrière-plan",
+  "backgroundSettingsDescription": "Personnalisez les images d'arrière-plan du système",
+  "backgroundImage1": "Image d'Arrière-plan 1",
+  "backgroundImage2": "Image d'Arrière-plan 2",
+  "invalidImageFormat": "Format d'image invalide",
+  "backgroundUpdated": "Arrière-plan mis à jour avec succès",
+  "errorUploadingBackground": "Erreur lors du téléchargement de l'arrière-plan",
+  "uploading": "Téléchargement..."
 }
