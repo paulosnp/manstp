@@ -89,6 +89,27 @@ export default function Auth() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    const email = (document.getElementById("signin-email") as HTMLInputElement)?.value;
+
+    if (!email) {
+      toast.error("Por favor, insira seu email");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+
+      if (error) throw error;
+
+      toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.");
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao enviar email de recuperação");
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary via-primary/90 to-primary/80 p-4">
       <Card className="w-full max-w-md shadow-elevated">
@@ -119,7 +140,17 @@ export default function Auth() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Senha</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="signin-password">Senha</Label>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="h-auto p-0 text-xs"
+                      onClick={handleForgotPassword}
+                    >
+                      Esqueceu a senha?
+                    </Button>
+                  </div>
                   <Input
                     id="signin-password"
                     name="password"

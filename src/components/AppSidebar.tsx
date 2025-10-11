@@ -1,4 +1,4 @@
-import { Home, Users, BookOpen, School, GraduationCap, BarChart3, FileText, LogOut } from "lucide-react";
+import { Home, Users, BookOpen, School, GraduationCap, BarChart3, FileText, Shield, LogOut } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -24,6 +24,7 @@ const menuItems = [
   { title: "Turmas", url: "/turmas", icon: School },
   { title: "Estatísticas", url: "/estatisticas", icon: BarChart3 },
   { title: "Relatórios", url: "/relatorios", icon: FileText },
+  { title: "Usuários", url: "/usuarios", icon: Shield },
 ];
 
 export function AppSidebar() {

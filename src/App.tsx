@@ -14,6 +14,7 @@ import Turmas from "./pages/Turmas";
 import Instrutores from "./pages/Instrutores";
 import Estatisticas from "./pages/Estatisticas";
 import Relatorios from "./pages/Relatorios";
+import Usuarios from "./pages/Usuarios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -93,6 +94,16 @@ const App = () => (
                 <ProtectedRoute>
                   <MainLayout>
                     <Relatorios />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/usuarios"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Usuarios />
                   </MainLayout>
                 </ProtectedRoute>
               }
