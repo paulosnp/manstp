@@ -51,7 +51,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             className="fixed inset-0 z-0 bg-no-repeat bg-center pointer-events-none"
             style={{ 
               backgroundImage: `url(${backgroundImage})`,
-              opacity: 0.03,
+              opacity: 0.10,
               backgroundSize: 'contain'
             }}
           />
