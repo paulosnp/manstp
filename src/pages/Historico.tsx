@@ -71,8 +71,12 @@ export default function Historico() {
   const [showClearDialog, setShowClearDialog] = useState(false);
 
   useEffect(() => {
-    if (!roleLoading && isCoordenador) {
-      fetchLogs();
+    if (!roleLoading) {
+      if (isCoordenador) {
+        fetchLogs();
+      } else {
+        setLoading(false);
+      }
     }
   }, [isCoordenador, roleLoading]);
 
