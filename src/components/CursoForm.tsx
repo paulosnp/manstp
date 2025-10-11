@@ -15,6 +15,7 @@ interface Curso {
   id: string;
   nome: string;
   instituicao: string | null;
+  local_realizacao: string | null;
   data_inicio: string | null;
   data_fim: string | null;
   situacao: string | null;
@@ -34,6 +35,7 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
   const [formData, setFormData] = useState<{
     nome: string;
     instituicao: string;
+    local_realizacao: string;
     data_inicio: string;
     data_fim: string;
     situacao: string;
@@ -42,6 +44,7 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
   }>({
     nome: curso?.nome || "",
     instituicao: curso?.instituicao || "",
+    local_realizacao: curso?.local_realizacao || "",
     data_inicio: curso?.data_inicio || "",
     data_fim: curso?.data_fim || "",
     situacao: curso?.situacao || "Em Andamento",
@@ -86,6 +89,7 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
         setFormData({
           nome: "",
           instituicao: "",
+          local_realizacao: "",
           data_inicio: "",
           data_fim: "",
           situacao: "Em Andamento",
@@ -147,6 +151,22 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
                 value={formData.categoria}
                 onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="local_realizacao">Local de Realização</Label>
+              <Select
+                value={formData.local_realizacao}
+                onValueChange={(value) => setFormData({ ...formData, local_realizacao: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o local" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="São Tomé">São Tomé</SelectItem>
+                  <SelectItem value="Brasil">Brasil</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

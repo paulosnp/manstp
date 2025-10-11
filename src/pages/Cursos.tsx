@@ -21,6 +21,7 @@ interface Curso {
   id: string;
   nome: string;
   instituicao: string | null;
+  local_realizacao: string | null;
   data_inicio: string | null;
   data_fim: string | null;
   situacao: string | null;
@@ -100,6 +101,7 @@ export default function Cursos() {
                 <TableRow>
                   <TableHead>Nome</TableHead>
                   <TableHead>Instituição</TableHead>
+                  <TableHead>Local</TableHead>
                   <TableHead>Período</TableHead>
                   <TableHead>Situação</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -110,6 +112,11 @@ export default function Cursos() {
                   <TableRow key={curso.id}>
                     <TableCell className="font-medium">{curso.nome}</TableCell>
                     <TableCell>{curso.instituicao || "-"}</TableCell>
+                    <TableCell>
+                      {curso.local_realizacao ? (
+                        <Badge variant="outline">{curso.local_realizacao}</Badge>
+                      ) : "-"}
+                    </TableCell>
                     <TableCell>
                       <div className="text-sm">
                         {curso.data_inicio && <div>Início: {new Date(curso.data_inicio).toLocaleDateString()}</div>}

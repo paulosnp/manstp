@@ -53,6 +53,7 @@ export const cursoSchema = z.object({
   nome: nameSchema,
   categoria: z.string().trim().max(100).optional().or(z.literal("")),
   instituicao: z.string().trim().max(200).optional().or(z.literal("")),
+  local_realizacao: z.enum(["São Tomé", "Brasil"]).optional(),
   data_inicio: z.string().optional(),
   data_fim: z.string().optional(),
   situacao: z.string().optional(),
