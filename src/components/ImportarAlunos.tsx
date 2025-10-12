@@ -30,6 +30,7 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
   const [dragging, setDragging] = useState(false);
   const [alunos, setAlunos] = useState<AlunoImport[]>([]);
   const [importing, setImporting] = useState(false);
+  const [tipoMilitar, setTipoMilitar] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validGraduacoes = [
@@ -63,42 +64,33 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
     
     const alunosData: AlunoImport[] = [];
     
-    // Formato esperado: nome_completo, graduacao, tipo_militar, email, telefone, local_servico, status (opcional)
+    // Formato esperado: graduacao, nome_completo
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
       
       const parts = line.split(/[,;\t]/).map(p => p.trim());
       
-      if (parts.length < 3) {
+      if (parts.length < 2) {
         alunosData.push({
           nome_completo: line,
           graduacao: "",
           tipo_militar: "",
-          error: "Formato inválido. Mínimo: nome, graduação, tipo militar"
+          error: "Formato inválido. Esperado: graduação, nome completo"
         });
         continue;
       }
 
       const aluno: AlunoImport = {
-        nome_completo: parts[0],
-        graduacao: parts[1],
-        tipo_militar: parts[2],
-        email: parts[3] || undefined,
-        telefone: parts[4] || undefined,
-        local_servico: parts[5] || undefined,
-        status: parts[6] || "Cursando"
+        graduacao: parts[0],
+        nome_completo: parts[1],
+        tipo_militar: tipoMilitar,
+        status: "Cursando"
       };
 
       // Validações
       if (!validGraduacoes.includes(aluno.graduacao)) {
         aluno.error = `Graduação inválida: ${aluno.graduacao}`;
-      }
-      if (!validTiposMilitares.includes(aluno.tipo_militar)) {
-        aluno.error = `Tipo militar inválido: ${aluno.tipo_militar}`;
-      }
-      if (aluno.status && !validStatus.includes(aluno.status)) {
-        aluno.error = `Status inválido: ${aluno.status}`;
       }
 
       alunosData.push(aluno);
@@ -123,35 +115,26 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
       const row = jsonData[i];
       if (!row || !row[0]) continue;
       
-      if (row.length < 3) {
+      if (row.length < 2) {
         alunosData.push({
           nome_completo: String(row[0] || ""),
           graduacao: "",
           tipo_militar: "",
-          error: "Linha com dados insuficientes"
+          error: "Linha com dados insuficientes. Esperado: graduação, nome completo"
         });
         continue;
       }
 
       const aluno: AlunoImport = {
-        nome_completo: String(row[0] || ""),
-        graduacao: String(row[1] || ""),
-        tipo_militar: String(row[2] || ""),
-        email: row[3] ? String(row[3]) : undefined,
-        telefone: row[4] ? String(row[4]) : undefined,
-        local_servico: row[5] ? String(row[5]) : undefined,
-        status: row[6] ? String(row[6]) : "Cursando"
+        graduacao: String(row[0] || ""),
+        nome_completo: String(row[1] || ""),
+        tipo_militar: tipoMilitar,
+        status: "Cursando"
       };
 
       // Validações
       if (!validGraduacoes.includes(aluno.graduacao)) {
         aluno.error = `Graduação inválida: ${aluno.graduacao}`;
-      }
-      if (!validTiposMilitares.includes(aluno.tipo_militar)) {
-        aluno.error = `Tipo militar inválido: ${aluno.tipo_militar}`;
-      }
-      if (aluno.status && !validStatus.includes(aluno.status)) {
-        aluno.error = `Status inválido: ${aluno.status}`;
       }
 
       alunosData.push(aluno);
@@ -174,6 +157,11 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
   };
 
   const handleImport = async () => {
+    if (!tipoMilitar) {
+      toast.error("Selecione o tipo militar antes de importar");
+      return;
+    }
+
     const validAlunos = alunos.filter(a => !a.error);
     
     if (validAlunos.length === 0) {
@@ -271,11 +259,27 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription className="text-xs">
-              <strong>Formato esperado:</strong> Nome Completo, Graduação, Tipo Militar, Email, Telefone, Local de Serviço{turmaId && ", Status"}<br/>
-              <strong>TXT:</strong> Separado por vírgula ou ponto e vírgula<br/>
-              <strong>Excel/CSV:</strong> Cada coluna representa um campo (primeira linha pode ser cabeçalho)
+              <strong>Formato esperado:</strong> Graduação, Nome Completo (nessa ordem)<br/>
+              <strong>TXT:</strong> Separado por vírgula, ponto e vírgula ou tab<br/>
+              <strong>Excel/CSV:</strong> Primeira coluna = Graduação, Segunda coluna = Nome Completo
             </AlertDescription>
           </Alert>
+
+          {/* Seleção de Tipo Militar */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Tipo Militar *</label>
+            <select
+              value={tipoMilitar}
+              onChange={(e) => setTipoMilitar(e.target.value)}
+              className="w-full p-2 border rounded-md"
+              required
+            >
+              <option value="">Selecione o tipo militar</option>
+              {validTiposMilitares.map(tipo => (
+                <option key={tipo} value={tipo}>{tipo}</option>
+              ))}
+            </select>
+          </div>
 
           {/* Área de drag and drop */}
           <div
