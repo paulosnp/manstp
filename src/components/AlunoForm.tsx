@@ -35,8 +35,8 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
     "brigadeiro", "coronel", "capitao_mar_guerra", "tenente_coronel",
     "capitao_fragata", "major", "capitao_tenente", "capitao",
     "primeiro_tenente", "tenente", "segundo_tenente", "alferes",
-    "guarda_marinha", "aspirante", "sargento_mor", "sargento_chefe",
-    "sargento_ajudante", "primeiro_sargento", "segundo_sargento",
+    "guarda_marinha", "aspirante", "subtenente", "sargento_mor", "sargento_chefe",
+    "sargento_ajudante", "primeiro_sargento", "segundo_sargento", "terceiro_sargento",
     "furriel", "primeiro_subsargento", "segundo_furriel", "suboficial",
     "subsargento", "cabo_secao", "cabo", "segundo_cabo", "segundo_marinheiro",
     "soldado", "grumete"
@@ -175,6 +175,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
                 <SelectContent className="bg-background">
                   <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
                   <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
+                  <SelectItem value="Marinha do Brasil">Marinha do Brasil</SelectItem>
                   <SelectItem value="Exercito">Exército</SelectItem>
                   <SelectItem value="Bombeiro">Bombeiro</SelectItem>
                 </SelectContent>
@@ -182,17 +183,18 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="local_servico">{t("serviceLocation")} *</Label>
+              <Label htmlFor="local_servico">OM ONDE SERVE *</Label>
               <Select
                 required
                 value={formData.local_servico}
                 onValueChange={(value) => setFormData({ ...formData, local_servico: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={t("selectLocation")} />
+                  <SelectValue placeholder="Selecione a OM" />
                 </SelectTrigger>
                 <SelectContent className="bg-background">
                   <SelectItem value="Guarda Costeira">Guarda Costeira</SelectItem>
+                  <SelectItem value="Quartel de Fuzileiros">Quartel de Fuzileiros</SelectItem>
                   <SelectItem value="Exército">Exército</SelectItem>
                   <SelectItem value="Palácio do Governo">Palácio do Governo</SelectItem>
                   <SelectItem value="Bombeiros">Bombeiros</SelectItem>

@@ -159,7 +159,7 @@ export default function Alunos() {
       const { data, error } = await supabase
         .from("alunos")
         .select("*")
-        .order("nome_completo");
+        .order("matricula", { ascending: true });
 
       if (error) throw error;
       setAlunos(data || []);
@@ -224,7 +224,7 @@ export default function Alunos() {
                     <TableHead className="min-w-[150px]">Nome</TableHead>
                     <TableHead className="min-w-[120px]">Graduação</TableHead>
                     <TableHead className="min-w-[140px]">Tipo</TableHead>
-                    <TableHead className="min-w-[120px] hidden sm:table-cell">Local de Serviço</TableHead>
+                    <TableHead className="min-w-[120px] hidden sm:table-cell">OM ONDE SERVE</TableHead>
                     <TableHead className="min-w-[150px] hidden md:table-cell">Contato</TableHead>
                     <TableHead className="text-right min-w-[100px]">Ações</TableHead>
                   </TableRow>

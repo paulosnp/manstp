@@ -96,6 +96,7 @@ export type Database = {
           graduacao: Database["public"]["Enums"]["graduacao_militar"]
           id: string
           local_servico: string | null
+          matricula: number
           nome_completo: string
           observacoes: string | null
           telefone: string | null
@@ -109,6 +110,7 @@ export type Database = {
           graduacao: Database["public"]["Enums"]["graduacao_militar"]
           id?: string
           local_servico?: string | null
+          matricula?: number
           nome_completo: string
           observacoes?: string | null
           telefone?: string | null
@@ -122,6 +124,7 @@ export type Database = {
           graduacao?: Database["public"]["Enums"]["graduacao_militar"]
           id?: string
           local_servico?: string | null
+          matricula?: number
           nome_completo?: string
           observacoes?: string | null
           telefone?: string | null
@@ -500,6 +503,8 @@ export type Database = {
         | "Soldado"
         | "Grumete"
         | "Suboficial"
+        | "Terceiro Sargento"
+        | "Subtenente"
       situacao_curso: "Em Andamento" | "Concluído" | "Cancelado"
       status_aluno: "Aprovado" | "Reprovado" | "Desligado" | "Cursando"
       tipo_militar:
@@ -508,6 +513,7 @@ export type Database = {
         | "Exercito"
         | "Bombeiro"
         | "Civil"
+        | "Marinha do Brasil"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -668,6 +674,8 @@ export const Constants = {
         "Soldado",
         "Grumete",
         "Suboficial",
+        "Terceiro Sargento",
+        "Subtenente",
       ],
       situacao_curso: ["Em Andamento", "Concluído", "Cancelado"],
       status_aluno: ["Aprovado", "Reprovado", "Desligado", "Cursando"],
@@ -677,6 +685,7 @@ export const Constants = {
         "Exercito",
         "Bombeiro",
         "Civil",
+        "Marinha do Brasil",
       ],
     },
   },

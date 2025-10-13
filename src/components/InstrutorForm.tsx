@@ -35,8 +35,8 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
     "brigadeiro", "coronel", "capitao_mar_guerra", "tenente_coronel",
     "capitao_fragata", "major", "capitao_tenente", "capitao",
     "primeiro_tenente", "tenente", "segundo_tenente", "alferes",
-    "guarda_marinha", "aspirante", "sargento_mor", "sargento_chefe",
-    "sargento_ajudante", "primeiro_sargento", "segundo_sargento",
+    "guarda_marinha", "aspirante", "subtenente", "sargento_mor", "sargento_chefe",
+    "sargento_ajudante", "primeiro_sargento", "segundo_sargento", "terceiro_sargento",
     "furriel", "primeiro_subsargento", "segundo_furriel", "suboficial",
     "subsargento", "cabo_secao", "cabo", "segundo_cabo", "segundo_marinheiro",
     "soldado", "grumete"
@@ -135,6 +135,7 @@ export function InstrutorForm({ instrutor, onSuccess, onCancel }: InstrutorFormP
           <SelectContent className="bg-background">
             <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
             <SelectItem value="Guarda Costeiro">Guarda Costeiro</SelectItem>
+            <SelectItem value="Marinha do Brasil">Marinha do Brasil</SelectItem>
             <SelectItem value="Exercito">Exército</SelectItem>
             <SelectItem value="Bombeiro">Bombeiro</SelectItem>
           </SelectContent>

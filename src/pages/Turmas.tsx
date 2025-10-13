@@ -95,8 +95,9 @@ export default function Turmas() {
     try {
       const { data, error } = await supabase
         .from("aluno_turma")
-        .select("id, aluno_id, status, alunos(id, nome_completo, graduacao, tipo_militar, local_servico, email, telefone)")
-        .eq("turma_id", turmaId);
+        .select("id, aluno_id, status, alunos(id, nome_completo, graduacao, tipo_militar, local_servico, email, telefone, matricula)")
+        .eq("turma_id", turmaId)
+        .order("alunos(matricula)", { ascending: true });
 
       if (error) throw error;
       setAlunosTurma(data?.map((item: any) => ({...item.alunos, vinculo_id: item.id, status: item.status})) || []);
@@ -382,7 +383,7 @@ export default function Turmas() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Graduação</TableHead>
                     <TableHead>Tipo</TableHead>
-                    <TableHead>Local de Serviço</TableHead>
+                    <TableHead>OM ONDE SERVE</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Contato</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
