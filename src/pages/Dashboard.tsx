@@ -5,49 +5,108 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface Stats {
-  totalAlunos: number;
+  cursosEmAndamentoBrasil: number;
+  cursosEmAndamentoSaoTome: number;
+  turmasConcluidas: number;
+  militaresConcluidos: number;
+  militaresConcluidosSaoTome: number;
+  militaresConcluidosBrasil: number;
   totalCursos: number;
-  totalTurmas: number;
-  cursosEmAndamento: number;
-  fuzieiros: number;
-  guardaCosteiros: number;
-  civis: number;
 }
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState<Stats>({
-    totalAlunos: 0,
+    cursosEmAndamentoBrasil: 0,
+    cursosEmAndamentoSaoTome: 0,
+    turmasConcluidas: 0,
+    militaresConcluidos: 0,
+    militaresConcluidosSaoTome: 0,
+    militaresConcluidosBrasil: 0,
     totalCursos: 0,
-    totalTurmas: 0,
-    cursosEmAndamento: 0,
-    fuzieiros: 0,
-    guardaCosteiros: 0,
-    civis: 0,
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [alunosRes, cursosRes, turmasRes, fuzileirosRes, guardaCosteirosRes, civisRes, emAndamentoRes] = await Promise.all([
-          supabase.from("alunos").select("id", { count: "exact", head: true }),
-          supabase.from("cursos").select("id", { count: "exact", head: true }),
-          supabase.from("turmas").select("id", { count: "exact", head: true }),
-          supabase.from("alunos").select("id", { count: "exact", head: true }).eq("tipo_militar", "Fuzileiro Naval"),
-          supabase.from("alunos").select("id", { count: "exact", head: true }).eq("tipo_militar", "Guarda Costeiro"),
-          supabase.from("alunos").select("id", { count: "exact", head: true }).eq("tipo_militar", "Civil"),
-          supabase.from("cursos").select("id", { count: "exact", head: true }).eq("situacao", "Em Andamento"),
-        ]);
+        // Buscar cursos totais
+        const cursosRes = await supabase.from("cursos").select("id", { count: "exact", head: true });
+        
+        // Buscar cursos em andamento por local
+        const cursosEmAndamentoBrasilRes = await supabase.from("cursos")
+          .select("id", { count: "exact", head: true })
+          .eq("situacao", "Em Andamento")
+          .eq("local_realizacao", "Brasil");
+        
+        const cursosEmAndamentoSaoTomeRes = await supabase.from("cursos")
+          .select("id", { count: "exact", head: true })
+          .eq("situacao", "Em Andamento")
+          .eq("local_realizacao", "São Tomé e Príncipe");
+        
+        // Buscar IDs dos cursos concluídos
+        const { data: cursosConcluidos } = await supabase.from("cursos")
+          .select("id")
+          .eq("situacao", "Concluído");
+        
+        const cursoConcluidoIds = cursosConcluidos?.map(c => c.id) || [];
+        
+        // Buscar turmas concluídas
+        const turmasConcluidas = await supabase.from("turmas")
+          .select("id", { count: "exact", head: true })
+          .in("curso_id", cursoConcluidoIds);
+        
+        // Buscar alunos aprovados
+        const alunosConcluidos = await supabase.from("aluno_turma")
+          .select("aluno_id", { count: "exact", head: true })
+          .eq("status", "Aprovado");
+        
+        // Buscar IDs dos cursos em São Tomé e Príncipe
+        const { data: cursosSaoTome } = await supabase.from("cursos")
+          .select("id")
+          .eq("local_realizacao", "São Tomé e Príncipe");
+        
+        const cursoSaoTomeIds = cursosSaoTome?.map(c => c.id) || [];
+        
+        // Buscar turmas de cursos em São Tomé e Príncipe
+        const { data: turmasSaoTome } = await supabase.from("turmas")
+          .select("id")
+          .in("curso_id", cursoSaoTomeIds);
+        
+        const turmaSaoTomeIds = turmasSaoTome?.map(t => t.id) || [];
+        
+        const alunosConcluidosSaoTome = await supabase.from("aluno_turma")
+          .select("aluno_id", { count: "exact", head: true })
+          .eq("status", "Aprovado")
+          .in("turma_id", turmaSaoTomeIds);
+        
+        // Buscar IDs dos cursos no Brasil
+        const { data: cursosBrasil } = await supabase.from("cursos")
+          .select("id")
+          .eq("local_realizacao", "Brasil");
+        
+        const cursoBrasilIds = cursosBrasil?.map(c => c.id) || [];
+        
+        // Buscar turmas de cursos no Brasil
+        const { data: turmasBrasil } = await supabase.from("turmas")
+          .select("id")
+          .in("curso_id", cursoBrasilIds);
+        
+        const turmaBrasilIds = turmasBrasil?.map(t => t.id) || [];
+        
+        const alunosConcluidosBrasil = await supabase.from("aluno_turma")
+          .select("aluno_id", { count: "exact", head: true })
+          .eq("status", "Aprovado")
+          .in("turma_id", turmaBrasilIds);
 
         setStats({
-          totalAlunos: alunosRes.count || 0,
           totalCursos: cursosRes.count || 0,
-          totalTurmas: turmasRes.count || 0,
-          cursosEmAndamento: emAndamentoRes.count || 0,
-          fuzieiros: fuzileirosRes.count || 0,
-          guardaCosteiros: guardaCosteirosRes.count || 0,
-          civis: civisRes.count || 0,
+          cursosEmAndamentoBrasil: cursosEmAndamentoBrasilRes.count || 0,
+          cursosEmAndamentoSaoTome: cursosEmAndamentoSaoTomeRes.count || 0,
+          turmasConcluidas: turmasConcluidas.count || 0,
+          militaresConcluidos: alunosConcluidos.count || 0,
+          militaresConcluidosSaoTome: alunosConcluidosSaoTome.count || 0,
+          militaresConcluidosBrasil: alunosConcluidosBrasil.count || 0,
         });
       } catch (error) {
         console.error("Erro ao buscar estatísticas:", error);
@@ -71,28 +130,40 @@ export default function Dashboard() {
 
   const statCards = [
     {
-      title: "Total de Alunos",
-      value: stats.totalAlunos,
-      icon: Users,
-      description: `${stats.fuzieiros} Fuzileiros | ${stats.guardaCosteiros} Guardas | ${stats.civis} Civis`,
+      title: "Cursos em Andamento - Brasil",
+      value: stats.cursosEmAndamentoBrasil,
+      icon: BookOpen,
+      description: "Cursos ativos no Brasil",
     },
     {
-      title: "Total de Cursos",
+      title: "Cursos em Andamento - São Tomé e Príncipe",
+      value: stats.cursosEmAndamentoSaoTome,
+      icon: BookOpen,
+      description: "Cursos ativos em São Tomé e Príncipe",
+    },
+    {
+      title: "Total de Turmas Concluídas",
+      value: stats.turmasConcluidas,
+      icon: School,
+      description: "Turmas finalizadas",
+    },
+    {
+      title: "Militares com Cursos Concluídos - São Tomé",
+      value: stats.militaresConcluidosSaoTome,
+      icon: Award,
+      description: "Militares formados em São Tomé e Príncipe",
+    },
+    {
+      title: "Militares com Cursos Concluídos - Brasil",
+      value: stats.militaresConcluidosBrasil,
+      icon: Users,
+      description: "Militares formados no Brasil",
+    },
+    {
+      title: "Total de Cursos Cadastrados",
       value: stats.totalCursos,
       icon: BookOpen,
-      description: `${stats.cursosEmAndamento} em andamento`,
-    },
-    {
-      title: "Total de Turmas",
-      value: stats.totalTurmas,
-      icon: School,
-      description: "Turmas cadastradas",
-    },
-    {
-      title: "Fuzileiros Navais",
-      value: stats.fuzieiros,
-      icon: Award,
-      description: `${stats.totalAlunos > 0 ? Math.round((stats.fuzieiros / stats.totalAlunos) * 100) : 0}% do total`,
+      description: "Todos os cursos no sistema",
     },
   ];
 
@@ -103,7 +174,7 @@ export default function Dashboard() {
         <p className="text-sm sm:text-base text-muted-foreground">Visão geral do sistema de gestão militar</p>
       </div>
 
-      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {statCards.map((stat, index) => (
           <Card key={index} className="shadow-card transition-all hover:shadow-elevated">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">

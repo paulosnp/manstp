@@ -36,24 +36,32 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
   const validGraduacoes = [
     "Almirante", "Vice-Almirante", "Contra-Almirante", "Capitão de Mar e Guerra",
     "Capitão de Fragata", "Capitão de Corveta", "Capitão-Tenente", "Primeiro-Tenente",
-    "Segundo-Tenente", "Guarda-Marinha", "Suboficial", "Subsargento", "Primeiro-Sargento",
-    "Segundo-Sargento", "Terceiro-Sargento", "Cabo", "Marinheiro"
+    "Segundo-Tenente", "Guarda-Marinha", "Suboficial", "Subtenente", "Primeiro-Sargento",
+    "Segundo-Sargento", "Terceiro Sargento", "Cabo", "Marinheiro"
   ];
 
-  const validTiposMilitares = ["Fuzileiro Naval", "Guarda Costeiro", "Exercito", "Bombeiro"];
+  const validTiposMilitares = ["Fuzileiro Naval", "Guarda Costeiro", "Exercito", "Bombeiro", "Civil", "Marinha do Brasil"];
   const validStatus = ["Cursando", "Aprovado", "Reprovado", "Desligado"];
 
   const processFile = async (file: File) => {
+    // Limite de 5MB
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("Arquivo muito grande. Tamanho máximo: 5MB");
+      return;
+    }
+
     try {
       if (file.name.endsWith('.txt')) {
         await processTXT(file);
       } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv')) {
         await processExcel(file);
+      } else if (file.name.endsWith('.docx')) {
+        await processWord(file);
       } else {
-        toast.error("Formato não suportado. Use TXT, CSV ou Excel (.xlsx, .xls)");
+        toast.error("Formato não suportado. Use TXT, CSV, Excel (.xlsx, .xls) ou Word (.docx)");
       }
     } catch (error) {
-      console.error("Erro ao processar arquivo:", error);
       toast.error("Erro ao processar arquivo");
     }
   };
@@ -106,12 +114,15 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
     const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][];
     
     const alunosData: AlunoImport[] = [];
+    const MAX_ROWS = 1000;
     
     // Pular cabeçalho se existir
     const startRow = jsonData[0] && typeof jsonData[0][0] === 'string' && 
                      jsonData[0][0].toLowerCase().includes('nome') ? 1 : 0;
     
-    for (let i = startRow; i < jsonData.length; i++) {
+    const endRow = Math.min(jsonData.length, startRow + MAX_ROWS);
+    
+    for (let i = startRow; i < endRow; i++) {
       const row = jsonData[i];
       if (!row || !row[0]) continue;
       
@@ -140,6 +151,57 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
       alunosData.push(aluno);
     }
     
+    if (jsonData.length > endRow) {
+      toast.warning(`Apenas as primeiras ${MAX_ROWS} linhas foram processadas`);
+    }
+    
+    setAlunos(alunosData);
+  };
+
+  const processWord = async (file: File) => {
+    const mammoth = await import('mammoth');
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    const text = result.value;
+    
+    const lines = text.split('\n').filter(line => line.trim());
+    const alunosData: AlunoImport[] = [];
+    const MAX_ROWS = 1000;
+    
+    for (let i = 0; i < Math.min(lines.length, MAX_ROWS); i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      
+      const parts = line.split(/[,;\t]/).map(p => p.trim());
+      
+      if (parts.length < 2) {
+        alunosData.push({
+          nome_completo: line,
+          graduacao: "",
+          tipo_militar: "",
+          error: "Formato inválido. Esperado: graduação, nome completo"
+        });
+        continue;
+      }
+
+      const aluno: AlunoImport = {
+        graduacao: parts[0],
+        nome_completo: parts[1],
+        tipo_militar: tipoMilitar,
+        status: "Cursando"
+      };
+
+      if (!validGraduacoes.includes(aluno.graduacao)) {
+        aluno.error = `Graduação inválida: ${aluno.graduacao}`;
+      }
+
+      alunosData.push(aluno);
+    }
+    
+    if (lines.length > MAX_ROWS) {
+      toast.warning(`Apenas as primeiras ${MAX_ROWS} linhas foram processadas`);
+    }
+    
     setAlunos(alunosData);
   };
 
@@ -162,7 +224,7 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
       return;
     }
 
-    const validAlunos = alunos.filter(a => !a.error);
+      const validAlunos = alunos.filter(a => !a.error);
     
     if (validAlunos.length === 0) {
       toast.error("Nenhum aluno válido para importar");
@@ -178,42 +240,45 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
       let successCount = 0;
       let errorCount = 0;
 
-      for (const aluno of validAlunos) {
-        try {
-          // Inserir aluno
-          const { data: alunoData, error: alunoError } = await supabase
-            .from("alunos")
-            .insert([{
-              nome_completo: aluno.nome_completo,
-              graduacao: aluno.graduacao as any,
-              tipo_militar: aluno.tipo_militar as any,
-              email: aluno.email,
-              telefone: aluno.telefone,
-              local_servico: aluno.local_servico,
-              user_id: user.id
-            }])
-            .select()
-            .single();
-
-          if (alunoError) throw alunoError;
-
-          // Se turmaId foi fornecido, vincular o aluno à turma
-          if (turmaId && alunoData) {
-            const { error: vinculoError } = await supabase
-              .from("aluno_turma")
+      // Processar em lotes de 50
+      const BATCH_SIZE = 50;
+      for (let i = 0; i < validAlunos.length; i += BATCH_SIZE) {
+        const batch = validAlunos.slice(i, i + BATCH_SIZE);
+        
+        for (const aluno of batch) {
+          try {
+            const { data: alunoData, error: alunoError } = await supabase
+              .from("alunos")
               .insert([{
-                aluno_id: alunoData.id,
-                turma_id: turmaId,
-                status: (aluno.status as any) || "Cursando"
-              }]);
+                nome_completo: aluno.nome_completo,
+                graduacao: aluno.graduacao as any,
+                tipo_militar: aluno.tipo_militar as any,
+                email: aluno.email,
+                telefone: aluno.telefone,
+                local_servico: aluno.local_servico,
+                user_id: user.id
+              }])
+              .select()
+              .single();
 
-            if (vinculoError) throw vinculoError;
+            if (alunoError) throw alunoError;
+
+            if (turmaId && alunoData) {
+              const { error: vinculoError } = await supabase
+                .from("aluno_turma")
+                .insert([{
+                  aluno_id: alunoData.id,
+                  turma_id: turmaId,
+                  status: (aluno.status || "Cursando") as any
+                }]);
+
+              if (vinculoError) throw vinculoError;
+            }
+
+            successCount++;
+          } catch (error) {
+            errorCount++;
           }
-
-          successCount++;
-        } catch (error) {
-          console.error("Erro ao importar aluno:", aluno.nome_completo, error);
-          errorCount++;
         }
       }
 
@@ -228,7 +293,6 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
         toast.error(`${errorCount} aluno(s) falharam na importação`);
       }
     } catch (error) {
-      console.error("Erro ao importar alunos:", error);
       toast.error("Erro ao importar alunos");
     } finally {
       setImporting(false);
@@ -310,7 +374,7 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".txt,.csv,.xlsx,.xls"
+                accept=".txt,.csv,.xlsx,.xls,.docx"
                 onChange={handleFileSelect}
                 className="hidden"
               />

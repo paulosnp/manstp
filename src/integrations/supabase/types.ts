@@ -202,8 +202,6 @@ export type Database = {
           categoria: string | null
           coordenador: string | null
           created_at: string | null
-          data_fim: string | null
-          data_inicio: string | null
           id: string
           instituicao: string | null
           local_realizacao: string | null
@@ -219,8 +217,6 @@ export type Database = {
           categoria?: string | null
           coordenador?: string | null
           created_at?: string | null
-          data_fim?: string | null
-          data_inicio?: string | null
           id?: string
           instituicao?: string | null
           local_realizacao?: string | null
@@ -236,8 +232,6 @@ export type Database = {
           categoria?: string | null
           coordenador?: string | null
           created_at?: string | null
-          data_fim?: string | null
-          data_inicio?: string | null
           id?: string
           instituicao?: string | null
           local_realizacao?: string | null
