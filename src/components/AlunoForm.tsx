@@ -35,11 +35,11 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
     "brigadeiro", "coronel", "capitao_mar_guerra", "tenente_coronel",
     "capitao_fragata", "major", "capitao_tenente", "capitao",
     "primeiro_tenente", "tenente", "segundo_tenente", "alferes",
-    "guarda_marinha", "aspirante", "subtenente", "sargento_mor", "sargento_chefe",
+    "guarda_marinha", "aspirante", "subtenente", "primeiro_cabo", "sargento_mor", "sargento_chefe",
     "sargento_ajudante", "primeiro_sargento", "segundo_sargento", "terceiro_sargento",
     "furriel", "primeiro_subsargento", "segundo_furriel", "suboficial",
     "subsargento", "cabo_secao", "cabo", "segundo_cabo", "segundo_marinheiro",
-    "soldado", "grumete"
+    "soldado", "grumete", "civil", "armada"
   ];
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);

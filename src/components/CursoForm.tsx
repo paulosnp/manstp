@@ -19,7 +19,6 @@ interface Curso {
   local_realizacao: string | null;
   tipo_curso: string | null;
   modalidade: string | null;
-  situacao: string | null;
   categoria: string | null;
   observacoes: string | null;
   coordenador: string | null;
@@ -43,7 +42,6 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
     local_realizacao: curso?.local_realizacao || "",
     tipo_curso: curso?.tipo_curso || "",
     modalidade: curso?.modalidade || "",
-    situacao: curso?.situacao || "Em Andamento",
     categoria: curso?.categoria || "",
     observacoes: curso?.observacoes || "",
     coordenador: curso?.coordenador || "",
@@ -95,7 +93,6 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
             <div className="space-y-2"><Label>{t("countryLocation")}</Label><Select value={formData.local_realizacao} onValueChange={(value) => setFormData({ ...formData, local_realizacao: value })}><SelectTrigger><SelectValue placeholder={t("selectCountry")} /></SelectTrigger><SelectContent className="max-h-[300px] overflow-y-auto bg-background">{countries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
             <div className="space-y-2"><Label>{t("courseType")}</Label><Select value={formData.tipo_curso} onValueChange={(value) => setFormData({ ...formData, tipo_curso: value })}><SelectTrigger><SelectValue placeholder={t("selectType")} /></SelectTrigger><SelectContent className="bg-background"><SelectItem value="Expedito">{t("expedited")}</SelectItem><SelectItem value="Carreira">{t("career")}</SelectItem></SelectContent></Select></div>
             <div className="space-y-2"><Label>{t("modality")}</Label><Select value={formData.modalidade} onValueChange={(value) => setFormData({ ...formData, modalidade: value })}><SelectTrigger><SelectValue placeholder={t("selectModality")} /></SelectTrigger><SelectContent className="bg-background"><SelectItem value="Presencial">{t("inPerson")}</SelectItem><SelectItem value="Semipresencial">{t("semiPresential")}</SelectItem><SelectItem value="A Distância">{t("distance")}</SelectItem></SelectContent></Select></div>
-            <div className="space-y-2 md:col-span-2"><Label>{t("status")}</Label><Select value={formData.situacao} onValueChange={(value) => setFormData({ ...formData, situacao: value })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent className="bg-background"><SelectItem value="Em Andamento">{t("inProgress")}</SelectItem><SelectItem value="Concluído">{t("completed")}</SelectItem><SelectItem value="Cancelado">{t("cancelled")}</SelectItem></SelectContent></Select></div>
             <div className="space-y-2 md:col-span-2"><Label>{t("observations")}</Label><Textarea value={formData.observacoes} onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })} rows={3} /></div>
           </div>
           <div className="flex justify-end gap-2">

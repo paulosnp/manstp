@@ -11,6 +11,7 @@ import {
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -24,7 +25,6 @@ interface Curso {
   local_realizacao: string | null;
   tipo_curso: string | null;
   modalidade: string | null;
-  situacao: string | null;
   categoria: string | null;
   observacoes: string | null;
   coordenador: string | null;
@@ -36,6 +36,7 @@ export default function Cursos() {
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<"alfabetica" | "tipo">("alfabetica");
 
   useEffect(() => {
     fetchCursos();
@@ -57,11 +58,21 @@ export default function Cursos() {
     }
   };
 
-  const filteredCursos = cursos.filter((curso) =>
-    curso.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (curso.instituicao && curso.instituicao.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (curso.categoria && curso.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredAndSortedCursos = cursos
+    .filter((curso) =>
+      curso.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (curso.instituicao && curso.instituicao.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (curso.categoria && curso.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+    .sort((a, b) => {
+      if (sortBy === "alfabetica") {
+        return a.nome.localeCompare(b.nome);
+      } else {
+        const tipoA = a.tipo_curso || "";
+        const tipoB = b.tipo_curso || "";
+        return tipoA.localeCompare(tipoB);
+      }
+    });
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -75,14 +86,25 @@ export default function Cursos() {
 
       <Card className="shadow-card">
         <CardHeader className="p-4 sm:p-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar cursos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 text-sm"
-            />
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar cursos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 text-sm"
+              />
+            </div>
+            <Select value={sortBy} onValueChange={(value: "alfabetica" | "tipo") => setSortBy(value)}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Ordenar por" />
+              </SelectTrigger>
+              <SelectContent className="bg-background">
+                <SelectItem value="alfabetica">A-Z</SelectItem>
+                <SelectItem value="tipo">Tipo de Curso</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0 sm:p-6">
@@ -90,7 +112,7 @@ export default function Cursos() {
             <div className="flex items-center justify-center py-12">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
             </div>
-          ) : filteredCursos.length === 0 ? (
+          ) : filteredAndSortedCursos.length === 0 ? (
             <div className="py-12 text-center">
               <p className="text-muted-foreground">
                 {searchTerm ? "Nenhum curso encontrado" : "Nenhum curso cadastrado"}
@@ -105,12 +127,11 @@ export default function Cursos() {
                     <TableHead className="min-w-[120px] hidden sm:table-cell">Instituição</TableHead>
                     <TableHead className="min-w-[100px]">Local</TableHead>
                     <TableHead className="min-w-[100px] hidden md:table-cell">Tipo</TableHead>
-                    <TableHead className="min-w-[100px]">Situação</TableHead>
                     <TableHead className="text-right min-w-[100px]">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCursos.map((curso) => (
+                  {filteredAndSortedCursos.map((curso) => (
                     <TableRow key={curso.id}>
                       <TableCell className="font-medium text-sm">{curso.nome}</TableCell>
                       <TableCell className="hidden sm:table-cell text-sm">{curso.instituicao || "-"}</TableCell>
@@ -125,17 +146,6 @@ export default function Cursos() {
                             {curso.tipo_curso}
                           </Badge>
                         ) : "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className="text-xs"
-                          variant={
-                            curso.situacao === "Concluído" ? "default" :
-                            curso.situacao === "Em Andamento" ? "secondary" : "outline"
-                          }
-                        >
-                          {curso.situacao}
-                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         {isCoordenador && (

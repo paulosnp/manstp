@@ -33,33 +33,18 @@ export default function Dashboard() {
         // Buscar cursos totais
         const cursosRes = await supabase.from("cursos").select("id", { count: "exact", head: true });
         
-        // Buscar cursos em andamento por local
-        const cursosEmAndamentoBrasilRes = await supabase.from("cursos")
-          .select("id", { count: "exact", head: true })
-          .eq("situacao", "Em Andamento")
+        // Buscar IDs dos cursos no Brasil
+        const { data: cursosBrasil } = await supabase.from("cursos")
+          .select("id")
           .eq("local_realizacao", "Brasil");
         
-        const cursosEmAndamentoSaoTomeRes = await supabase.from("cursos")
+        const cursoBrasilIds = cursosBrasil?.map(c => c.id) || [];
+        
+        // Buscar turmas com situação "Em Andamento" em cursos do Brasil
+        const turmasEmAndamentoBrasil = await supabase.from("turmas")
           .select("id", { count: "exact", head: true })
-          .eq("situacao", "Em Andamento")
-          .eq("local_realizacao", "São Tomé e Príncipe");
-        
-        // Buscar IDs dos cursos concluídos
-        const { data: cursosConcluidos } = await supabase.from("cursos")
-          .select("id")
-          .eq("situacao", "Concluído");
-        
-        const cursoConcluidoIds = cursosConcluidos?.map(c => c.id) || [];
-        
-        // Buscar turmas concluídas
-        const turmasConcluidas = await supabase.from("turmas")
-          .select("id", { count: "exact", head: true })
-          .in("curso_id", cursoConcluidoIds);
-        
-        // Buscar alunos aprovados
-        const alunosConcluidos = await supabase.from("aluno_turma")
-          .select("aluno_id", { count: "exact", head: true })
-          .eq("status", "Aprovado");
+          .in("curso_id", cursoBrasilIds)
+          .eq("situacao", "Em Andamento");
         
         // Buscar IDs dos cursos em São Tomé e Príncipe
         const { data: cursosSaoTome } = await supabase.from("cursos")
@@ -67,6 +52,22 @@ export default function Dashboard() {
           .eq("local_realizacao", "São Tomé e Príncipe");
         
         const cursoSaoTomeIds = cursosSaoTome?.map(c => c.id) || [];
+        
+        // Buscar turmas com situação "Em Andamento" em cursos de São Tomé
+        const turmasEmAndamentoSaoTome = await supabase.from("turmas")
+          .select("id", { count: "exact", head: true })
+          .in("curso_id", cursoSaoTomeIds)
+          .eq("situacao", "Em Andamento");
+        
+        // Buscar turmas concluídas
+        const turmasConcluidas = await supabase.from("turmas")
+          .select("id", { count: "exact", head: true })
+          .eq("situacao", "Concluído");
+        
+        // Buscar alunos aprovados
+        const alunosConcluidos = await supabase.from("aluno_turma")
+          .select("aluno_id", { count: "exact", head: true })
+          .eq("status", "Aprovado");
         
         // Buscar turmas de cursos em São Tomé e Príncipe
         const { data: turmasSaoTome } = await supabase.from("turmas")
@@ -79,13 +80,6 @@ export default function Dashboard() {
           .select("aluno_id", { count: "exact", head: true })
           .eq("status", "Aprovado")
           .in("turma_id", turmaSaoTomeIds);
-        
-        // Buscar IDs dos cursos no Brasil
-        const { data: cursosBrasil } = await supabase.from("cursos")
-          .select("id")
-          .eq("local_realizacao", "Brasil");
-        
-        const cursoBrasilIds = cursosBrasil?.map(c => c.id) || [];
         
         // Buscar turmas de cursos no Brasil
         const { data: turmasBrasil } = await supabase.from("turmas")
@@ -101,8 +95,8 @@ export default function Dashboard() {
 
         setStats({
           totalCursos: cursosRes.count || 0,
-          cursosEmAndamentoBrasil: cursosEmAndamentoBrasilRes.count || 0,
-          cursosEmAndamentoSaoTome: cursosEmAndamentoSaoTomeRes.count || 0,
+          cursosEmAndamentoBrasil: turmasEmAndamentoBrasil.count || 0,
+          cursosEmAndamentoSaoTome: turmasEmAndamentoSaoTome.count || 0,
           turmasConcluidas: turmasConcluidas.count || 0,
           militaresConcluidos: alunosConcluidos.count || 0,
           militaresConcluidosSaoTome: alunosConcluidosSaoTome.count || 0,

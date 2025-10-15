@@ -39,6 +39,7 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
     tipo_militar: string;
     data_inicio: string;
     data_fim: string;
+    situacao: string;
     observacoes: string;
   }>({
     nome: turma?.nome || "",
@@ -47,6 +48,7 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
     tipo_militar: turma?.tipo_militar || "",
     data_inicio: (turma as any)?.data_inicio || "",
     data_fim: (turma as any)?.data_fim || "",
+    situacao: (turma as any)?.situacao || "Em Andamento",
     observacoes: turma?.observacoes || "",
   });
 
@@ -102,6 +104,7 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
           tipo_militar: "",
           data_inicio: "",
           data_fim: "",
+          situacao: "Em Andamento",
           observacoes: "",
         });
       }
@@ -213,6 +216,25 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
                 value={formData.data_fim}
                 onChange={(e) => setFormData({ ...formData, data_fim: e.target.value })}
               />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="situacao">Situação do Curso *</Label>
+              <Select
+                required
+                value={formData.situacao}
+                onValueChange={(value) => setFormData({ ...formData, situacao: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a situação" />
+                </SelectTrigger>
+                <SelectContent className="bg-background">
+                  <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+                  <SelectItem value="Concluído">Concluído</SelectItem>
+                  <SelectItem value="Cancelado">Cancelado</SelectItem>
+                  <SelectItem value="Planejado">Planejado</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2 md:col-span-2">

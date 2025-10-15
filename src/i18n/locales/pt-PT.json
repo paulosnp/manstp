@@ -119,6 +119,7 @@
     "guarda_marinha": "Guarda-Marinha",
     "aspirante": "Aspirante",
     "subtenente": "Subtenente",
+    "primeiro_cabo": "Primeiro Cabo",
     "sargento_mor": "Sargento-Mor",
     "sargento_chefe": "Sargento-Chefe",
     "sargento_ajudante": "Sargento-Ajudante",
@@ -135,6 +136,8 @@
     "segundo_cabo": "Segundo-Cabo",
     "segundo_marinheiro": "Segundo-Marinheiro",
     "soldado": "Soldado",
-    "grumete": "Grumete"
+    "grumete": "Grumete",
+    "civil": "Civil",
+    "armada": "Armada"
   }
 }

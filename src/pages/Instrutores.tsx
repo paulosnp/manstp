@@ -202,7 +202,10 @@ export default function Instrutores() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold">Instrutores</h1>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">Instrutores</h1>
+          <p className="text-sm text-muted-foreground">Total de Instrutores: {instrutores.length}</p>
+        </div>
         {isCoordenador && (
           <Button
             onClick={() => {

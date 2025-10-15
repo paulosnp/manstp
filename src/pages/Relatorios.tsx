@@ -174,7 +174,7 @@ export default function Relatorios() {
       }
 
       if (incluirCursos) {
-        let query = supabase.from("cursos").select("nome, instituicao, coordenador, local_realizacao, tipo_curso, modalidade, data_inicio, data_fim, situacao, categoria");
+        let query = supabase.from("cursos").select("nome, instituicao, coordenador, local_realizacao, tipo_curso, modalidade, categoria");
         if (selectedCurso && selectedCurso !== "all") query = query.eq("id", selectedCurso);
         const { data: cursosData } = await query;
         if (cursosData) data = [...data, ...cursosData];

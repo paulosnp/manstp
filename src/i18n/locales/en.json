@@ -119,6 +119,7 @@
     "guarda_marinha": "Midshipman",
     "aspirante": "Cadet",
     "subtenente": "Sub-Lieutenant",
+    "primeiro_cabo": "Corporal First Class",
     "sargento_mor": "Sergeant Major",
     "sargento_chefe": "Master Sergeant",
     "sargento_ajudante": "Staff Sergeant",
@@ -135,6 +136,8 @@
     "segundo_cabo": "Lance Corporal",
     "segundo_marinheiro": "Seaman",
     "soldado": "Private",
-    "grumete": "Seaman Recruit"
+    "grumete": "Seaman Recruit",
+    "civil": "Civilian",
+    "armada": "Navy"
   }
 }

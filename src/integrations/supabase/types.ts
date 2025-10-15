@@ -208,7 +208,6 @@ export type Database = {
           modalidade: string | null
           nome: string
           observacoes: string | null
-          situacao: Database["public"]["Enums"]["situacao_curso"] | null
           tipo_curso: string | null
           updated_at: string | null
           user_id: string
@@ -223,7 +222,6 @@ export type Database = {
           modalidade?: string | null
           nome: string
           observacoes?: string | null
-          situacao?: Database["public"]["Enums"]["situacao_curso"] | null
           tipo_curso?: string | null
           updated_at?: string | null
           user_id: string
@@ -238,7 +236,6 @@ export type Database = {
           modalidade?: string | null
           nome?: string
           observacoes?: string | null
-          situacao?: Database["public"]["Enums"]["situacao_curso"] | null
           tipo_curso?: string | null
           updated_at?: string | null
           user_id?: string
@@ -389,6 +386,7 @@ export type Database = {
           id: string
           nome: string
           observacoes: string | null
+          situacao: Database["public"]["Enums"]["situacao_curso"] | null
           tipo_militar: Database["public"]["Enums"]["tipo_militar"]
           updated_at: string | null
           user_id: string
@@ -402,6 +400,7 @@ export type Database = {
           id?: string
           nome: string
           observacoes?: string | null
+          situacao?: Database["public"]["Enums"]["situacao_curso"] | null
           tipo_militar: Database["public"]["Enums"]["tipo_militar"]
           updated_at?: string | null
           user_id: string
@@ -415,6 +414,7 @@ export type Database = {
           id?: string
           nome?: string
           observacoes?: string | null
+          situacao?: Database["public"]["Enums"]["situacao_curso"] | null
           tipo_militar?: Database["public"]["Enums"]["tipo_militar"]
           updated_at?: string | null
           user_id?: string
@@ -499,6 +499,9 @@ export type Database = {
         | "Suboficial"
         | "Terceiro Sargento"
         | "Subtenente"
+        | "Civil"
+        | "Armada"
+        | "Primeiro Cabo"
       situacao_curso: "Em Andamento" | "Concluído" | "Cancelado"
       status_aluno: "Aprovado" | "Reprovado" | "Desligado" | "Cursando"
       tipo_militar:
@@ -670,6 +673,9 @@ export const Constants = {
         "Suboficial",
         "Terceiro Sargento",
         "Subtenente",
+        "Civil",
+        "Armada",
+        "Primeiro Cabo",
       ],
       situacao_curso: ["Em Andamento", "Concluído", "Cancelado"],
       status_aluno: ["Aprovado", "Reprovado", "Desligado", "Cursando"],

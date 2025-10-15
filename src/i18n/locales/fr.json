@@ -119,6 +119,7 @@
     "guarda_marinha": "Aspirant",
     "aspirante": "Aspirant",
     "subtenente": "Sous-Lieutenant",
+    "primeiro_cabo": "Caporal-Chef",
     "sargento_mor": "Major",
     "sargento_chefe": "Adjudant-Chef",
     "sargento_ajudante": "Adjudant",
@@ -135,6 +136,8 @@
     "segundo_cabo": "Caporal",
     "segundo_marinheiro": "Matelot",
     "soldado": "Soldat",
-    "grumete": "Matelot"
+    "grumete": "Matelot",
+    "civil": "Civil",
+    "armada": "Marine"
   }
 }
