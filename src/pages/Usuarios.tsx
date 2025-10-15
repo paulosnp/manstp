@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Search, UserPlus, Mail, Trash2 } from "lucide-react";
+import { Search, UserPlus, Mail, Trash2, Edit } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
@@ -46,6 +46,12 @@ export default function Usuarios() {
   const [submitting, setSubmitting] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
   const [updatingRoleId, setUpdatingRoleId] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    id: "",
+    email: "",
+    nome_completo: "",
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -199,6 +205,62 @@ export default function Usuarios() {
       toast.error(error.message || "Erro ao atualizar nível de acesso");
     } finally {
       setUpdatingRoleId(null);
+    }
+  };
+
+  const openEditDialog = (user: User) => {
+    setEditFormData({
+      id: user.id,
+      email: user.email,
+      nome_completo: user.nome_completo,
+    });
+    setEditOpen(true);
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!editFormData.nome_completo.trim() || editFormData.nome_completo.length < 3) {
+      toast.error("Nome deve ter no mínimo 3 caracteres");
+      return;
+    }
+
+    if (!editFormData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editFormData.email)) {
+      toast.error("Email inválido");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          userId: editFormData.id,
+          email: editFormData.email,
+          nome_completo: editFormData.nome_completo,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao atualizar usuário');
+      }
+
+      toast.success("Usuário atualizado com sucesso!");
+      setEditOpen(false);
+      fetchUsers();
+    } catch (error: any) {
+      console.error("Erro ao atualizar usuário:", error);
+      toast.error(error.message || "Erro ao atualizar usuário");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -361,6 +423,15 @@ export default function Usuarios() {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => openEditDialog(user)}
+                              className="gap-2"
+                              title="Editar usuário"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => handleSendPasswordReset(user.email)}
                               className="gap-2"
                               disabled={!user.email}
@@ -391,24 +462,62 @@ export default function Usuarios() {
       </Card>
 
       {isCoordenador && (
-        <AlertDialog open={deleteUserId !== null} onOpenChange={(open) => !open && setDeleteUserId(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Deletar Usuário</AlertDialogTitle>
-              <AlertDialogDescription>
-                Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita e todos os dados associados serão permanentemente removidos.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <Button variant="outline" onClick={() => setDeleteUserId(null)}>
-                Cancelar
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteUser}>
-                Deletar
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <>
+          <Dialog open={editOpen} onOpenChange={setEditOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Editar Usuário</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleUpdateUser} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Nome Completo</Label>
+                  <Input
+                    value={editFormData.nome_completo}
+                    onChange={(e) => setEditFormData({ ...editFormData, nome_completo: e.target.value })}
+                    required
+                    minLength={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    value={editFormData.email}
+                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={() => setEditOpen(false)} className="flex-1">
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={submitting} className="flex-1">
+                    {submitting ? "Salvando..." : "Salvar"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          <AlertDialog open={deleteUserId !== null} onOpenChange={(open) => !open && setDeleteUserId(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Deletar Usuário</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita e todos os dados associados serão permanentemente removidos.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <Button variant="outline" onClick={() => setDeleteUserId(null)}>
+                  Cancelar
+                </Button>
+                <Button variant="destructive" onClick={handleDeleteUser}>
+                  Deletar
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
       )}
     </div>
   );
