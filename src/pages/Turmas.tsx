@@ -12,18 +12,18 @@ import { Search, Users, X, GraduationCap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
-import { toast } from "sonner";
 import { TurmaForm } from "@/components/TurmaForm";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { VincularAlunoTurma } from "@/components/VincularAlunoTurma";
 import { VincularInstrutorTurma } from "@/components/VincularInstrutorTurma";
 import { ImportarAlunos } from "@/components/ImportarAlunos";
 import { EditAlunoDialog } from "@/components/EditAlunoDialog";
+import { toast } from "sonner";
 
 interface Turma {
   id: string;
@@ -99,7 +99,7 @@ export default function Turmas() {
       
       setTurmas(turmasComContagem);
     } catch (error) {
-      toast.error("Erro ao carregar turmas");
+      console.error("Erro ao buscar turmas:", error);
     } finally {
       setLoading(false);
     }
@@ -117,7 +117,7 @@ export default function Turmas() {
       if (error) throw error;
       setAlunosTurma(data?.map((item: any) => ({...item.alunos, vinculo_id: item.id, status: item.status})) || []);
     } catch (error) {
-      toast.error("Erro ao carregar alunos da turma");
+      console.error("Erro ao buscar alunos da turma:", error);
     } finally {
       setLoadingAlunos(false);
     }
@@ -134,7 +134,7 @@ export default function Turmas() {
       if (error) throw error;
       setInstrutoresTurma(data?.map((item: any) => ({...item.instrutores, vinculo_id: item.id})) || []);
     } catch (error) {
-      toast.error("Erro ao carregar instrutores da turma");
+      console.error("Erro ao buscar instrutores da turma:", error);
     } finally {
       setLoadingInstrutores(false);
     }
@@ -154,6 +154,7 @@ export default function Turmas() {
       }
       toast.success("Status atualizado com sucesso");
     } catch (error) {
+      console.error("Erro ao atualizar status:", error);
       toast.error("Erro ao atualizar status");
     }
   };
@@ -172,6 +173,7 @@ export default function Turmas() {
       }
       toast.success("Aluno desvinculado com sucesso");
     } catch (error) {
+      console.error("Erro ao desvincular aluno:", error);
       toast.error("Erro ao desvincular aluno");
     }
   };
@@ -190,6 +192,7 @@ export default function Turmas() {
       }
       toast.success("Instrutor desvinculado com sucesso");
     } catch (error) {
+      console.error("Erro ao desvincular instrutor:", error);
       toast.error("Erro ao desvincular instrutor");
     }
   };

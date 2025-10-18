@@ -83,8 +83,10 @@ export default function Usuarios() {
         };
       });
 
+      console.log("Usuários carregados:", usersWithRoles.length);
       setUsers(usersWithRoles);
     } catch (error) {
+      console.error("Erro ao buscar usuários:", error);
       toast.error("Erro ao carregar usuários");
     } finally {
       setLoading(false);
@@ -129,6 +131,7 @@ export default function Usuarios() {
       setFormData({ email: "", nome_completo: "", password: "", role: "visualizador" });
       fetchUsers();
     } catch (error: any) {
+      console.error("Erro ao criar usuário:", error);
       toast.error(error.message || "Erro ao criar usuário");
     } finally {
       setSubmitting(false);
@@ -150,6 +153,7 @@ export default function Usuarios() {
 
       toast.success("Email de recuperação enviado com sucesso!");
     } catch (error: any) {
+      console.error("Erro ao enviar email:", error);
       toast.error(error.message || "Erro ao enviar email de recuperação");
     }
   };
@@ -179,6 +183,7 @@ export default function Usuarios() {
       setDeleteUserId(null);
       fetchUsers();
     } catch (error: any) {
+      console.error("Erro ao deletar usuário:", error);
       toast.error(error.message || "Erro ao deletar usuário");
     }
   };
@@ -196,6 +201,7 @@ export default function Usuarios() {
       toast.success("Nível de acesso atualizado com sucesso!");
       fetchUsers();
     } catch (error: any) {
+      console.error("Erro ao atualizar role:", error);
       toast.error(error.message || "Erro ao atualizar nível de acesso");
     } finally {
       setUpdatingRoleId(null);
@@ -251,6 +257,7 @@ export default function Usuarios() {
       setEditOpen(false);
       fetchUsers();
     } catch (error: any) {
+      console.error("Erro ao atualizar usuário:", error);
       toast.error(error.message || "Erro ao atualizar usuário");
     } finally {
       setSubmitting(false);

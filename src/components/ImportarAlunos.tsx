@@ -73,6 +73,7 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
 
       await importarAlunos(alunos);
     } catch (error) {
+      console.error("Erro ao processar Excel:", error);
       toast.error("Erro ao processar arquivo Excel");
     }
   };

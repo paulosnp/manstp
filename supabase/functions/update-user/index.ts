@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,29 +43,11 @@ serve(async (req) => {
       throw new Error('Apenas coordenadores podem atualizar usuários');
     }
 
-    const updateUserSchema = z.object({
-      userId: z.string().uuid('ID de usuário inválido'),
-      email: z.string().email('Email inválido').max(255).optional(),
-      nome_completo: z.string().min(1, 'Nome não pode estar vazio').max(200).optional()
-    });
+    const { userId, email, nome_completo } = await req.json();
 
-    const body = await req.json();
-    const validation = updateUserSchema.safeParse(body);
-
-    if (!validation.success) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Dados inválidos', 
-          details: validation.error.errors 
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      );
+    if (!userId) {
+      throw new Error('ID do usuário é obrigatório');
     }
-
-    const { userId, email, nome_completo } = validation.data;
 
     // Atualizar email no auth.users se fornecido
     if (email) {
