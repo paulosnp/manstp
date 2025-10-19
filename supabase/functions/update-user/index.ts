@@ -6,6 +6,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Simple in-memory rate limiter
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT = 20 // requests per hour
+const RATE_WINDOW = 60 * 60 * 1000 // 1 hour in milliseconds
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now()
+  const userLimit = rateLimitMap.get(userId)
+
+  if (!userLimit || now > userLimit.resetAt) {
+    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_WINDOW })
+    return true
+  }
+
+  if (userLimit.count >= RATE_LIMIT) {
+    return false
+  }
+
+  userLimit.count++
+  return true
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -41,6 +63,14 @@ serve(async (req) => {
 
     if (roleError || roleData?.role !== 'coordenador') {
       throw new Error('Apenas coordenadores podem atualizar usuários');
+    }
+
+    // Check rate limit
+    if (!checkRateLimit(currentUser.id)) {
+      return new Response(
+        JSON.stringify({ error: 'Limite de requisições excedido. Tente novamente em 1 hora.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     const { userId, email, nome_completo } = await req.json();

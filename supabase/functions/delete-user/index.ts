@@ -10,6 +10,28 @@ const deleteUserSchema = z.object({
   userId: z.string().uuid()
 })
 
+// Simple in-memory rate limiter
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT = 10 // requests per hour
+const RATE_WINDOW = 60 * 60 * 1000 // 1 hour in milliseconds
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now()
+  const userLimit = rateLimitMap.get(userId)
+
+  if (!userLimit || now > userLimit.resetAt) {
+    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_WINDOW })
+    return true
+  }
+
+  if (userLimit.count >= RATE_LIMIT) {
+    return false
+  }
+
+  userLimit.count++
+  return true
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -48,6 +70,14 @@ Deno.serve(async (req) => {
 
     if (roleError || roleData?.role !== 'coordenador') {
       throw new Error('Apenas coordenadores podem deletar usuários')
+    }
+
+    // Check rate limit
+    if (!checkRateLimit(user.id)) {
+      return new Response(
+        JSON.stringify({ error: 'Limite de requisições excedido. Tente novamente em 1 hora.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     // Obter e validar o ID do usuário a ser deletado
