@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { alunoSchema } from "@/lib/validations";
 import { useTranslation } from "react-i18next";
+import type { Database } from "@/integrations/supabase/types";
 
 interface Aluno {
   id: string;
@@ -77,7 +78,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
       if (aluno) {
         const { error } = await supabase
           .from("alunos")
-          .update(formData as any)
+          .update(formData as Database['public']['Tables']['alunos']['Update'])
           .eq("id", aluno.id);
 
         if (error) throw error;
@@ -85,7 +86,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
       } else {
         const { error } = await supabase
           .from("alunos")
-          .insert([{ ...formData, user_id: user.id } as any]);
+          .insert([{ ...formData, user_id: user.id } as Database['public']['Tables']['alunos']['Insert']]);
 
         if (error) throw error;
         toast.success(t("studentRegisteredSuccess"));

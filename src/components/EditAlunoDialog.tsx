@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import type { Database } from "@/integrations/supabase/types";
 
 interface Aluno {
   id: string;
@@ -96,8 +97,8 @@ export function EditAlunoDialog({ aluno, onSuccess }: EditAlunoDialogProps) {
         .from("alunos")
         .update({
           nome_completo: formData.nome_completo,
-          graduacao: formData.graduacao as any,
-          tipo_militar: formData.tipo_militar as any,
+          graduacao: formData.graduacao as Database['public']['Enums']['graduacao_militar'],
+          tipo_militar: formData.tipo_militar as Database['public']['Enums']['tipo_militar'],
           local_servico: formData.local_servico,
           observacoes: formData.observacoes,
         })
@@ -109,7 +110,7 @@ export function EditAlunoDialog({ aluno, onSuccess }: EditAlunoDialogProps) {
       if (aluno.vinculo_id) {
         const { error: statusError } = await supabase
           .from("aluno_turma")
-          .update({ status: formData.status as any })
+          .update({ status: formData.status as Database['public']['Enums']['status_aluno'] })
           .eq("id", aluno.vinculo_id);
 
         if (statusError) throw statusError;

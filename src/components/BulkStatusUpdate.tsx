@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Edit } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import type { Database } from "@/integrations/supabase/types";
 
 interface BulkStatusUpdateProps {
   turmaId: string;
@@ -23,7 +24,7 @@ export function BulkStatusUpdate({ turmaId, turmaNome, onSuccess }: BulkStatusUp
     try {
       const { error } = await supabase
         .from("aluno_turma")
-        .update({ status: selectedStatus as any })
+        .update({ status: selectedStatus as Database['public']['Enums']['status_aluno'] })
         .eq("turma_id", turmaId);
 
       if (error) throw error;

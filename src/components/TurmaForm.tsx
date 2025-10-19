@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { turmaSchema } from "@/lib/validations";
 import { useTranslation } from "react-i18next";
+import type { Database } from "@/integrations/supabase/types";
 
 interface Turma {
   id: string;
@@ -80,7 +81,7 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
       if (turma) {
         const { error } = await supabase
           .from("turmas")
-          .update(formData as any)
+          .update(formData as Database['public']['Tables']['turmas']['Update'])
           .eq("id", turma.id);
 
         if (error) throw error;
@@ -88,7 +89,7 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
       } else {
         const { error } = await supabase
           .from("turmas")
-          .insert([{ ...formData, user_id: user.id } as any]);
+          .insert([{ ...formData, user_id: user.id } as Database['public']['Tables']['turmas']['Insert']]);
 
         if (error) throw error;
         toast.success(t("classRegisteredSuccess"));

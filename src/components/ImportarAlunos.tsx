@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import * as XLSX from 'xlsx';
 import { useAuth } from "@/contexts/AuthContext";
+import type { Database } from "@/integrations/supabase/types";
 
 interface ImportarAlunosProps {
   onSuccess: () => void;
@@ -96,11 +97,11 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
             .from("alunos")
             .insert([{
               nome_completo: aluno.nome_completo,
-              graduacao: aluno.graduacao as any,
-              tipo_militar: aluno.tipo_militar as any,
+              graduacao: aluno.graduacao as Database['public']['Enums']['graduacao_militar'],
+              tipo_militar: aluno.tipo_militar as Database['public']['Enums']['tipo_militar'],
               local_servico: aluno.local_servico,
               user_id: user.id
-            }])
+            } as Database['public']['Tables']['alunos']['Insert']])
             .select()
             .single();
 
@@ -113,8 +114,8 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
               .insert([{
                 aluno_id: novoAluno.id,
                 turma_id: turmaId,
-                status: aluno.status as any
-              }]);
+                status: aluno.status as Database['public']['Enums']['status_aluno']
+              } as Database['public']['Tables']['aluno_turma']['Insert']]);
 
             if (vincularError) throw vincularError;
           }

@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cursoSchema } from "@/lib/validations";
 import { useTranslation } from "react-i18next";
+import type { Database } from "@/integrations/supabase/types";
 
 interface Curso {
   id: string;
@@ -60,11 +61,11 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
     setLoading(true);
     try {
       if (curso) {
-        const { error } = await supabase.from("cursos").update(formData as any).eq("id", curso.id);
+        const { error } = await supabase.from("cursos").update(formData as Database['public']['Tables']['cursos']['Update']).eq("id", curso.id);
         if (error) throw error;
         toast.success(t("courseUpdatedSuccess"));
       } else {
-        const { error } = await supabase.from("cursos").insert([{ ...formData, user_id: user.id } as any]);
+        const { error } = await supabase.from("cursos").insert([{ ...formData, user_id: user.id } as Database['public']['Tables']['cursos']['Insert']]);
         if (error) throw error;
         toast.success(t("courseRegisteredSuccess"));
       }

@@ -23,6 +23,7 @@ import { DeleteDialog } from "@/components/DeleteDialog";
 import { VincularAlunoTurma } from "@/components/VincularAlunoTurma";
 import { VincularInstrutorTurma } from "@/components/VincularInstrutorTurma";
 import { ImportarAlunos } from "@/components/ImportarAlunos";
+import type { Database } from "@/integrations/supabase/types";
 import { BulkStatusUpdate } from "@/components/BulkStatusUpdate";
 import { EditAlunoDialog } from "@/components/EditAlunoDialog";
 import { toast } from "sonner";
@@ -147,7 +148,7 @@ export default function Turmas() {
     try {
       const { error } = await supabase
         .from("aluno_turma")
-        .update({ status: newStatus as any })
+        .update({ status: newStatus as Database['public']['Enums']['status_aluno'] })
         .eq("id", vinculoId);
 
       if (error) throw error;

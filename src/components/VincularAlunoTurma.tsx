@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { alunoSchema } from "@/lib/validations";
+import type { Database } from "@/integrations/supabase/types";
 
 interface VincularAlunoTurmaProps {
   turmaId: string;
@@ -156,7 +157,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
 
       const { error } = await supabase
         .from("aluno_turma")
-        .insert([{ aluno_id: selectedAluno, turma_id: turmaId, status: selectedStatus as any }]);
+        .insert([{ aluno_id: selectedAluno, turma_id: turmaId, status: selectedStatus as Database['public']['Enums']['status_aluno'] }]);
 
       if (error) throw error;
 
@@ -199,11 +200,11 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
         .from("alunos")
         .insert([{ 
           nome_completo: newAlunoData.nome_completo,
-          graduacao: rankMap[newAlunoData.graduacao] as any,
-          tipo_militar: newAlunoData.tipo_militar as any,
+          graduacao: rankMap[newAlunoData.graduacao] as Database['public']['Enums']['graduacao_militar'],
+          tipo_militar: newAlunoData.tipo_militar as Database['public']['Enums']['tipo_militar'],
           local_servico: newAlunoData.local_servico,
           user_id: user.id 
-        }])
+        } as Database['public']['Tables']['alunos']['Insert']])
         .select()
         .single();
 
@@ -212,7 +213,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
       // Vincular à turma
       const { error: vincularError } = await supabase
         .from("aluno_turma")
-        .insert([{ aluno_id: novoAluno.id, turma_id: turmaId, status: selectedStatus as any }]);
+        .insert([{ aluno_id: novoAluno.id, turma_id: turmaId, status: selectedStatus as Database['public']['Enums']['status_aluno'] }]);
 
       if (vincularError) throw vincularError;
 
