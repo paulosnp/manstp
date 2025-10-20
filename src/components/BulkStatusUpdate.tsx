@@ -17,7 +17,7 @@ interface BulkStatusUpdateProps {
 export function BulkStatusUpdate({ turmaId, turmaNome, onSuccess }: BulkStatusUpdateProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState("Cursando");
+  const [selectedStatus, setSelectedStatus] = useState("Aguardando");
 
   const handleBulkUpdate = async () => {
     setLoading(true);
@@ -63,8 +63,12 @@ export function BulkStatusUpdate({ turmaId, turmaNome, onSuccess }: BulkStatusUp
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="Aguardando">Aguardando</SelectItem>
+                <SelectItem value="Planejado">Planejado</SelectItem>
                 <SelectItem value="Cursando">Cursando</SelectItem>
+                <SelectItem value="Estagiando">Estagiando</SelectItem>
                 <SelectItem value="Concluído">Concluído</SelectItem>
+                <SelectItem value="Cancelado">Cancelado</SelectItem>
                 <SelectItem value="Reprovado">Reprovado</SelectItem>
                 <SelectItem value="Desligado">Desligado</SelectItem>
                 <SelectItem value="Desertor">Desertor</SelectItem>

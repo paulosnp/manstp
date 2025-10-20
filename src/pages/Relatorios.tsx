@@ -109,8 +109,12 @@ export default function Relatorios() {
     if (!statusData) return null;
 
     const statusCounts = {
+      aguardando: 0,
+      planejado: 0,
       cursando: 0,
+      estagiando: 0,
       concluido: 0,
+      cancelado: 0,
       reprovado: 0,
       desligado: 0,
       desertor: 0,
@@ -120,8 +124,12 @@ export default function Relatorios() {
     statusData.forEach((item: any) => {
       statusCounts.total += 1;
       const status = item.status?.toLowerCase() || 'cursando';
-      if (status === 'cursando') statusCounts.cursando += 1;
+      if (status === 'aguardando') statusCounts.aguardando += 1;
+      else if (status === 'planejado') statusCounts.planejado += 1;
+      else if (status === 'cursando') statusCounts.cursando += 1;
+      else if (status === 'estagiando') statusCounts.estagiando += 1;
       else if (status === 'concluído' || status === 'concluido') statusCounts.concluido += 1;
+      else if (status === 'cancelado') statusCounts.cancelado += 1;
       else if (status === 'reprovado') statusCounts.reprovado += 1;
       else if (status === 'desligado') statusCounts.desligado += 1;
       else if (status === 'desertor') statusCounts.desertor += 1;
@@ -140,8 +148,12 @@ export default function Relatorios() {
       if (statusStats) {
         data.push({
           Tipo: "Status dos Alunos",
+          Aguardando: statusStats.aguardando,
+          Planejado: statusStats.planejado,
           Cursando: statusStats.cursando,
+          Estagiando: statusStats.estagiando,
           Concluído: statusStats.concluido,
+          Cancelado: statusStats.cancelado,
           Reprovado: statusStats.reprovado,
           Desligado: statusStats.desligado,
           Desertor: statusStats.desertor,
@@ -234,17 +246,25 @@ export default function Relatorios() {
         yPosition += 10;
 
         // Criar gráfico de barras simples para status
-        const barWidth = 25;
-        const barSpacing = 35;
+        const barWidth = 20;
+        const barSpacing = 25;
         const maxBarHeight = 40;
-        const maxValue = Math.max(statusStats.concluido, statusStats.reprovado, statusStats.desligado, statusStats.desertor, statusStats.cursando);
+        const maxValue = Math.max(
+          statusStats.aguardando, statusStats.planejado, statusStats.cursando, 
+          statusStats.estagiando, statusStats.concluido, statusStats.cancelado,
+          statusStats.reprovado, statusStats.desligado, statusStats.desertor
+        );
         
         const statuses = [
+          { label: 'Aguard.', value: statusStats.aguardando, color: [150, 150, 150] },
+          { label: 'Planej.', value: statusStats.planejado, color: [200, 200, 200] },
           { label: 'Cursando', value: statusStats.cursando, color: [100, 150, 255] },
+          { label: 'Estag.', value: statusStats.estagiando, color: [100, 200, 255] },
           { label: 'Concluído', value: statusStats.concluido, color: [50, 200, 100] },
-          { label: 'Reprovado', value: statusStats.reprovado, color: [255, 100, 100] },
-          { label: 'Desligado', value: statusStats.desligado, color: [255, 200, 50] },
-          { label: 'Desertor', value: statusStats.desertor, color: [150, 150, 150] }
+          { label: 'Cancel.', value: statusStats.cancelado, color: [255, 150, 50] },
+          { label: 'Reprov.', value: statusStats.reprovado, color: [255, 100, 100] },
+          { label: 'Deslig.', value: statusStats.desligado, color: [255, 200, 50] },
+          { label: 'Desertor', value: statusStats.desertor, color: [100, 100, 100] }
         ];
 
         statuses.forEach((status, index) => {
@@ -272,7 +292,9 @@ export default function Relatorios() {
         pdf.setFontSize(10);
         pdf.text(`Total de vínculos aluno-turma: ${statusStats.total}`, 14, yPosition);
         yPosition += 7;
-        pdf.text(`Cursando: ${statusStats.cursando} | Concluídos: ${statusStats.concluido} | Reprovados: ${statusStats.reprovado}`, 14, yPosition);
+        pdf.text(`Aguardando: ${statusStats.aguardando} | Planejado: ${statusStats.planejado} | Cursando: ${statusStats.cursando} | Estagiando: ${statusStats.estagiando}`, 14, yPosition);
+        yPosition += 7;
+        pdf.text(`Concluídos: ${statusStats.concluido} | Cancelados: ${statusStats.cancelado} | Reprovados: ${statusStats.reprovado}`, 14, yPosition);
         yPosition += 7;
         pdf.text(`Desligados: ${statusStats.desligado} | Desertores: ${statusStats.desertor}`, 14, yPosition);
         yPosition += 15;

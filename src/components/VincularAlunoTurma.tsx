@@ -31,7 +31,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [alunosVinculados, setAlunosVinculados] = useState<string[]>([]);
   const [selectedAluno, setSelectedAluno] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("Cursando");
+  const [selectedStatus, setSelectedStatus] = useState("Aguardando");
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("existing");
   
@@ -163,7 +163,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
 
       toast.success("Aluno vinculado com sucesso!");
       setSelectedAluno("");
-      setSelectedStatus("Cursando");
+      setSelectedStatus("Aguardando");
       fetchAlunosVinculados();
       onSuccess();
     } catch (error) {
@@ -200,9 +200,9 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
         .from("alunos")
         .insert([{ 
           nome_completo: newAlunoData.nome_completo,
-          graduacao: rankMap[newAlunoData.graduacao] as Database['public']['Enums']['graduacao_militar'],
+          graduacao: (newAlunoData.tipo_militar === "Civil" ? "Civil" : rankMap[newAlunoData.graduacao]) as Database['public']['Enums']['graduacao_militar'],
           tipo_militar: newAlunoData.tipo_militar as Database['public']['Enums']['tipo_militar'],
-          local_servico: newAlunoData.local_servico,
+          local_servico: newAlunoData.tipo_militar === "Civil" ? "Nenhuma" : newAlunoData.local_servico,
           user_id: user.id 
         } as Database['public']['Tables']['alunos']['Insert']])
         .select()
@@ -224,7 +224,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
         tipo_militar: "",
         local_servico: "",
       });
-      setSelectedStatus("Cursando");
+      setSelectedStatus("Aguardando");
       setActiveTab("existing");
       fetchAlunos();
       fetchAlunosVinculados();
@@ -289,8 +289,12 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
                   <SelectValue />
                 </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="Aguardando">Aguardando</SelectItem>
+                    <SelectItem value="Planejado">Planejado</SelectItem>
                     <SelectItem value="Cursando">Cursando</SelectItem>
+                    <SelectItem value="Estagiando">Estagiando</SelectItem>
                     <SelectItem value="Concluído">Concluído</SelectItem>
+                    <SelectItem value="Cancelado">Cancelado</SelectItem>
                     <SelectItem value="Reprovado">Reprovado</SelectItem>
                     <SelectItem value="Desligado">Desligado</SelectItem>
                     <SelectItem value="Desertor">Desertor</SelectItem>
@@ -363,6 +367,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
                     <SelectItem value="Marinha do Brasil">Marinha do Brasil</SelectItem>
                     <SelectItem value="Exercito">Exército</SelectItem>
                     <SelectItem value="Bombeiro">Bombeiro</SelectItem>
+                    <SelectItem value="ENAPORT">ENAPORT</SelectItem>
                     <SelectItem value="Civil">Civil</SelectItem>
                   </SelectContent>
                 </Select>
@@ -398,8 +403,12 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="Aguardando">Aguardando</SelectItem>
+                    <SelectItem value="Planejado">Planejado</SelectItem>
                     <SelectItem value="Cursando">Cursando</SelectItem>
+                    <SelectItem value="Estagiando">Estagiando</SelectItem>
                     <SelectItem value="Concluído">Concluído</SelectItem>
+                    <SelectItem value="Cancelado">Cancelado</SelectItem>
                     <SelectItem value="Reprovado">Reprovado</SelectItem>
                     <SelectItem value="Desligado">Desligado</SelectItem>
                     <SelectItem value="Desertor">Desertor</SelectItem>

@@ -413,8 +413,12 @@ export default function Turmas() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="Aguardando">Aguardando</SelectItem>
+                    <SelectItem value="Planejado">Planejado</SelectItem>
                     <SelectItem value="Cursando">Cursando</SelectItem>
+                    <SelectItem value="Estagiando">Estagiando</SelectItem>
                     <SelectItem value="Concluído">Concluído</SelectItem>
+                    <SelectItem value="Cancelado">Cancelado</SelectItem>
                     <SelectItem value="Reprovado">Reprovado</SelectItem>
                     <SelectItem value="Desligado">Desligado</SelectItem>
                     <SelectItem value="Desertor">Desertor</SelectItem>
@@ -451,7 +455,17 @@ export default function Turmas() {
                 {alunosTurma.filter(aluno => statusFilter === "todos" || aluno.status === statusFilter).map((aluno, index) => (
                   <TableRow key={aluno.id}>
                     <TableCell className="font-medium">{index + 1}</TableCell>
-                    <TableCell className="font-medium">{aluno.nome_completo}</TableCell>
+                    <TableCell className="font-medium">
+                      <span className={
+                        aluno.status === "Desertor" || aluno.status === "Reprovado" || aluno.status === "Desligado" 
+                          ? "text-destructive" 
+                          : aluno.status === "Cursando" 
+                          ? "text-success" 
+                          : ""
+                      }>
+                        {aluno.nome_completo}
+                      </span>
+                    </TableCell>
                       <TableCell>{aluno.graduacao}</TableCell>
                       <TableCell>
                         <Badge
@@ -469,15 +483,19 @@ export default function Turmas() {
                       <TableCell>{aluno.local_servico || "-"}</TableCell>
                       <TableCell>
                         <Select
-                          value={aluno.status || "Cursando"}
+                          value={aluno.status || "Aguardando"}
                           onValueChange={(value) => handleUpdateStatus(aluno.vinculo_id!, value)}
                         >
                           <SelectTrigger className="w-32">
                             <SelectValue />
                           </SelectTrigger>
                            <SelectContent>
+                            <SelectItem value="Aguardando">Aguardando</SelectItem>
+                            <SelectItem value="Planejado">Planejado</SelectItem>
                             <SelectItem value="Cursando">Cursando</SelectItem>
+                            <SelectItem value="Estagiando">Estagiando</SelectItem>
                             <SelectItem value="Concluído">Concluído</SelectItem>
+                            <SelectItem value="Cancelado">Cancelado</SelectItem>
                             <SelectItem value="Reprovado">Reprovado</SelectItem>
                             <SelectItem value="Desligado">Desligado</SelectItem>
                             <SelectItem value="Desertor">Desertor</SelectItem>

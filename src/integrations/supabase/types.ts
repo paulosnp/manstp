@@ -509,6 +509,10 @@ export type Database = {
         | "Reprovado"
         | "Desligado"
         | "Desertor"
+        | "Cancelado"
+        | "Aguardando"
+        | "Planejado"
+        | "Estagiando"
       tipo_militar:
         | "Fuzileiro Naval"
         | "Guarda Costeiro"
@@ -516,6 +520,7 @@ export type Database = {
         | "Bombeiro"
         | "Civil"
         | "Marinha do Brasil"
+        | "ENAPORT"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -689,6 +694,10 @@ export const Constants = {
         "Reprovado",
         "Desligado",
         "Desertor",
+        "Cancelado",
+        "Aguardando",
+        "Planejado",
+        "Estagiando",
       ],
       tipo_militar: [
         "Fuzileiro Naval",
@@ -697,6 +706,7 @@ export const Constants = {
         "Bombeiro",
         "Civil",
         "Marinha do Brasil",
+        "ENAPORT",
       ],
     },
   },

@@ -35,7 +35,7 @@ export function EditAlunoDialog({ aluno, onSuccess }: EditAlunoDialogProps) {
     tipo_militar: aluno.tipo_militar,
     local_servico: aluno.local_servico || "",
     observacoes: aluno.observacoes || "",
-    status: aluno.status || "Cursando",
+    status: aluno.status || "Aguardando",
   });
 
   const rankKeys = [
@@ -193,6 +193,7 @@ export function EditAlunoDialog({ aluno, onSuccess }: EditAlunoDialogProps) {
                   <SelectItem value="Marinha do Brasil">Marinha do Brasil</SelectItem>
                   <SelectItem value="Exercito">Exército</SelectItem>
                   <SelectItem value="Bombeiro">Bombeiro</SelectItem>
+                  <SelectItem value="ENAPORT">ENAPORT</SelectItem>
                   <SelectItem value="Civil">Civil</SelectItem>
                 </SelectContent>
               </Select>
@@ -230,8 +231,12 @@ export function EditAlunoDialog({ aluno, onSuccess }: EditAlunoDialogProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="Aguardando">Aguardando</SelectItem>
+                  <SelectItem value="Planejado">Planejado</SelectItem>
                   <SelectItem value="Cursando">Cursando</SelectItem>
+                  <SelectItem value="Estagiando">Estagiando</SelectItem>
                   <SelectItem value="Concluído">Concluído</SelectItem>
+                  <SelectItem value="Cancelado">Cancelado</SelectItem>
                   <SelectItem value="Reprovado">Reprovado</SelectItem>
                   <SelectItem value="Desligado">Desligado</SelectItem>
                   <SelectItem value="Desertor">Desertor</SelectItem>

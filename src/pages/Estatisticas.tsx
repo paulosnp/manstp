@@ -154,8 +154,10 @@ export default function Estatisticas() {
 
       const yearData = yearMap.get(ano)!;
       
-      // Conta total de inscritos
-      yearData.TOTAL_INSCRITOS++;
+      // Conta total de inscritos (inclui Cancelado)
+      if (status !== "Planejado" && status !== "Aguardando") {
+        yearData.TOTAL_INSCRITOS++;
+      }
       
       // Conta apenas alunos com status "Concluído" por categoria
       if (status === "Concluído") {
