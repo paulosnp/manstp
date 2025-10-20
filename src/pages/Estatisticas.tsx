@@ -37,8 +37,8 @@ interface YearChartData {
 interface LocationChartData {
   ano: number;
   TOTAL_INSCRITOS: number;
-  CIAGA_CONCLUIDOS: number;
   CIABA_CONCLUIDOS: number;
+  CIAGA_APROVEITADOS: number;
 }
 
 interface CourseTypeChartData {
@@ -180,7 +180,12 @@ export default function Estatisticas() {
     setYearChartData(yearArray);
 
     // Location chart data - group by year and location (CIABA/CIAGA)
-    const locationMap = new Map<number, { TOTAL_INSCRITOS: number; CIAGA_CONCLUIDOS: number; CIABA_CONCLUIDOS: number }>();
+    const locationMap = new Map<number, { 
+      TOTAL_INSCRITOS: number; 
+      CIABA_CONCLUIDOS: number; 
+      CIAGA_TOTAL: number;
+      CIAGA_EXCLUIDOS: number;
+    }>();
 
     filteredData.forEach((item: any) => {
       const ano = item.turmas.ano;
@@ -188,26 +193,46 @@ export default function Estatisticas() {
       const status = item.status || "Cursando";
 
       if (!locationMap.has(ano)) {
-        locationMap.set(ano, { TOTAL_INSCRITOS: 0, CIAGA_CONCLUIDOS: 0, CIABA_CONCLUIDOS: 0 });
+        locationMap.set(ano, { 
+          TOTAL_INSCRITOS: 0, 
+          CIABA_CONCLUIDOS: 0, 
+          CIAGA_TOTAL: 0,
+          CIAGA_EXCLUIDOS: 0
+        });
       }
 
       const locationData = locationMap.get(ano)!;
       
-      // Conta total de inscritos
-      locationData.TOTAL_INSCRITOS++;
+      // Conta total de inscritos (CIABA + CIAGA)
+      if (status !== "Planejado" && status !== "Aguardando") {
+        locationData.TOTAL_INSCRITOS++;
+      }
       
-      // Conta apenas alunos com status "Concluído" por local
-      if (status === "Concluído") {
-        if (local === "São Tomé e Príncipe") {
-          locationData.CIABA_CONCLUIDOS++;
-        } else if (local === "Brasil") {
-          locationData.CIAGA_CONCLUIDOS++;
+      // Para CIABA: conta apenas concluídos
+      if (local === "São Tomé e Príncipe" && status === "Concluído") {
+        locationData.CIABA_CONCLUIDOS++;
+      }
+      
+      // Para CIAGA: conta total e excluídos separadamente
+      if (local === "Brasil") {
+        if (status !== "Planejado" && status !== "Aguardando") {
+          locationData.CIAGA_TOTAL++;
+          
+          // Conta os que devem ser excluídos (reprovados, desligados, desertores, cancelados)
+          if (["Reprovado", "Desligado", "Desertor", "Cancelado"].includes(status)) {
+            locationData.CIAGA_EXCLUIDOS++;
+          }
         }
       }
     });
 
     const locationArray: LocationChartData[] = Array.from(locationMap.entries())
-      .map(([ano, counts]) => ({ ano, ...counts }))
+      .map(([ano, counts]) => ({ 
+        ano, 
+        TOTAL_INSCRITOS: counts.TOTAL_INSCRITOS,
+        CIABA_CONCLUIDOS: counts.CIABA_CONCLUIDOS,
+        CIAGA_APROVEITADOS: counts.CIAGA_TOTAL - counts.CIAGA_EXCLUIDOS
+      }))
       .sort((a, b) => a.ano - b.ano);
 
     setLocationChartData(locationArray);
@@ -364,9 +389,9 @@ export default function Estatisticas() {
   };
 
   const locationChartConfig = {
-    TOTAL_INSCRITOS: { label: "Total de Inscritos", color: "hsl(200, 80%, 45%)" },
-    CIAGA_CONCLUIDOS: { label: "Concluídos CIAGA (Brasil)", color: "hsl(160, 70%, 45%)" },
-    CIABA_CONCLUIDOS: { label: "Concluídos CIABA (São Tomé e Príncipe)", color: "hsl(40, 90%, 55%)" },
+    TOTAL_INSCRITOS: { label: "Total de Inscritos (CIABA + CIAGA)", color: "hsl(210, 70%, 55%)" },
+    CIABA_CONCLUIDOS: { label: "Concluídos CIABA (São Tomé e Príncipe)", color: "hsl(45, 93%, 47%)" },
+    CIAGA_APROVEITADOS: { label: "Aproveitados CIAGA (Brasil)", color: "hsl(155, 65%, 42%)" },
   };
 
   const courseTypeChartConfig = {
@@ -482,8 +507,8 @@ export default function Estatisticas() {
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Legend wrapperStyle={{ fontSize: '12px' }} />
                 <Bar dataKey="TOTAL_INSCRITOS" fill={locationChartConfig.TOTAL_INSCRITOS.color} label={{ position: 'top', fontSize: 10 }} />
-                <Bar dataKey="CIAGA_CONCLUIDOS" fill={locationChartConfig.CIAGA_CONCLUIDOS.color} label={{ position: 'top', fontSize: 10 }} />
                 <Bar dataKey="CIABA_CONCLUIDOS" fill={locationChartConfig.CIABA_CONCLUIDOS.color} label={{ position: 'top', fontSize: 10 }} />
+                <Bar dataKey="CIAGA_APROVEITADOS" fill={locationChartConfig.CIAGA_APROVEITADOS.color} label={{ position: 'top', fontSize: 10 }} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
