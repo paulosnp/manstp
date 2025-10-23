@@ -26,12 +26,13 @@ export default function UltraChart() {
 
   const fetchData = async () => {
     try {
-      // Buscar alunos com suas turmas
+      // Buscar alunos com suas turmas e status
       const { data: alunoTurma, error: errorAT } = await supabase
         .from("aluno_turma")
         .select(`
           aluno_id,
           turma_id,
+          status,
           turmas!inner(ano)
         `);
 
@@ -48,27 +49,60 @@ export default function UltraChart() {
       const alunosMap = new Map(alunos?.map(a => [a.id, a]) || []);
 
       // Agrupar por ano
-      const dadosPorAno: Record<string, { fuzileiro: number; marinheiro: number; exercito: number; civil: number }> = {};
+      const dadosPorAno: Record<string, { 
+        fuzileiro: number; 
+        marinheiro: number; 
+        exercito: number; 
+        civil: number;
+        total: number;
+      }> = {};
+
+      // Totais gerais (todos os anos somados)
+      let totalGeralFuzileiro = 0;
+      let totalGeralMarinheiro = 0;
+      let totalGeralExercito = 0;
+      let totalGeralCivil = 0;
+      let totalGeralTodos = 0;
 
       alunoTurma?.forEach((at) => {
         const ano = (at.turmas as any)?.ano?.toString() || "Sem Ano";
         const aluno = alunosMap.get(at.aluno_id);
+        const status = at.status;
         
         if (!aluno) return;
 
         if (!dadosPorAno[ano]) {
-          dadosPorAno[ano] = { fuzileiro: 0, marinheiro: 0, exercito: 0, civil: 0 };
+          dadosPorAno[ano] = { fuzileiro: 0, marinheiro: 0, exercito: 0, civil: 0, total: 0 };
         }
 
         const tipo = aluno.tipo_militar?.toLowerCase() || "civil";
+        const concluido = status === "Concluído";
+
+        // Para Total: contar todos independente do status
+        dadosPorAno[ano].total++;
+        totalGeralTodos++;
+
+        // Para categorias específicas: só contar se concluído
         if (tipo.includes("fuzileiro")) {
-          dadosPorAno[ano].fuzileiro++;
+          if (concluido) {
+            dadosPorAno[ano].fuzileiro++;
+            totalGeralFuzileiro++;
+          }
         } else if (tipo.includes("marinheiro")) {
-          dadosPorAno[ano].marinheiro++;
+          if (concluido) {
+            dadosPorAno[ano].marinheiro++;
+            totalGeralMarinheiro++;
+          }
         } else if (tipo.includes("exército") || tipo.includes("exercito")) {
-          dadosPorAno[ano].exercito++;
+          if (concluido) {
+            dadosPorAno[ano].exercito++;
+            totalGeralExercito++;
+          }
         } else {
-          dadosPorAno[ano].civil++;
+          if (concluido) {
+            dadosPorAno[ano].civil++;
+            totalGeralCivil++;
+          }
         }
       });
 
@@ -77,12 +111,22 @@ export default function UltraChart() {
         .sort()
         .map((ano) => ({
           ano,
-          fuzileiro: dadosPorAno[ano].fuzileiro,
+          total: dadosPorAno[ano].total,
           marinheiro: dadosPorAno[ano].marinheiro,
+          fuzileiro: dadosPorAno[ano].fuzileiro,
           exercito: dadosPorAno[ano].exercito,
-          civil: dadosPorAno[ano].civil,
-          total: dadosPorAno[ano].fuzileiro + dadosPorAno[ano].marinheiro + dadosPorAno[ano].exercito + dadosPorAno[ano].civil
+          civil: dadosPorAno[ano].civil
         }));
+
+      // Adicionar Total Geral no início
+      resultado.unshift({
+        ano: "TOTAL GERAL",
+        total: totalGeralTodos,
+        marinheiro: totalGeralMarinheiro,
+        fuzileiro: totalGeralFuzileiro,
+        exercito: totalGeralExercito,
+        civil: totalGeralCivil
+      });
 
       setYearData(resultado);
       setLastUpdate(new Date());
@@ -152,19 +196,19 @@ export default function UltraChart() {
               />
               <Legend wrapperStyle={{ paddingTop: "20px" }} />
               
-              <Bar dataKey="fuzileiro" name="Fuzileiro" fill={COLORS.fuzileiro} radius={[8, 8, 0, 0]}>
-                <LabelList content={renderCustomLabel} />
-              </Bar>
-              <Bar dataKey="marinheiro" name="Marinheiro" fill={COLORS.marinheiro} radius={[8, 8, 0, 0]}>
-                <LabelList content={renderCustomLabel} />
-              </Bar>
-              <Bar dataKey="exercito" name="Exército" fill={COLORS.exercito} radius={[8, 8, 0, 0]}>
-                <LabelList content={renderCustomLabel} />
-              </Bar>
-              <Bar dataKey="civil" name="Civil" fill={COLORS.civil} radius={[8, 8, 0, 0]}>
-                <LabelList content={renderCustomLabel} />
-              </Bar>
               <Bar dataKey="total" name="Total" fill={COLORS.total} radius={[8, 8, 0, 0]}>
+                <LabelList content={renderCustomLabel} />
+              </Bar>
+              <Bar dataKey="marinheiro" name="Marinheiro (Concluídos)" fill={COLORS.marinheiro} radius={[8, 8, 0, 0]}>
+                <LabelList content={renderCustomLabel} />
+              </Bar>
+              <Bar dataKey="fuzileiro" name="Fuzileiro (Concluídos)" fill={COLORS.fuzileiro} radius={[8, 8, 0, 0]}>
+                <LabelList content={renderCustomLabel} />
+              </Bar>
+              <Bar dataKey="exercito" name="Exército (Concluídos)" fill={COLORS.exercito} radius={[8, 8, 0, 0]}>
+                <LabelList content={renderCustomLabel} />
+              </Bar>
+              <Bar dataKey="civil" name="Civil (Concluídos)" fill={COLORS.civil} radius={[8, 8, 0, 0]}>
                 <LabelList content={renderCustomLabel} />
               </Bar>
             </BarChart>
