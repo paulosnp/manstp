@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import DashboardCharts from "@/components/DashboardCharts";
+import UltraChart from "@/components/UltraChart";
 
 interface StatData {
   totalAlunos: number;
@@ -86,8 +86,8 @@ const Estatisticas = () => {
         </Card>
       </div>
 
-      {/* Dashboard Charts */}
-      <DashboardCharts />
+      {/* Gráfico Ultra */}
+      <UltraChart />
     </div>
   );
 };
