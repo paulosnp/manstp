@@ -1,88 +1,90 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell, LabelList } from "recharts";
 
-interface CategoryData {
-  name: string;
-  value: number;
-  color: string;
-  alert?: "increase" | "decrease";
-}
-
-interface HistoryData {
-  date: string;
+interface YearData {
+  ano: string;
+  fuzileiro: number;
+  marinheiro: number;
+  exercito: number;
+  civil: number;
   total: number;
 }
 
-const COLORS = ["#4f46e5", "#f43f5e", "#0ea5e9", "#22c55e", "#eab308", "#ec4899", "#a855f7"];
-const THRESHOLD_ALERT = 5;
+const COLORS = {
+  fuzileiro: "#43A047",
+  marinheiro: "#FB8C00",
+  exercito: "#8E24AA",
+  civil: "#E53935",
+  total: "#1E88E5"
+};
 
 export default function UltraChart() {
-  const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
-  const [historyData, setHistoryData] = useState<HistoryData[]>([]);
+  const [yearData, setYearData] = useState<YearData[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   const fetchData = async () => {
     try {
-      // Buscar todos os alunos
-      const { data: alunos, error } = await supabase
+      // Buscar alunos com suas turmas
+      const { data: alunoTurma, error: errorAT } = await supabase
+        .from("aluno_turma")
+        .select(`
+          aluno_id,
+          turma_id,
+          turmas!inner(ano)
+        `);
+
+      if (errorAT) throw errorAT;
+
+      // Buscar informações dos alunos
+      const { data: alunos, error: errorAlunos } = await supabase
         .from("alunos")
-        .select("tipo_militar");
+        .select("id, tipo_militar");
 
-      if (error) throw error;
+      if (errorAlunos) throw errorAlunos;
 
-      // Contar por tipo
-      const contagem: Record<string, number> = {};
-      alunos?.forEach((aluno) => {
-        const tipo = (aluno.tipo_militar || "Outros").toLowerCase();
-        contagem[tipo] = (contagem[tipo] || 0) + 1;
+      // Criar mapa de alunos
+      const alunosMap = new Map(alunos?.map(a => [a.id, a]) || []);
+
+      // Agrupar por ano
+      const dadosPorAno: Record<string, { fuzileiro: number; marinheiro: number; exercito: number; civil: number }> = {};
+
+      alunoTurma?.forEach((at) => {
+        const ano = (at.turmas as any)?.ano?.toString() || "Sem Ano";
+        const aluno = alunosMap.get(at.aluno_id);
+        
+        if (!aluno) return;
+
+        if (!dadosPorAno[ano]) {
+          dadosPorAno[ano] = { fuzileiro: 0, marinheiro: 0, exercito: 0, civil: 0 };
+        }
+
+        const tipo = aluno.tipo_militar?.toLowerCase() || "civil";
+        if (tipo.includes("fuzileiro")) {
+          dadosPorAno[ano].fuzileiro++;
+        } else if (tipo.includes("marinheiro")) {
+          dadosPorAno[ano].marinheiro++;
+        } else if (tipo.includes("exército") || tipo.includes("exercito")) {
+          dadosPorAno[ano].exercito++;
+        } else {
+          dadosPorAno[ano].civil++;
+        }
       });
 
-      // Recuperar histórico anterior
-      const historico = JSON.parse(localStorage.getItem("historicoAlunos") || "{}");
-      const hoje = new Date().toISOString().split("T")[0];
-
-      // Detectar alertas
-      const previousData = historico[Object.keys(historico).sort().pop() || ""] || {};
-      const newCategoryData: CategoryData[] = Object.keys(contagem)
+      // Converter para array e ordenar
+      const resultado: YearData[] = Object.keys(dadosPorAno)
         .sort()
-        .map((tipo, index) => {
-          const currentValue = contagem[tipo];
-          const previousValue = previousData[tipo] || 0;
-          const diff = previousValue === 0 ? 0 : ((currentValue - previousValue) / previousValue) * 100;
-          
-          return {
-            name: tipo.charAt(0).toUpperCase() + tipo.slice(1),
-            value: currentValue,
-            color: COLORS[index % COLORS.length],
-            alert: Math.abs(diff) >= THRESHOLD_ALERT ? (diff > 0 ? "increase" : "decrease") : undefined,
-          };
-        });
-
-      // Adicionar total geral
-      const totalGeral = Object.values(contagem).reduce((a, b) => a + b, 0);
-      newCategoryData.unshift({
-        name: "Total Geral",
-        value: totalGeral,
-        color: "#4f46e5",
-      });
-
-      setCategoryData(newCategoryData);
-
-      // Salvar histórico
-      historico[hoje] = contagem;
-      localStorage.setItem("historicoAlunos", JSON.stringify(historico));
-
-      // Preparar dados de histórico para o gráfico
-      const historyArray: HistoryData[] = Object.keys(historico)
-        .sort()
-        .map((date) => ({
-          date,
-          total: Object.values(historico[date] as Record<string, number>).reduce((a: number, b: number) => a + b, 0),
+        .map((ano) => ({
+          ano,
+          fuzileiro: dadosPorAno[ano].fuzileiro,
+          marinheiro: dadosPorAno[ano].marinheiro,
+          exercito: dadosPorAno[ano].exercito,
+          civil: dadosPorAno[ano].civil,
+          total: dadosPorAno[ano].fuzileiro + dadosPorAno[ano].marinheiro + dadosPorAno[ano].exercito + dadosPorAno[ano].civil
         }));
 
-      setHistoryData(historyArray);
+      setYearData(resultado);
       setLastUpdate(new Date());
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
@@ -95,12 +97,28 @@ export default function UltraChart() {
     return () => clearInterval(interval);
   }, []);
 
+  const renderCustomLabel = (props: any) => {
+    const { x, y, width, value } = props;
+    return value > 0 ? (
+      <text 
+        x={x + width / 2} 
+        y={y - 5} 
+        fill="hsl(var(--foreground))" 
+        textAnchor="middle" 
+        fontSize={12}
+        fontWeight="bold"
+      >
+        {value}
+      </text>
+    ) : null;
+  };
+
   return (
     <div className="space-y-6">
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Visualização Ultra - Alunos por Categoria</span>
+            <span>Distribuição de Alunos por Ano e Categoria</span>
             <span className="text-xs text-muted-foreground">
               Atualizado: {lastUpdate.toLocaleTimeString()}
             </span>
@@ -111,18 +129,19 @@ export default function UltraChart() {
             Atualizado automaticamente a cada 30 segundos
           </div>
 
-          {/* Gráfico de Barras 3D */}
-          <ResponsiveContainer width="100%" height={360}>
-            <BarChart data={categoryData}>
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={yearData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis 
-                dataKey="name" 
+                dataKey="ano" 
                 stroke="hsl(var(--foreground))"
                 tick={{ fill: "hsl(var(--foreground))", fontSize: 12 }}
+                label={{ value: "Ano", position: "insideBottom", offset: -5 }}
               />
               <YAxis 
                 stroke="hsl(var(--foreground))"
                 tick={{ fill: "hsl(var(--foreground))", fontSize: 12 }}
+                label={{ value: "Quantidade de Alunos", angle: -90, position: "insideLeft" }}
               />
               <Tooltip
                 contentStyle={{
@@ -131,58 +150,25 @@ export default function UltraChart() {
                   borderRadius: "8px",
                 }}
               />
-              <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                {categoryData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.color}
-                    opacity={entry.alert ? 1 : 0.8}
-                    className={entry.alert ? "animate-pulse" : ""}
-                  />
-                ))}
+              <Legend wrapperStyle={{ paddingTop: "20px" }} />
+              
+              <Bar dataKey="fuzileiro" name="Fuzileiro" fill={COLORS.fuzileiro} radius={[8, 8, 0, 0]}>
+                <LabelList content={renderCustomLabel} />
+              </Bar>
+              <Bar dataKey="marinheiro" name="Marinheiro" fill={COLORS.marinheiro} radius={[8, 8, 0, 0]}>
+                <LabelList content={renderCustomLabel} />
+              </Bar>
+              <Bar dataKey="exercito" name="Exército" fill={COLORS.exercito} radius={[8, 8, 0, 0]}>
+                <LabelList content={renderCustomLabel} />
+              </Bar>
+              <Bar dataKey="civil" name="Civil" fill={COLORS.civil} radius={[8, 8, 0, 0]}>
+                <LabelList content={renderCustomLabel} />
+              </Bar>
+              <Bar dataKey="total" name="Total" fill={COLORS.total} radius={[8, 8, 0, 0]}>
+                <LabelList content={renderCustomLabel} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle>Histórico Diário - Total de Alunos</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={historyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis 
-                dataKey="date" 
-                stroke="hsl(var(--foreground))"
-                tick={{ fill: "hsl(var(--foreground))", fontSize: 10 }}
-              />
-              <YAxis 
-                stroke="hsl(var(--foreground))"
-                tick={{ fill: "hsl(var(--foreground))", fontSize: 10 }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--background))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="total"
-                stroke="#4f46e5"
-                strokeWidth={2}
-                dot={{ fill: "#4f46e5", r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-          <div className="text-xs text-muted-foreground mt-2">
-            Histórico diário salvo localmente. Colunas brilham quando há variação significativa (&gt;{THRESHOLD_ALERT}%).
-          </div>
         </CardContent>
       </Card>
     </div>
