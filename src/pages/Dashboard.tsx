@@ -1,152 +1,388 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, BookOpen, School, Award } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 
-interface Stats {
-  cursosEmAndamentoBrasil: number;
-  cursosEmAndamentoSaoTome: number;
-  turmasConcluidas: number;
-  // Brasil - por tipo
-  fuzileirosBrasil: number;
-  guardaCosteiraBrasil: number;
-  exercitoBrasil: number;
-  civisBrasil: number;
-  // São Tomé - por tipo
-  fuzileirosSaoTome: number;
-  guardaCosteiraSaoTome: number;
-  exercitoSaoTome: number;
-  civisSaoTome: number;
-  totalCursos: number;
+
+interface AlunoData {
+  id: string;
+  nome: string;
+  turma_id: string | null;
+  status: string;
+  tipo_militar: string;
+}
+
+interface TurmaData {
+  id: string;
+  nome: string;
+  ano: number;
+  curso_id: string;
+  situacao: string;
+}
+
+interface CursoData {
+  id: string;
+  nome: string;
+  local_realizacao: string | null;
+  modalidade: string | null;
+}
+
+interface YearStats {
+  ano: number;
+  inscritos: number;
+  concluintes: number;
+  reprovados: number;
 }
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [stats, setStats] = useState<Stats>({
-    cursosEmAndamentoBrasil: 0,
-    cursosEmAndamentoSaoTome: 0,
-    turmasConcluidas: 0,
-    fuzileirosBrasil: 0,
-    guardaCosteiraBrasil: 0,
-    exercitoBrasil: 0,
-    civisBrasil: 0,
-    fuzileirosSaoTome: 0,
-    guardaCosteiraSaoTome: 0,
-    exercitoSaoTome: 0,
-    civisSaoTome: 0,
-    totalCursos: 0,
-  });
   const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState({
+    totalGeral: 0,
+    ead: 0,
+    alunosCenpem: 0,
+    alunosExp: 0,
+    carreira: 0,
+    conclExerc: 0
+  });
+  const [evolution, setEvolution] = useState<YearStats[]>([]);
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+  const [cfommData, setCfommData] = useState<any[]>([]);
+  const [careerData, setCareerData] = useState<Record<string, number>>({});
+  const [alunosCursando, setAlunosCursando] = useState<any[]>([]);
+  const [alunosPlanejados, setAlunosPlanejados] = useState<any[]>([]);
+
+  const evoCanvasRef = useRef<HTMLCanvasElement>(null);
+  const statusCanvasRef = useRef<HTMLCanvasElement>(null);
+  const cfommCanvasRef = useRef<HTMLCanvasElement>(null);
+  const careerCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        // Buscar cursos totais
-        const cursosRes = await supabase.from("cursos").select("id", { count: "exact", head: true });
-        
-        // Buscar IDs dos cursos no Brasil
-        const { data: cursosBrasil } = await supabase.from("cursos")
-          .select("id")
-          .eq("local_realizacao", "Brasil");
-        
-        const cursoBrasilIds = cursosBrasil?.map(c => c.id) || [];
-        
-        // Buscar turmas com situação "Em Andamento" em cursos do Brasil
-        const turmasEmAndamentoBrasil = await supabase.from("turmas")
-          .select("id", { count: "exact", head: true })
-          .in("curso_id", cursoBrasilIds)
-          .eq("situacao", "Em Andamento");
-        
-        // Buscar IDs dos cursos em São Tomé e Príncipe
-        const { data: cursosSaoTome } = await supabase.from("cursos")
-          .select("id")
-          .eq("local_realizacao", "São Tomé e Príncipe");
-        
-        const cursoSaoTomeIds = cursosSaoTome?.map(c => c.id) || [];
-        
-        // Buscar turmas com situação "Em Andamento" em cursos de São Tomé
-        const turmasEmAndamentoSaoTome = await supabase.from("turmas")
-          .select("id", { count: "exact", head: true })
-          .in("curso_id", cursoSaoTomeIds)
-          .eq("situacao", "Em Andamento");
-        
-        // Buscar turmas concluídas
-        const turmasConcluidas = await supabase.from("turmas")
-          .select("id", { count: "exact", head: true })
-          .eq("situacao", "Concluído");
-        
-        // Buscar turmas de cursos no Brasil
-        const { data: turmasBrasil } = await supabase.from("turmas")
-          .select("id")
-          .in("curso_id", cursoBrasilIds);
-        
-        const turmaBrasilIds = turmasBrasil?.map(t => t.id) || [];
-        
-        // Buscar alunos concluídos no Brasil por tipo militar
-        const { data: alunosConcluidosBrasil } = await supabase
-          .from("aluno_turma")
-          .select("aluno_id, alunos!inner(tipo_militar)")
-          .eq("status", "Concluído")
-          .in("turma_id", turmaBrasilIds);
-
-        let fuzileirosBrasil = 0, guardaCosteiraBrasil = 0, exercitoBrasil = 0, civisBrasil = 0;
-        alunosConcluidosBrasil?.forEach((item: any) => {
-          const tipo = item.alunos.tipo_militar;
-          if (tipo === "Fuzileiro Naval") fuzileirosBrasil++;
-          else if (tipo === "Marinheiro") guardaCosteiraBrasil++;
-          else if (tipo === "Exercito") exercitoBrasil++;
-          else if (tipo === "Civil") civisBrasil++;
-        });
-
-        // Buscar turmas de cursos em São Tomé e Príncipe
-        const { data: turmasSaoTome } = await supabase.from("turmas")
-          .select("id")
-          .in("curso_id", cursoSaoTomeIds);
-        
-        const turmaSaoTomeIds = turmasSaoTome?.map(t => t.id) || [];
-        
-        // Buscar alunos concluídos em São Tomé por tipo militar
-        const { data: alunosConcluidosSaoTome } = await supabase
-          .from("aluno_turma")
-          .select("aluno_id, alunos!inner(tipo_militar)")
-          .eq("status", "Concluído")
-          .in("turma_id", turmaSaoTomeIds);
-
-        let fuzileirosSaoTome = 0, guardaCosteiraSaoTome = 0, exercitoSaoTome = 0, civisSaoTome = 0;
-        alunosConcluidosSaoTome?.forEach((item: any) => {
-          const tipo = item.alunos.tipo_militar;
-          if (tipo === "Fuzileiro Naval") fuzileirosSaoTome++;
-          else if (tipo === "Marinheiro") guardaCosteiraSaoTome++;
-          else if (tipo === "Exercito") exercitoSaoTome++;
-          else if (tipo === "Civil") civisSaoTome++;
-        });
-
-        setStats({
-          totalCursos: cursosRes.count || 0,
-          cursosEmAndamentoBrasil: turmasEmAndamentoBrasil.count || 0,
-          cursosEmAndamentoSaoTome: turmasEmAndamentoSaoTome.count || 0,
-          turmasConcluidas: turmasConcluidas.count || 0,
-          fuzileirosBrasil,
-          guardaCosteiraBrasil,
-          exercitoBrasil,
-          civisBrasil,
-          fuzileirosSaoTome,
-          guardaCosteiraSaoTome,
-          exercitoSaoTome,
-          civisSaoTome,
-        });
-      } catch (error) {
-        console.error("Erro ao buscar estatísticas:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (user) {
-      fetchStats();
+      fetchAllData();
     }
   }, [user]);
+
+  const fetchAllData = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch all data in parallel
+      const [cursosRes, turmasRes, alunosRes, alunoTurmaRes] = await Promise.all([
+        supabase.from("cursos").select("*"),
+        supabase.from("turmas").select("*"),
+        supabase.from("alunos").select("*"),
+        supabase.from("aluno_turma").select("*, alunos(*)")
+      ]);
+
+      const cursos: CursoData[] = cursosRes.data || [];
+      const turmas: TurmaData[] = turmasRes.data || [];
+      const alunos: AlunoData[] = (alunosRes.data || []).map((a: any) => ({
+        id: a.id,
+        nome: a.nome_completo,
+        turma_id: null,
+        status: "",
+        tipo_militar: a.tipo_militar
+      }));
+
+      // Map aluno_turma relationships
+      const alunoTurmaMap = new Map<string, { turma_id: string; status: string }[]>();
+      (alunoTurmaRes.data || []).forEach((at: any) => {
+        if (!alunoTurmaMap.has(at.aluno_id)) {
+          alunoTurmaMap.set(at.aluno_id, []);
+        }
+        alunoTurmaMap.get(at.aluno_id)!.push({
+          turma_id: at.turma_id,
+          status: at.status || "CURSANDO"
+        });
+      });
+
+      // Enrich alunos with turma data
+      const enrichedAlunos = alunos.flatMap(aluno => {
+        const turmaLinks = alunoTurmaMap.get(aluno.id) || [];
+        if (turmaLinks.length === 0) {
+          return [{ ...aluno, turma_id: null, status: "PLANEJADO" }];
+        }
+        return turmaLinks.map(link => ({
+          ...aluno,
+          turma_id: link.turma_id,
+          status: link.status.toUpperCase()
+        }));
+      });
+
+      // Compute metrics
+      const totalGeral = enrichedAlunos.length;
+      
+      // EAD courses
+      const cursosEadIds = cursos.filter(c => /EAD|DISTÂNCIA/i.test(c.modalidade || "")).map(c => c.id);
+      const turmasEadIds = turmas.filter(t => cursosEadIds.includes(t.curso_id)).map(t => t.id);
+      const ead = enrichedAlunos.filter(a => a.turma_id && turmasEadIds.includes(a.turma_id)).length;
+
+      // CENPEM courses
+      const cursosCenpemIds = cursos.filter(c => /CENPEM/i.test(c.local_realizacao || "")).map(c => c.id);
+      const turmasCenpemIds = turmas.filter(t => cursosCenpemIds.includes(t.curso_id)).map(t => t.id);
+      const alunosCenpem = enrichedAlunos.filter(a => a.turma_id && turmasCenpemIds.includes(a.turma_id)).length;
+
+      // Expedited courses
+      const cursosExpIds = cursos.filter(c => /EXPEDIT/i.test(c.nome || "")).map(c => c.id);
+      const turmasExpIds = turmas.filter(t => cursosExpIds.includes(t.curso_id)).map(t => t.id);
+      const alunosExp = enrichedAlunos.filter(a => a.turma_id && turmasExpIds.includes(a.turma_id)).length;
+
+      // Career (military types)
+      const carreira = enrichedAlunos.filter(a => /MARINHEIRO|FUZILEIRO|OFICIAL/i.test(a.tipo_militar || "")).length;
+
+      // Concluded from army
+      const conclExerc = enrichedAlunos.filter(a => /EXERCITO/i.test(a.tipo_militar || "") && a.status === "CONCLUÍDO").length;
+
+      setMetrics({
+        totalGeral,
+        ead,
+        alunosCenpem,
+        alunosExp,
+        carreira,
+        conclExerc
+      });
+
+      // Status counts
+      const statusMap: Record<string, number> = {};
+      enrichedAlunos.forEach(a => {
+        const status = a.status || "SEM STATUS";
+        statusMap[status] = (statusMap[status] || 0) + 1;
+      });
+      setStatusCounts(statusMap);
+
+      // Evolution by year
+      const anos = Array.from(new Set(turmas.map(t => t.ano))).filter(Boolean).sort((a, b) => a - b);
+      const evolutionStats: YearStats[] = anos.map(ano => {
+        const turmaIds = turmas.filter(t => t.ano === ano).map(t => t.id);
+        const alunosAno = enrichedAlunos.filter(a => a.turma_id && turmaIds.includes(a.turma_id));
+        const inscritos = alunosAno.length;
+        const concluintes = alunosAno.filter(a => a.status === "CONCLUÍDO").length;
+        const reprovados = alunosAno.filter(a => /REPROVADO/i.test(a.status)).length;
+        return { ano, inscritos, concluintes, reprovados };
+      });
+      setEvolution(evolutionStats);
+
+      // CFOMM data
+      const cfommStats = anos.map(ano => {
+        const turmasAno = turmas.filter(t => t.ano === ano);
+        const cfommTurmaIds = turmasAno
+          .filter(t => {
+            const curso = cursos.find(c => c.id === t.curso_id);
+            return /C-FOMM/i.test(curso?.nome || "") && (/CIAGA|CIABA/i.test(curso?.nome || ""));
+          })
+          .map(t => t.id);
+        
+        const alunosCfomm = enrichedAlunos.filter(a => a.turma_id && cfommTurmaIds.includes(a.turma_id));
+        const inscritos = alunosCfomm.length;
+        
+        const conclCiaga = alunosCfomm.filter(a => {
+          const turma = turmas.find(t => t.id === a.turma_id);
+          const curso = turma ? cursos.find(c => c.id === turma.curso_id) : null;
+          return a.status === "CONCLUÍDO" && /CIAGA/i.test(curso?.nome || "");
+        }).length;
+        
+        const conclCiaba = alunosCfomm.filter(a => {
+          const turma = turmas.find(t => t.id === a.turma_id);
+          const curso = turma ? cursos.find(c => c.id === turma.curso_id) : null;
+          return a.status === "CONCLUÍDO" && /CIABA/i.test(curso?.nome || "");
+        }).length;
+        
+        return { ano, inscritos, conclCiaga, conclCiaba };
+      });
+      setCfommData(cfommStats);
+
+      // Career distribution
+      const careerMap: Record<string, number> = {};
+      enrichedAlunos.forEach(a => {
+        const tipo = a.tipo_militar || "Outros";
+        careerMap[tipo] = (careerMap[tipo] || 0) + 1;
+      });
+      setCareerData(careerMap);
+
+      // Lists
+      setAlunosCursando(enrichedAlunos.filter(a => a.status === "CURSANDO").slice(0, 50));
+      setAlunosPlanejados(enrichedAlunos.filter(a => /PLANEJADO|PREVISTO|AGENDADO/i.test(a.status)).slice(0, 50));
+
+    } catch (error) {
+      console.error("Erro ao buscar dados:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!loading && evolution.length > 0 && evoCanvasRef.current) {
+      renderEvolutionChart();
+    }
+  }, [evolution, loading]);
+
+  useEffect(() => {
+    if (!loading && Object.keys(statusCounts).length > 0 && statusCanvasRef.current) {
+      renderStatusChart();
+    }
+  }, [statusCounts, loading]);
+
+  useEffect(() => {
+    if (!loading && cfommData.length > 0 && cfommCanvasRef.current) {
+      renderCfommChart();
+    }
+  }, [cfommData, loading]);
+
+  useEffect(() => {
+    if (!loading && Object.keys(careerData).length > 0 && careerCanvasRef.current) {
+      renderCareerChart();
+    }
+  }, [careerData, loading]);
+
+  const renderEvolutionChart = async () => {
+    const ctx = evoCanvasRef.current?.getContext("2d");
+    if (!ctx) return;
+
+    const { Chart } = await import("chart.js/auto");
+    const ChartDataLabels = (await import("chartjs-plugin-datalabels")).default;
+
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: evolution.map(e => e.ano.toString()),
+        datasets: [
+          {
+            label: "Inscritos",
+            data: evolution.map(e => e.inscritos),
+            backgroundColor: "rgba(14, 165, 233, 0.9)",
+          },
+          {
+            label: "Concluintes",
+            data: evolution.map(e => e.concluintes),
+            backgroundColor: "rgba(16, 185, 129, 0.9)",
+          },
+          {
+            label: "Reprovados",
+            data: evolution.map(e => e.reprovados),
+            backgroundColor: "rgba(239, 68, 68, 0.9)",
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "top" },
+          datalabels: {
+            color: "#fff",
+            font: { weight: "bold" as const, size: 10 },
+            formatter: (value: any) => value > 0 ? value : ""
+          }
+        }
+      },
+      plugins: [ChartDataLabels]
+    });
+  };
+
+  const renderStatusChart = async () => {
+    const ctx = statusCanvasRef.current?.getContext("2d");
+    if (!ctx) return;
+
+    const { Chart } = await import("chart.js/auto");
+
+    new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        labels: Object.keys(statusCounts),
+        datasets: [{
+          data: Object.values(statusCounts),
+          backgroundColor: [
+            "rgba(16, 185, 129, 0.9)",
+            "rgba(14, 165, 233, 0.9)",
+            "rgba(245, 158, 11, 0.9)",
+            "rgba(239, 68, 68, 0.9)",
+            "rgba(249, 115, 22, 0.9)"
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "right" }
+        }
+      }
+    });
+  };
+
+  const renderCfommChart = async () => {
+    const ctx = cfommCanvasRef.current?.getContext("2d");
+    if (!ctx) return;
+
+    const { Chart } = await import("chart.js/auto");
+    const ChartDataLabels = (await import("chartjs-plugin-datalabels")).default;
+
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: cfommData.map(c => c.ano.toString()),
+        datasets: [
+          {
+            label: "Inscritos (CIAGA+CIABA)",
+            data: cfommData.map(c => c.inscritos),
+            backgroundColor: "rgba(14, 165, 233, 0.95)"
+          },
+          {
+            label: "Concluintes CIAGA",
+            data: cfommData.map(c => c.conclCiaga),
+            backgroundColor: "rgba(52, 211, 153, 0.95)"
+          },
+          {
+            label: "Concluintes CIABA",
+            data: cfommData.map(c => c.conclCiaba),
+            backgroundColor: "rgba(139, 92, 246, 0.95)"
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "top" },
+          datalabels: {
+            color: "#fff",
+            font: { weight: "bold" as const, size: 10 },
+            formatter: (value: any) => value > 0 ? value : ""
+          }
+        }
+      },
+      plugins: [ChartDataLabels]
+    });
+  };
+
+  const renderCareerChart = async () => {
+    const ctx = careerCanvasRef.current?.getContext("2d");
+    if (!ctx) return;
+
+    const { Chart } = await import("chart.js/auto");
+
+    const keys = Object.keys(careerData).slice(0, 8);
+    const values = keys.map(k => careerData[k]);
+
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: keys,
+        datasets: [{
+          data: values,
+          backgroundColor: "rgba(37, 99, 235, 0.95)"
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  };
 
   if (loading) {
     return (
@@ -156,78 +392,146 @@ export default function Dashboard() {
     );
   }
 
-  const statCards = [
-    {
-      title: "Turmas em Andamento - Brasil",
-      value: stats.cursosEmAndamentoBrasil,
-      icon: BookOpen,
-      description: "Turmas ativas no Brasil",
-    },
-    {
-      title: "Turmas em Andamento - São Tomé e Príncipe",
-      value: stats.cursosEmAndamentoSaoTome,
-      icon: BookOpen,
-      description: "Turmas ativas em São Tomé e Príncipe",
-    },
-    {
-      title: "Total de Turmas Concluídas",
-      value: stats.turmasConcluidas,
-      icon: School,
-      description: "Turmas finalizadas",
-    },
-    {
-      title: "Militares com Cursos Concluídos - São Tomé",
-      value: stats.fuzileirosSaoTome + stats.guardaCosteiraSaoTome + stats.exercitoSaoTome + stats.civisSaoTome,
-      icon: Award,
-      description: `Fuzileiros: ${stats.fuzileirosSaoTome} | Guarda Costeira: ${stats.guardaCosteiraSaoTome} | Exército: ${stats.exercitoSaoTome} | Civis: ${stats.civisSaoTome}`,
-    },
-    {
-      title: "Militares com Cursos Concluídos - Brasil",
-      value: stats.fuzileirosBrasil + stats.guardaCosteiraBrasil + stats.exercitoBrasil + stats.civisBrasil,
-      icon: Users,
-      description: `Fuzileiros: ${stats.fuzileirosBrasil} | Guarda Costeira: ${stats.guardaCosteiraBrasil} | Exército: ${stats.exercitoBrasil} | Civis: ${stats.civisBrasil}`,
-    },
-    {
-      title: "Total de Cursos Cadastrados",
-      value: stats.totalCursos,
-      icon: BookOpen,
-      description: "Todos os cursos no sistema",
-    },
-  ];
-
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-sm sm:text-base text-muted-foreground">Visão geral do sistema de gestão militar</p>
+        <h2 className="text-3xl font-bold tracking-tight text-foreground">Dashboard — Controle de Formação</h2>
+        <p className="text-muted-foreground">Visão analítica do sistema de gestão militar</p>
       </div>
 
-      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {statCards.map((stat, index) => (
-          <Card key={index} className="shadow-card transition-all hover:shadow-elevated">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
-              <CardTitle className="text-xs sm:text-sm font-medium">{stat.title}</CardTitle>
-              <stat.icon className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+      {/* Metric Cards */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {[
+          ["Total de Alunos", metrics.totalGeral],
+          ["Cursos EAD", metrics.ead],
+          ["Cursos CENPEM", metrics.alunosCenpem],
+          ["Cursos Expeditos", metrics.alunosExp],
+          ["Carreira", metrics.carreira],
+          ["Concluídos (Exército)", metrics.conclExerc]
+        ].map(([title, value], idx) => (
+          <Card key={idx} className="shadow-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs text-muted-foreground font-medium">{title}</CardTitle>
             </CardHeader>
-            <CardContent className="p-4 sm:p-6 pt-0">
-              <div className="text-xl sm:text-2xl font-bold">{stat.value}</div>
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{stat.description}</p>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{value}</div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Card className="shadow-card">
-        <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="text-base sm:text-lg">Bem-vindo ao Sistema</CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 sm:p-6 pt-0">
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Use o menu lateral para navegar entre as diferentes seções do sistema.
-            Gerencie alunos, cursos, turmas e acompanhe estatísticas detalhadas.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Charts Grid */}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+        <Card className="lg:col-span-2 shadow-card">
+          <CardHeader>
+            <CardTitle className="text-lg">Evolução Anual — Inscritos / Concluídos / Reprovados</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <canvas ref={evoCanvasRef}></canvas>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="text-lg">Distribuição de Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <canvas ref={statusCanvasRef}></canvas>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Lower Charts */}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="text-lg">Comparativo C-FOMM</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[250px]">
+              <canvas ref={cfommCanvasRef}></canvas>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="text-lg">Distribuição por Carreira</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[250px]">
+              <canvas ref={careerCanvasRef}></canvas>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tables */}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="text-lg">Alunos Cursando Agora ({alunosCursando.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-auto max-h-[300px]">
+              {alunosCursando.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum registro</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="border-b border-border">
+                    <tr className="text-left">
+                      <th className="pb-2 font-medium text-muted-foreground">Nome</th>
+                      <th className="pb-2 font-medium text-muted-foreground">Tipo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {alunosCursando.map((a, i) => (
+                      <tr key={i} className="border-b border-border last:border-0">
+                        <td className="py-2 text-foreground">{a.nome}</td>
+                        <td className="py-2 text-muted-foreground">{a.tipo_militar}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="text-lg">Alunos Planejados ({alunosPlanejados.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-auto max-h-[300px]">
+              {alunosPlanejados.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum registro</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="border-b border-border">
+                    <tr className="text-left">
+                      <th className="pb-2 font-medium text-muted-foreground">Nome</th>
+                      <th className="pb-2 font-medium text-muted-foreground">Tipo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {alunosPlanejados.map((a, i) => (
+                      <tr key={i} className="border-b border-border last:border-0">
+                        <td className="py-2 text-foreground">{a.nome}</td>
+                        <td className="py-2 text-muted-foreground">{a.tipo_militar}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
