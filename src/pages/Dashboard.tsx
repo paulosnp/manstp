@@ -1,40 +1,33 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ChartOptions,
-} from "chart.js";
-import { Bar } from "react-chartjs-2";
-import ChartDataLabels from "chartjs-plugin-datalabels";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ChartDataLabels
-);
+interface MetricCard {
+  label: string;
+  value: number;
+}
 
-interface CursoData {
+interface CursoCard {
+  id: string;
   nome: string;
-  totalAlunos: number;
-  turmasAndamento: number;
   local: string;
+  count: number;
+}
+
+interface AlunoAndamento {
+  nome: string;
+  siglaCurso: string;
+  localCurso: string;
+  turmaId: string;
 }
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [cursosData, setCursosData] = useState<CursoData[]>([]);
+  const [metrics, setMetrics] = useState<MetricCard[]>([]);
+  const [cursosEmAndamento, setCursosEmAndamento] = useState<CursoCard[]>([]);
+  const [alunosAndamento, setAlunosAndamento] = useState<AlunoAndamento[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,33 +42,71 @@ export default function Dashboard() {
             local_realizacao,
             turmas (
               id,
+              nome,
               situacao,
               aluno_turma (
-                aluno_id
+                aluno_id,
+                sigla_curso,
+                local_curso,
+                alunos (
+                  nome_completo
+                )
               )
             )
           `);
 
         if (cursos) {
-          const dadosProcessados: CursoData[] = cursos.map((curso: any) => {
-            const totalAlunos = curso.turmas?.reduce(
+          let totalAlunos = 0;
+          let totalCursos = cursos.length;
+          let totalTurmasAndamento = 0;
+          const cursosCards: CursoCard[] = [];
+          const alunosArray: AlunoAndamento[] = [];
+
+          cursos.forEach((curso: any) => {
+            const turmasEmAndamento = curso.turmas?.filter(
+              (turma: any) => turma.situacao === "Em Andamento"
+            ) || [];
+
+            totalTurmasAndamento += turmasEmAndamento.length;
+
+            const alunosNoCurso = turmasEmAndamento.reduce(
               (sum: number, turma: any) => sum + (turma.aluno_turma?.length || 0),
               0
-            ) || 0;
+            );
 
-            const turmasAndamento = curso.turmas?.filter(
-              (turma: any) => turma.situacao === "Em Andamento"
-            ).length || 0;
+            totalAlunos += alunosNoCurso;
 
-            return {
-              nome: curso.nome || "Sem nome",
-              totalAlunos,
-              turmasAndamento,
-              local: curso.local_realizacao || "Não especificado",
-            };
+            if (turmasEmAndamento.length > 0) {
+              cursosCards.push({
+                id: curso.id,
+                nome: curso.nome || "Sem nome",
+                local: curso.local_realizacao || "Não especificado",
+                count: alunosNoCurso,
+              });
+
+              // Coletar alunos para tabela
+              turmasEmAndamento.forEach((turma: any) => {
+                turma.aluno_turma?.forEach((vinculo: any) => {
+                  alunosArray.push({
+                    nome: vinculo.alunos?.nome_completo || "N/A",
+                    siglaCurso: vinculo.sigla_curso || curso.nome || "N/A",
+                    localCurso: vinculo.local_curso || curso.local_realizacao || "N/A",
+                    turmaId: turma.nome || turma.id,
+                  });
+                });
+              });
+            }
           });
 
-          setCursosData(dadosProcessados);
+          setMetrics([
+            { label: "Total de Alunos", value: totalAlunos },
+            { label: "Cursos Ativos", value: totalCursos },
+            { label: "Turmas em Andamento", value: totalTurmasAndamento },
+            { label: "Alunos Cursando", value: alunosArray.length },
+          ]);
+
+          setCursosEmAndamento(cursosCards);
+          setAlunosAndamento(alunosArray);
         }
       } catch (error) {
         console.error("Erro ao buscar dados do dashboard:", error);
@@ -97,132 +128,80 @@ export default function Dashboard() {
     );
   }
 
-  const chartData = {
-    labels: cursosData.map((c) => `${c.nome}\n(${c.local})`),
-    datasets: [
-      {
-        label: "Alunos Ativos",
-        data: cursosData.map((c) => c.totalAlunos),
-        backgroundColor: "hsl(var(--primary))",
-        borderRadius: 8,
-        borderWidth: 0,
-      },
-    ],
-  };
-
-  const chartOptions: ChartOptions<"bar"> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "top" as const,
-        labels: {
-          color: "hsl(var(--foreground))",
-          font: {
-            size: 13,
-            weight: 500,
-          },
-          padding: 16,
-        },
-      },
-      title: {
-        display: true,
-        text: "📊 Cursos em Andamento – Localização e Total de Alunos",
-        color: "hsl(var(--foreground))",
-        font: {
-          size: 18,
-          weight: "bold",
-        },
-        padding: {
-          top: 10,
-          bottom: 20,
-        },
-      },
-      tooltip: {
-        backgroundColor: "hsl(var(--popover))",
-        titleColor: "hsl(var(--popover-foreground))",
-        bodyColor: "hsl(var(--popover-foreground))",
-        borderColor: "hsl(var(--border))",
-        borderWidth: 1,
-        padding: 12,
-        boxPadding: 6,
-        callbacks: {
-          label: function (context) {
-            const curso = cursosData[context.dataIndex];
-            return [
-              `Alunos: ${context.parsed.y}`,
-              `Turmas em andamento: ${curso.turmasAndamento}`,
-            ];
-          },
-        },
-      },
-      datalabels: {
-        color: "hsl(var(--primary-foreground))",
-        anchor: "end",
-        align: "top",
-        font: {
-          weight: "bold",
-          size: 12,
-        },
-        formatter: (value: number) => value > 0 ? value : "",
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          color: "hsl(var(--muted-foreground))",
-          font: {
-            size: 11,
-          },
-        },
-        grid: {
-          color: "hsl(var(--border))",
-        },
-      },
-      x: {
-        ticks: {
-          color: "hsl(var(--muted-foreground))",
-          font: {
-            size: 11,
-          },
-        },
-        grid: {
-          display: false,
-        },
-      },
-    },
-  };
-
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-sm sm:text-base text-muted-foreground">
-          Visão geral dos cursos em andamento
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight">Painel de Controle — Formação</h1>
       </div>
 
+      {/* CARDS DE MÉTRICAS */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {metrics.map((metric, idx) => (
+          <Card key={idx} className="shadow-card">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground mb-1">{metric.label}</p>
+              <p className="text-2xl font-bold">{metric.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* CURSOS EM ANDAMENTO */}
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle className="text-lg">Panorama de Cursos e Alunos</CardTitle>
+          <CardTitle>Cursos em andamento</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[500px] w-full">
-            <Bar data={chartData} options={chartOptions} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {cursosEmAndamento.length === 0 ? (
+              <p className="text-muted-foreground col-span-full">Nenhum curso em andamento</p>
+            ) : (
+              cursosEmAndamento.map((curso) => (
+                <div key={curso.id} className="p-3 border rounded-lg bg-card">
+                  <div className="font-semibold">{curso.nome}</div>
+                  <div className="text-sm text-muted-foreground">Local: {curso.local}</div>
+                  <div className="text-lg font-bold mt-2">{curso.count} alunos</div>
+                </div>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {cursosData.length === 0 && (
-        <Card className="shadow-card">
-          <CardContent className="p-6">
-            <p className="text-center text-muted-foreground">
-              Nenhum curso com dados disponíveis no momento.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      {/* TABELA DE ALUNOS EM ANDAMENTO */}
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle>Alunos com cursos em andamento</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {alunosAndamento.length === 0 ? (
+            <p className="text-muted-foreground">Nenhum aluno cursando no momento</p>
+          ) : (
+            <div className="overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Curso</TableHead>
+                    <TableHead>Local</TableHead>
+                    <TableHead>Ano/Turma</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {alunosAndamento.map((aluno, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{aluno.nome}</TableCell>
+                      <TableCell>{aluno.siglaCurso}</TableCell>
+                      <TableCell>{aluno.localCurso}</TableCell>
+                      <TableCell>{aluno.turmaId}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
