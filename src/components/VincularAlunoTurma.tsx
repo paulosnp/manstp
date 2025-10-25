@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { UserPlus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,22 +18,12 @@ interface VincularAlunoTurmaProps {
   onSuccess: () => void;
 }
 
-interface Aluno {
-  id: string;
-  nome_completo: string;
-  graduacao: string;
-  tipo_militar: string;
-}
 
 export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAlunoTurmaProps) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [alunos, setAlunos] = useState<Aluno[]>([]);
-  const [alunosVinculados, setAlunosVinculados] = useState<string[]>([]);
-  const [selectedAluno, setSelectedAluno] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("Aguardando");
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("existing");
   
   const rankKeys = [
     "brigadeiro", "coronel", "capitao_mar_guerra", "tenente_coronel",
@@ -91,94 +81,6 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
     local_curso: "",
     sigla_curso: "",
   });
-
-  useEffect(() => {
-    if (open) {
-      fetchAlunos();
-      fetchAlunosVinculados();
-    }
-  }, [open, turmaId]);
-
-  const fetchAlunos = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("alunos")
-        .select("id, nome_completo, graduacao, tipo_militar")
-        .order("nome_completo");
-
-      if (error) throw error;
-      setAlunos(data || []);
-    } catch (error) {
-      console.error("Erro ao buscar alunos:", error);
-      toast.error("Erro ao carregar alunos");
-    }
-  };
-
-  const fetchAlunosVinculados = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("aluno_turma")
-        .select("aluno_id")
-        .eq("turma_id", turmaId);
-
-      if (error) throw error;
-      setAlunosVinculados(data?.map((item) => item.aluno_id) || []);
-    } catch (error) {
-      console.error("Erro ao buscar vínculos:", error);
-    }
-  };
-
-  const handleVincular = async () => {
-    if (!selectedAluno) {
-      toast.error("Selecione um aluno");
-      return;
-    }
-
-    if (alunosVinculados.includes(selectedAluno)) {
-      toast.error("Aluno já vinculado a esta turma");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Check for duplicates before inserting
-      const { data: existingLink, error: checkError } = await supabase
-        .from("aluno_turma")
-        .select("id")
-        .eq("aluno_id", selectedAluno)
-        .eq("turma_id", turmaId)
-        .maybeSingle();
-
-      if (checkError) throw checkError;
-
-      if (existingLink) {
-        toast.error("Aluno já vinculado a esta turma");
-        setLoading(false);
-        return;
-      }
-
-      const { error } = await supabase
-        .from("aluno_turma")
-        .insert([{ 
-          aluno_id: selectedAluno, 
-          turma_id: turmaId, 
-          status: selectedStatus as Database['public']['Enums']['status_aluno']
-        }]);
-
-      if (error) throw error;
-
-      toast.success("Aluno vinculado com sucesso!");
-      setSelectedAluno("");
-      setSelectedStatus("Aguardando");
-      fetchAlunosVinculados();
-      onSuccess();
-    } catch (error) {
-      console.error("Erro ao vincular aluno:", error);
-      toast.error("Erro ao vincular aluno");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCreateAndVincular = async () => {
     if (!user) {
@@ -239,9 +141,6 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
         sigla_curso: "",
       });
       setSelectedStatus("Aguardando");
-      setActiveTab("existing");
-      fetchAlunos();
-      fetchAlunosVinculados();
       onSuccess();
     } catch (error) {
       console.error("Erro ao criar e vincular aluno:", error);
@@ -250,10 +149,6 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
       setLoading(false);
     }
   };
-
-  const alunosDisponiveis = alunos.filter(
-    (aluno) => !alunosVinculados.includes(aluno.id)
-  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -265,67 +160,10 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Vincular Aluno à Turma: {turmaNome}</DialogTitle>
+          <DialogTitle>Criar e Vincular Novo Aluno à Turma: {turmaNome}</DialogTitle>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="existing">Aluno Existente</TabsTrigger>
-            <TabsTrigger value="new">Novo Aluno</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="existing" className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label>Selecione o Aluno</Label>
-              <Select value={selectedAluno} onValueChange={setSelectedAluno}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Escolha um aluno" />
-                </SelectTrigger>
-                <SelectContent>
-                  {alunosDisponiveis.length === 0 ? (
-                    <SelectItem value="none" disabled>
-                      Nenhum aluno disponível
-                    </SelectItem>
-                  ) : (
-                    alunosDisponiveis.map((aluno) => (
-                      <SelectItem key={aluno.id} value={aluno.id}>
-                        {aluno.nome_completo} - {aluno.graduacao} ({aluno.tipo_militar})
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Aguardando">Aguardando</SelectItem>
-                    <SelectItem value="Planejado">Planejado</SelectItem>
-                    <SelectItem value="Cursando">Cursando</SelectItem>
-                    <SelectItem value="Estagiando">Estagiando</SelectItem>
-                    <SelectItem value="Concluído">Concluído</SelectItem>
-                    <SelectItem value="Cancelado">Cancelado</SelectItem>
-                    <SelectItem value="Reprovado">Reprovado</SelectItem>
-                    <SelectItem value="Desligado">Desligado</SelectItem>
-                    <SelectItem value="Desertor">Desertor</SelectItem>
-                  </SelectContent>
-              </Select>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleVincular} disabled={loading || !selectedAluno}>
-                {loading ? "Vinculando..." : "Vincular"}
-              </Button>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="new" className="space-y-4 mt-4">
+        <div className="space-y-4 mt-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
                 <Label>Nome Completo *</Label>
@@ -467,8 +305,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
                 {loading ? "Criando..." : "Criar e Vincular"}
               </Button>
             </div>
-          </TabsContent>
-        </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
   );
