@@ -1,124 +1,209 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RealtimeChannel } from "@supabase/supabase-js";
 
-interface MetricCard {
-  label: string;
-  value: number;
-}
-
-interface CursoCard {
-  id: string;
-  nome: string;
-  local: string;
-  count: number;
+interface DashboardCard {
+  titulo: string;
+  valor: number;
+  subtitulo?: string;
+  cor: string; // Tailwind border color class
 }
 
 interface AlunoAndamento {
   nome: string;
-  siglaCurso: string;
-  localCurso: string;
-  turmaId: string;
+  curso: string;
+  local: string;
+  turmaAno: string;
 }
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [metrics, setMetrics] = useState<MetricCard[]>([]);
-  const [cursosEmAndamento, setCursosEmAndamento] = useState<CursoCard[]>([]);
+  const [cards, setCards] = useState<DashboardCard[]>([]);
   const [alunosAndamento, setAlunosAndamento] = useState<AlunoAndamento[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<string>("");
 
   const fetchDashboardData = async () => {
     try {
       console.log('Fetching dashboard data...');
-      // Buscar todos os cursos com suas turmas e alunos
-      const { data: cursos } = await supabase
-        .from("cursos")
+      
+      // Buscar todos os vínculos aluno-turma com status Cursando ou Aguardando
+      const { data: vinculos } = await supabase
+        .from("aluno_turma")
         .select(`
-          id,
-          nome,
-          local_realizacao,
+          status,
+          sigla_curso,
+          local_curso,
+          alunos (nome_completo),
           turmas (
             id,
             nome,
+            ano,
             situacao,
-            aluno_turma (
-              aluno_id,
-              sigla_curso,
-              local_curso,
-              status,
-              alunos (
-                nome_completo
-              )
+            tipo_militar,
+            cursos (
+              nome,
+              tipo_curso,
+              modalidade,
+              local_realizacao
             )
           )
-        `);
+        `)
+        .in('status', ['Cursando', 'Aguardando']);
 
-      if (cursos) {
-        let totalAlunos = 0;
-        let totalCursos = cursos.length;
-        let totalTurmasAndamento = 0;
-        const cursosCards: CursoCard[] = [];
-        const alunosArray: AlunoAndamento[] = [];
+      if (!vinculos) return;
 
-        cursos.forEach((curso: any) => {
-          const turmasEmAndamento = curso.turmas?.filter(
-            (turma: any) => turma.situacao === "Em Andamento"
-          ) || [];
+      // Contadores
+      let totalGeral = 0;
+      let eadTotal = 0, eadTurmasAtivas = 0;
+      let cenpemTotal = 0, cenpemAguardando = 0, cenpemAndamento = 0;
+      let expeditosTotal = 0, expeditosAndamento = 0;
+      let efommCiagaTotal = 0, efommCiagaAndamento = 0, efommCiagaAguardando = 0;
+      let efommCiabaTotal = 0, efommCiabaAndamento = 0, efommCiabaAguardando = 0;
+      let rovEbTotal = 0, rovEbAndamento = 0, rovEbAguardando = 0;
+      let cursosAndamentoBrasil = 0;
 
-          totalTurmasAndamento += turmasEmAndamento.length;
+      const turmasUnicas = new Set<string>();
+      const alunosArray: AlunoAndamento[] = [];
 
-          // Contar apenas alunos com status "Cursando"
-          const alunosNoCurso = turmasEmAndamento.reduce(
-            (sum: number, turma: any) => {
-              const alunosCursando = turma.aluno_turma?.filter(
-                (at: any) => at.status?.toLowerCase() === 'cursando'
-              ) || [];
-              return sum + alunosCursando.length;
-            },
-            0
-          );
+      vinculos.forEach((vinculo: any) => {
+        const turma = vinculo.turmas;
+        const curso = turma?.cursos;
+        const status = vinculo.status?.toLowerCase();
+        const isAndamento = status === 'cursando';
+        const isAguardando = status === 'aguardando';
 
-          totalAlunos += alunosNoCurso;
+        if (!turma || !curso) return;
 
-          if (turmasEmAndamento.length > 0 && alunosNoCurso > 0) {
-            cursosCards.push({
-              id: curso.id,
-              nome: curso.nome || "Sem nome",
-              local: curso.local_realizacao || "Não especificado",
-              count: alunosNoCurso,
-            });
+        totalGeral++;
+        
+        // Adicionar à tabela se estiver em andamento
+        if (isAndamento) {
+          cursosAndamentoBrasil++;
+          alunosArray.push({
+            nome: vinculo.alunos?.nome_completo || "N/A",
+            curso: vinculo.sigla_curso || curso.nome || "N/A",
+            local: vinculo.local_curso || curso.local_realizacao || "N/A",
+            turmaAno: `${turma.ano}/${turma.nome}` || "N/A"
+          });
+        }
 
-            // Coletar alunos para tabela (apenas os que estão cursando)
-            turmasEmAndamento.forEach((turma: any) => {
-              turma.aluno_turma?.forEach((vinculo: any) => {
-                if (vinculo.status?.toLowerCase() === 'cursando') {
-                  alunosArray.push({
-                    nome: vinculo.alunos?.nome_completo || "N/A",
-                    siglaCurso: vinculo.sigla_curso || curso.nome || "N/A",
-                    localCurso: vinculo.local_curso || curso.local_realizacao || "N/A",
-                    turmaId: turma.nome || turma.id,
-                  });
-                }
-              });
-            });
+        // Categorizar por tipo de curso
+        const nomeCurso = curso.nome?.toLowerCase() || '';
+        const tipoCurso = curso.tipo_curso?.toLowerCase() || '';
+        const modalidade = curso.modalidade?.toLowerCase() || '';
+
+        // EAD
+        if (modalidade.includes('ead') || modalidade.includes('distância')) {
+          if (isAndamento || isAguardando) {
+            eadTotal++;
+            turmasUnicas.add(turma.id);
           }
-        });
+        }
 
-        setMetrics([
-          { label: "Total de Alunos", value: totalAlunos },
-          { label: "Cursos Ativos", value: totalCursos },
-          { label: "Turmas em Andamento", value: totalTurmasAndamento },
-          { label: "Alunos Cursando", value: alunosArray.length },
-        ]);
+        // CENPEM
+        if (nomeCurso.includes('cenpem')) {
+          cenpemTotal++;
+          if (isAguardando) cenpemAguardando++;
+          if (isAndamento) cenpemAndamento++;
+        }
 
-        setCursosEmAndamento(cursosCards);
-        setAlunosAndamento(alunosArray);
-        console.log('Dashboard data updated:', { cursosCards, alunosArray });
-      }
+        // Expeditos (STP)
+        if (tipoCurso.includes('expedito') || nomeCurso.includes('stp')) {
+          expeditosTotal++;
+          if (isAndamento) expeditosAndamento++;
+        }
+
+        // EFOMM CIAGA
+        if (nomeCurso.includes('efomm') && nomeCurso.includes('ciaga')) {
+          efommCiagaTotal++;
+          if (isAndamento) efommCiagaAndamento++;
+          if (isAguardando) efommCiagaAguardando++;
+        }
+
+        // EFOMM CIABA
+        if (nomeCurso.includes('efomm') && nomeCurso.includes('ciaba')) {
+          efommCiabaTotal++;
+          if (isAndamento) efommCiabaAndamento++;
+          if (isAguardando) efommCiabaAguardando++;
+        }
+
+        // ROV - EB
+        if (nomeCurso.includes('rov') || nomeCurso.includes('eb')) {
+          rovEbTotal++;
+          if (isAndamento) rovEbAndamento++;
+          if (isAguardando) rovEbAguardando++;
+        }
+      });
+
+      eadTurmasAtivas = turmasUnicas.size;
+
+      // Criar cards
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      const dateStr = now.toLocaleDateString('pt-BR');
+      
+      setLastUpdate(`${dateStr} ${timeStr}`);
+
+      const newCards: DashboardCard[] = [
+        {
+          titulo: "Total Geral de Alunos",
+          valor: totalGeral,
+          subtitulo: `Atualizado: ${timeStr}`,
+          cor: "border-l-blue-400"
+        },
+        {
+          titulo: "Cursos a Distância (EAD)",
+          valor: eadTotal,
+          subtitulo: `Turmas ativas: ${eadTurmasAtivas}`,
+          cor: "border-l-green-500"
+        },
+        {
+          titulo: "Cursos CENPEM",
+          valor: cenpemTotal,
+          subtitulo: `Aguardando: ${cenpemAguardando} • Andamento: ${cenpemAndamento}`,
+          cor: "border-l-blue-600"
+        },
+        {
+          titulo: "Cursos Expeditos (STP)",
+          valor: expeditosTotal,
+          subtitulo: `Andamento: ${expeditosAndamento}`,
+          cor: "border-l-orange-500"
+        },
+        {
+          titulo: "EFOMM CIAGA (And/Agd)",
+          valor: efommCiagaTotal,
+          subtitulo: `Andamento: ${efommCiagaAndamento} • Aguardando: ${efommCiagaAguardando}`,
+          cor: "border-l-purple-600"
+        },
+        {
+          titulo: "EFOMM CIABA (And/Agd)",
+          valor: efommCiabaTotal,
+          subtitulo: `Andamento: ${efommCiabaAndamento} • Aguardando: ${efommCiabaAguardando}`,
+          cor: "border-l-indigo-600"
+        },
+        {
+          titulo: "ROV - EB",
+          valor: rovEbTotal,
+          subtitulo: `Andamento: ${rovEbAndamento} • Aguardando: ${rovEbAguardando}`,
+          cor: "border-l-red-600"
+        },
+        {
+          titulo: "Cursos em Andamento (Brasil)",
+          valor: cursosAndamentoBrasil,
+          subtitulo: `Última atualização: ${timeStr}`,
+          cor: "border-l-cyan-500"
+        }
+      ];
+
+      // Filtrar cards com valor > 0
+      setCards(newCards.filter(card => card.valor > 0));
+      setAlunosAndamento(alunosArray);
+      
+      console.log('Dashboard data updated');
     } catch (error) {
       console.error("Erro ao buscar dados do dashboard:", error);
     } finally {
@@ -189,78 +274,63 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Painel de Controle — Formação</h1>
-        <p className="text-sm text-muted-foreground mt-1">Atualização automática em tempo real 🔴</p>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">DASHBOARD — CURSOS (Quadros Informativos)</h1>
+        <p className="text-sm text-muted-foreground mt-1">Painel atualizado automaticamente. Cards aparecem/removem conforme turmas com alunos 'CURSANDO' ou 'AGUARDANDO'.</p>
       </div>
 
-      {/* CARDS DE MÉTRICAS */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {metrics.map((metric, idx) => (
-          <Card key={idx} className="shadow-card">
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground mb-1">{metric.label}</p>
-              <p className="text-2xl font-bold">{metric.value}</p>
+      {/* CARDS INFORMATIVOS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {cards.map((card, idx) => (
+          <Card key={idx} className={`shadow-card border-l-4 ${card.cor}`}>
+            <CardContent className="p-5">
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">{card.titulo}</h3>
+              <p className="text-3xl font-bold mb-1">{card.valor}</p>
+              {card.subtitulo && (
+                <p className="text-xs text-muted-foreground">{card.subtitulo}</p>
+              )}
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* CURSOS EM ANDAMENTO */}
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle>Cursos em andamento</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {cursosEmAndamento.length === 0 ? (
-              <p className="text-muted-foreground col-span-full">Nenhum curso em andamento</p>
-            ) : (
-              cursosEmAndamento.map((curso) => (
-                <div key={curso.id} className="p-3 border rounded-lg bg-card">
-                  <div className="font-semibold">{curso.nome}</div>
-                  <div className="text-sm text-muted-foreground">Local: {curso.local}</div>
-                  <div className="text-lg font-bold mt-2">{curso.count} alunos</div>
-                </div>
-              ))
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {cards.length === 0 && (
+        <Card className="shadow-card">
+          <CardContent className="p-6 text-center">
+            <p className="text-muted-foreground">Nenhum curso com alunos em andamento ou aguardando no momento</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* TABELA DE ALUNOS EM ANDAMENTO */}
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle>Alunos com cursos em andamento</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {alunosAndamento.length === 0 ? (
-            <p className="text-muted-foreground">Nenhum aluno cursando no momento</p>
-          ) : (
+      {alunosAndamento.length > 0 && (
+        <Card className="shadow-card">
+          <CardContent className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Alunos com cursos em andamento (por curso)</h2>
             <div className="overflow-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nome</TableHead>
+                    <TableHead>Nome do Aluno</TableHead>
                     <TableHead>Curso</TableHead>
                     <TableHead>Local</TableHead>
-                    <TableHead>Ano/Turma</TableHead>
+                    <TableHead>Turma/Ano</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {alunosAndamento.map((aluno, idx) => (
                     <TableRow key={idx}>
-                      <TableCell>{aluno.nome}</TableCell>
-                      <TableCell>{aluno.siglaCurso}</TableCell>
-                      <TableCell>{aluno.localCurso}</TableCell>
-                      <TableCell>{aluno.turmaId}</TableCell>
+                      <TableCell className="font-medium">{aluno.nome}</TableCell>
+                      <TableCell>{aluno.curso}</TableCell>
+                      <TableCell>{aluno.local}</TableCell>
+                      <TableCell>{aluno.turmaAno}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
