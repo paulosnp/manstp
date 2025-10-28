@@ -115,7 +115,7 @@ export function BackgroundSettings() {
           <ImagePlus className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>{t("backgroundSettings")}</DialogTitle>
           <DialogDescription>{t("backgroundSettingsDescription")}</DialogDescription>

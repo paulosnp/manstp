@@ -69,7 +69,6 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
         if (error) throw error;
         toast.success(t("courseRegisteredSuccess"));
       }
-      setOpen(false);
       onSuccess();
     } catch (error) {
       toast.error(t("errorSavingCourse"));
@@ -83,7 +82,7 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
       <DialogTrigger asChild>
         {curso ? <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button> : <Button className="gap-2"><Plus className="h-4 w-4" />{t("newCourse")}</Button>}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader><DialogTitle>{curso ? t("editCourse") : t("newCourse")}</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">

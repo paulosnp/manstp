@@ -30,7 +30,6 @@ export function BulkStatusUpdate({ turmaId, turmaNome, onSuccess }: BulkStatusUp
       if (error) throw error;
 
       toast.success(`Status de todos os alunos atualizado para "${selectedStatus}"`);
-      setOpen(false);
       onSuccess();
     } catch (error) {
       console.error("Erro ao atualizar status em massa:", error);
@@ -48,7 +47,7 @@ export function BulkStatusUpdate({ turmaId, turmaNome, onSuccess }: BulkStatusUp
           Editar Status da Turma
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Alterar Status de Toda a Turma</DialogTitle>
           <DialogDescription>

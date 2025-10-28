@@ -158,7 +158,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
           Vincular Aluno
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Criar e Vincular Novo Aluno à Turma: {turmaNome}</DialogTitle>
         </DialogHeader>

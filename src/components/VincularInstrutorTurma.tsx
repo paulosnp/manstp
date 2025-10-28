@@ -68,7 +68,6 @@ export function VincularInstrutorTurma({
     }
 
     toast.success("Instrutor vinculado com sucesso!");
-    setOpen(false);
     setInstrutorId("");
     onSuccess();
   };
@@ -84,7 +83,7 @@ export function VincularInstrutorTurma({
         <GraduationCap className="h-4 w-4" />
         Vincular Instrutor
       </Button>
-      <DialogContent>
+      <DialogContent onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Vincular Instrutor à Turma</DialogTitle>
         </DialogHeader>

@@ -128,7 +128,6 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
       }
 
       toast.success(`Importação concluída! ${sucessos} aluno(s) importado(s), ${erros} erro(s)`);
-      setOpen(false);
       onSuccess();
     } catch (error) {
       console.error("Erro na importação:", error);
@@ -173,7 +172,7 @@ export function ImportarAlunos({ onSuccess, turmaId, trigger }: ImportarAlunosPr
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Importar Lista de Alunos</DialogTitle>
         </DialogHeader>

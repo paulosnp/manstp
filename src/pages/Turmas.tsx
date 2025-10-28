@@ -394,7 +394,7 @@ export default function Turmas() {
       </Card>
 
       <Dialog open={!!selectedTurma} onOpenChange={() => setSelectedTurma(null)}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>
               {viewType === 'alunos' ? 'Alunos' : 'Instrutores'} da Turma: {selectedTurma?.nome} ({selectedTurma?.ano})

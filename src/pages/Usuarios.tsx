@@ -127,7 +127,6 @@ export default function Usuarios() {
       }
 
       toast.success("Usuário criado com sucesso!");
-      setOpen(false);
       setFormData({ email: "", nome_completo: "", password: "", role: "visualizador" });
       fetchUsers();
     } catch (error: any) {
@@ -254,7 +253,6 @@ export default function Usuarios() {
       }
 
       toast.success("Usuário atualizado com sucesso!");
-      setEditOpen(false);
       fetchUsers();
     } catch (error: any) {
       console.error("Erro ao atualizar usuário:", error);
@@ -287,7 +285,7 @@ export default function Usuarios() {
                 Novo Usuário
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md" onInteractOutside={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>Cadastrar Novo Usuário</DialogTitle>
             </DialogHeader>
@@ -464,7 +462,7 @@ export default function Usuarios() {
       {isCoordenador && (
         <>
           <Dialog open={editOpen} onOpenChange={setEditOpen}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md" onInteractOutside={(e) => e.preventDefault()}>
               <DialogHeader>
                 <DialogTitle>Editar Usuário</DialogTitle>
               </DialogHeader>

@@ -95,7 +95,6 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
         toast.success(t("classRegisteredSuccess"));
       }
 
-      setOpen(false);
       onSuccess();
       if (!turma) {
         setFormData({
@@ -131,7 +130,7 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>{turma ? t("editClass") : t("newClass")}</DialogTitle>
         </DialogHeader>

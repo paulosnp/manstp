@@ -125,7 +125,6 @@ export function EditAlunoDialog({ aluno, onSuccess }: EditAlunoDialogProps) {
       }
 
       toast.success("Aluno atualizado com sucesso!");
-      setOpen(false);
       onSuccess();
     } catch (error) {
       console.error("Erro ao atualizar aluno:", error);
@@ -142,7 +141,7 @@ export function EditAlunoDialog({ aluno, onSuccess }: EditAlunoDialogProps) {
           <Pencil className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Editar Aluno</DialogTitle>
         </DialogHeader>

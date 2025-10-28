@@ -92,7 +92,6 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
         toast.success(t("studentRegisteredSuccess"));
       }
 
-      setOpen(false);
       onSuccess();
       if (!aluno) {
         setFormData({
@@ -127,7 +126,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>{aluno ? t("editStudent") : t("newStudent")}</DialogTitle>
         </DialogHeader>
