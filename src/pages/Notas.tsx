@@ -63,6 +63,7 @@ export default function Notas() {
     if (selectedTurma) {
       fetchAlunosDaTurma();
       fetchDisciplinas();
+      fetchNotas();
       setInfoTurma({
         curso: selectedTurma.cursos?.nome || "",
         nome: selectedTurma.nome || "",
@@ -70,6 +71,22 @@ export default function Notas() {
       });
     }
   }, [selectedTurma]);
+
+  const fetchNotas = async () => {
+    if (!selectedTurma) return;
+    
+    const { data, error } = await supabase
+      .from("notas")
+      .select("aluno_id, disciplina_id, nota")
+      .eq("turma_id", selectedTurma.id);
+    
+    if (error) {
+      toast.error("Erro ao carregar notas");
+      return;
+    }
+    
+    setNotas(data || []);
+  };
 
   const fetchTurmas = async () => {
     const { data, error } = await supabase
@@ -104,48 +121,97 @@ export default function Notas() {
   };
 
   const fetchDisciplinas = async () => {
-    // Simulated - In production, you'd have a disciplinas table
-    setDisciplinas([
-      { id: "1", nome: "Matemática" },
-      { id: "2", nome: "Português" },
-      { id: "3", nome: "História" },
-      { id: "4", nome: "Geografia" },
-      { id: "5", nome: "Ciências" },
-    ]);
+    if (!selectedTurma) return;
+    
+    const { data, error } = await supabase
+      .from("disciplinas")
+      .select("id, nome")
+      .eq("turma_id", selectedTurma.id);
+    
+    if (error) {
+      toast.error("Erro ao carregar disciplinas");
+      return;
+    }
+    
+    setDisciplinas(data || []);
   };
 
-  const adicionarDisciplina = () => {
+  const adicionarDisciplina = async () => {
     if (!novaDisciplina.trim()) {
       toast.error("Digite o nome da disciplina");
       return;
     }
 
-    const novaDisciplinaObj = {
-      id: `disc-${Date.now()}`,
-      nome: novaDisciplina,
-    };
+    if (!selectedTurma) {
+      toast.error("Selecione uma turma primeiro");
+      return;
+    }
 
-    setDisciplinas([...disciplinas, novaDisciplinaObj]);
+    const { data, error } = await supabase
+      .from("disciplinas")
+      .insert([{
+        nome: novaDisciplina.trim(),
+        turma_id: selectedTurma.id,
+        carga_horaria: 0
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      toast.error("Erro ao adicionar disciplina");
+      return;
+    }
+
+    setDisciplinas([...disciplinas, data]);
     setNovaDisciplina("");
     toast.success("Disciplina adicionada!");
   };
 
-  const removerDisciplina = (disciplinaId: string) => {
+  const removerDisciplina = async (disciplinaId: string) => {
+    const { error } = await supabase
+      .from("disciplinas")
+      .delete()
+      .eq("id", disciplinaId);
+
+    if (error) {
+      toast.error("Erro ao remover disciplina");
+      return;
+    }
+
     setDisciplinas(disciplinas.filter(d => d.id !== disciplinaId));
     setNotas(notas.filter(n => n.disciplina_id !== disciplinaId));
     toast.success("Disciplina removida!");
   };
 
-  const atualizarNota = (alunoId: string, disciplinaId: string, valor: string) => {
+  const atualizarNota = async (alunoId: string, disciplinaId: string, valor: string) => {
     const nota = parseFloat(valor);
     if (isNaN(nota) || nota < 0 || nota > 10) return;
 
+    if (!selectedTurma) return;
+
+    // Atualizar localmente primeiro para resposta rápida
     const notasAtualizadas = notas.filter(
       n => !(n.aluno_id === alunoId && n.disciplina_id === disciplinaId)
     );
-    
     notasAtualizadas.push({ aluno_id: alunoId, disciplina_id: disciplinaId, nota });
     setNotas(notasAtualizadas);
+
+    // Salvar no banco (upsert)
+    const { error } = await supabase
+      .from("notas")
+      .upsert({
+        turma_id: selectedTurma.id,
+        aluno_id: alunoId,
+        disciplina_id: disciplinaId,
+        nota: nota
+      }, {
+        onConflict: 'turma_id,aluno_id,disciplina_id'
+      });
+
+    if (error) {
+      console.error("Erro ao salvar nota:", error);
+      toast.error("Erro ao salvar nota");
+    }
   };
 
   const getNota = (alunoId: string, disciplinaId: string): number => {

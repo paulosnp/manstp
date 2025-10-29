@@ -427,6 +427,58 @@ export type Database = {
         }
         Relationships: []
       }
+      notas: {
+        Row: {
+          aluno_id: string
+          created_at: string | null
+          disciplina_id: string
+          id: string
+          nota: number
+          turma_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          aluno_id: string
+          created_at?: string | null
+          disciplina_id: string
+          id?: string
+          nota?: number
+          turma_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          aluno_id?: string
+          created_at?: string | null
+          disciplina_id?: string
+          id?: string
+          nota?: number
+          turma_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_disciplina_id_fkey"
+            columns: ["disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
