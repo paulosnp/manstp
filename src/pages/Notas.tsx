@@ -484,16 +484,26 @@ export default function Notas() {
                          const media = parseFloat(calcularMedia(aluno.id));
                          const isRecuperacao = media < 10;
                         
+                        const disciplinasAbaixo10 = notas.filter(n => n.aluno_id === aluno.id && n.nota < 10).length;
+                        
                         return (
                           <TableRow 
                             key={aluno.id} 
                             className={`
                               ${index % 2 === 0 ? 'bg-white dark:bg-gray-950' : 'bg-gray-50 dark:bg-gray-900'}
-                              ${isRecuperacao ? 'animate-pulse border-l-4 border-l-red-500' : ''}
+                              ${isRecuperacao ? 'animate-pulse border-l-4 border-l-red-500 bg-red-50 dark:bg-red-950' : ''}
+                              ${disciplinasAbaixo10 > 0 && disciplinasAbaixo10 < 3 ? 'border-l-4 border-l-yellow-500 bg-yellow-50 dark:bg-yellow-950' : ''}
                               hover:bg-cyan-50 dark:hover:bg-cyan-950 transition-colors
                             `}
                           >
-                            <TableCell className="font-medium">{aluno.nome_completo}</TableCell>
+                            <TableCell className="font-medium">
+                              {aluno.nome_completo}
+                              {disciplinasAbaixo10 > 0 && (
+                                <span className="ml-2 text-xs px-2 py-1 rounded bg-yellow-200 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-100">
+                                  {disciplinasAbaixo10} disc. &lt; 10
+                                </span>
+                              )}
+                            </TableCell>
                             {disciplinas.map((disc) => {
                               const nota = getNota(aluno.id, disc.id);
                               return (

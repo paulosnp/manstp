@@ -349,6 +349,41 @@ export type Database = {
         }
         Relationships: []
       }
+      grade_semana: {
+        Row: {
+          created_at: string
+          dias: Json
+          id: string
+          semana: number
+          turma_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dias?: Json
+          id?: string
+          semana: number
+          turma_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dias?: Json
+          id?: string
+          semana?: number
+          turma_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grade_semana_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instrutor_turma: {
         Row: {
           created_at: string | null

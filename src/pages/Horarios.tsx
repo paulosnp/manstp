@@ -1,10 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, User, Calendar } from "lucide-react";
+import { Plus, User, Calendar, ChevronLeft, ChevronRight, Save, BookOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { startOfYear, addDays, format } from "date-fns";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const DIAS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
+
+interface SemanaData {
+  semana: number;
+  dias: Array<{
+    dia: Date;
+    aulasManha: string[];
+    aulasTarde: string[];
+  }>;
+}
 
 const defaultBlock = (turma_id: string, dia_semana: string, aula_numero: number) => ({
   turma_id,
@@ -23,6 +39,8 @@ export default function Horarios() {
   const [alunos, setAlunos] = useState<any[]>([]);
   const [disciplinas, setDisciplinas] = useState<any[]>([]);
   const [grade, setGrade] = useState<any[]>([]);
+  const [gradeSemanal, setGradeSemanal] = useState<SemanaData[]>([]);
+  const [semanaAtual, setSemanaAtual] = useState(1);
 
   const [activeTurma, setActiveTurma] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -46,6 +64,7 @@ export default function Horarios() {
     if (activeTurma) {
       localStorage.setItem("lovable_last_turma", JSON.stringify(activeTurma));
       loadTurmaData(activeTurma.id);
+      gerarGradeSemanal(activeTurma.id);
     }
   }, [activeTurma]);
 
@@ -72,7 +91,6 @@ export default function Horarios() {
   async function loadTurmaData(turmaId: string) {
     setLoading(true);
     try {
-      // Carregar alunos vinculados via aluno_turma
       const { data: vinculos } = await supabase
         .from("aluno_turma")
         .select("aluno_id")
@@ -117,6 +135,47 @@ export default function Horarios() {
     return blocks;
   }
 
+  function gerarGradeSemanal(turmaId: string) {
+    const ano = new Date().getFullYear();
+    const inicioAno = startOfYear(new Date(ano, 0, 1));
+    const semanas: SemanaData[] = [];
+    
+    for (let i = 0; i < 52; i++) {
+      const semanaData = [];
+      for (let j = 0; j < 5; j++) {
+        const dia = addDays(inicioAno, i * 7 + j);
+        semanaData.push({ 
+          dia, 
+          aulasManha: ['', '', '', ''], 
+          aulasTarde: ['', '', '', ''] 
+        });
+      }
+      semanas.push({ semana: i + 1, dias: semanaData });
+    }
+    setGradeSemanal(semanas);
+  }
+
+  async function atualizarAulaSemanal(
+    semanaIdx: number, 
+    diaIdx: number, 
+    periodo: 'aulasManha' | 'aulasTarde', 
+    aulaIdx: number, 
+    valor: string
+  ) {
+    const copia = [...gradeSemanal];
+    copia[semanaIdx].dias[diaIdx][periodo][aulaIdx] = valor;
+    setGradeSemanal(copia);
+
+    if (activeTurma) {
+      await supabase.from("grade_semana").upsert([{
+        turma_id: activeTurma.id,
+        semana: copia[semanaIdx].semana,
+        dias: copia[semanaIdx].dias as any
+      }], { onConflict: 'turma_id,semana' });
+      toast.success("Grade semanal salva");
+    }
+  }
+
   function openTurma(t: any) {
     setActiveTurma(t);
   }
@@ -138,7 +197,7 @@ export default function Horarios() {
         situacao: "Em Andamento", 
         ano: new Date().getFullYear(),
         user_id: user.user.id,
-        curso_id: "00000000-0000-0000-0000-000000000000" // placeholder
+        curso_id: "00000000-0000-0000-0000-000000000000"
       }])
       .select()
       .single();
@@ -147,48 +206,43 @@ export default function Horarios() {
       toast.error("Erro ao criar turma");
       return;
     }
-    setTurmas((prev) => [...prev, data]);
+    setTurmas([...turmas, data]);
     setNovaTurmaNome("");
     toast.success("Turma criada ✅");
   }
 
   async function criarAluno() {
     if (!novoAlunoNome.trim() || !activeTurma) return;
-    
+
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) {
       toast.error("Usuário não autenticado");
       return;
     }
 
-    const { data, error } = await supabase
+    const { data: aluno, error } = await supabase
       .from("alunos")
       .insert([{ 
         nome_completo: novoAlunoNome.trim(), 
-        graduacao: "Soldado", 
-        tipo_militar: "Marinha do Brasil",
-        user_id: user.user.id
+        tipo_militar: "Marinha do Brasil", 
+        graduacao: "Soldado",
+        user_id: user.user.id 
       }])
       .select()
       .single();
+
     if (error) {
       console.error(error);
       toast.error("Erro ao adicionar aluno");
       return;
     }
-    
-    // Vincular à turma
-    const { error: vinculoError } = await supabase
-      .from("aluno_turma")
-      .insert([{ aluno_id: data.id, turma_id: activeTurma.id }]);
-    
-    if (vinculoError) {
-      console.error(vinculoError);
-      toast.error("Erro ao vincular aluno");
-      return;
-    }
-    
-    setAlunos((prev) => [...prev, data]);
+
+    await supabase.from("aluno_turma").insert([{ 
+      aluno_id: aluno.id, 
+      turma_id: activeTurma.id 
+    }]);
+
+    setAlunos([...alunos, aluno]);
     setNovoAlunoNome("");
     toast.success("Aluno adicionado ✅");
   }
@@ -197,38 +251,47 @@ export default function Horarios() {
     if (!novaDisciplinaNome.trim() || !activeTurma) return;
     const { data, error } = await supabase
       .from("disciplinas")
-      .insert([{ nome: novaDisciplinaNome.trim(), turma_id: activeTurma.id, carga_horaria: 0 }])
+      .insert([{
+        nome: novaDisciplinaNome.trim(),
+        turma_id: activeTurma.id,
+        carga_horaria: 0
+      }])
       .select()
       .single();
+
     if (error) {
       console.error(error);
-      toast.error("Erro ao criar disciplina");
+      toast.error("Erro ao adicionar disciplina");
       return;
     }
-    setDisciplinas((prev) => [...prev, data]);
+
+    setDisciplinas([...disciplinas, data]);
     setNovaDisciplinaNome("");
     toast.success("Disciplina criada ✅");
   }
 
   async function salvarBloco(b: any) {
+    toast.info("Salvando...");
     const payload = {
       turma_id: b.turma_id,
       dia_semana: b.dia_semana,
       aula_numero: b.aula_numero,
-      disciplina: b.disciplina || "",
-      professor: b.professor || "",
-      sala: b.sala || "",
-      observacao: b.observacao || "",
+      disciplina: b.disciplina,
+      professor: b.professor,
+      sala: b.sala,
+      observacao: b.observacao,
     };
+
     const { error } = await supabase
       .from("grade_aulas")
       .upsert(payload, { onConflict: "turma_id,dia_semana,aula_numero" });
+
     if (error) {
       console.error(error);
       toast.error("Erro ao salvar");
       return;
     }
-    toast.success("✅ Salvo automaticamente");
+    toast.success("✅ Dados salvos automaticamente");
   }
 
   function onChangeBlock(index: number, field: string, value: string) {
@@ -248,138 +311,123 @@ export default function Horarios() {
     <div className="min-h-screen flex bg-background">
       <aside className="w-72 bg-card border-r p-4">
         <div className="flex items-center gap-3 mb-4">
-          <Calendar className="h-6 w-6 text-primary" />
-          <h2 className="text-lg font-semibold">{t('schedules.title')}</h2>
+          <Calendar className="h-6 w-6" />
+          <h2 className="text-lg font-semibold">Turmas</h2>
         </div>
 
-        <div className="space-y-2 max-h-[400px] overflow-y-auto">
-          {turmas.map((t) => (
+        <div className="space-y-2">
+          {turmas.map(t => (
             <button
               key={t.id}
               onClick={() => openTurma(t)}
-              className={`w-full text-left px-3 py-2 rounded flex justify-between items-center transition-colors ${
-                activeTurma?.id === t.id ? "bg-primary text-primary-foreground" : "hover:bg-accent"
+              className={`w-full text-left px-3 py-2 rounded flex justify-between items-center ${
+                activeTurma?.id === t.id ? "ring-2 ring-primary ring-offset-1" : "hover:bg-accent"
               }`}
             >
               <span className="flex items-center gap-2">
-                <span className="inline-block w-3 h-3 rounded bg-primary"></span>
                 <strong>{t.nome}</strong>
               </span>
-              <span className="text-sm opacity-70">{t.tipo_militar || "misto"}</span>
+              <span className="text-sm text-muted-foreground">{t.ano}</span>
             </button>
           ))}
         </div>
 
         <div className="mt-6">
-          <input
+          <Input
             value={novaTurmaNome}
-            onChange={(e) => setNovaTurmaNome(e.target.value)}
+            onChange={e => setNovaTurmaNome(e.target.value)}
             placeholder="Nova turma"
-            className="w-full p-2 border rounded mb-2 bg-background"
+            className="w-full mb-2"
           />
-          <button
-            onClick={criarTurma}
-            className="w-full p-2 bg-primary text-primary-foreground rounded flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"
-          >
-            <Plus className="h-4 w-4" /> Criar Turma
-          </button>
+          <Button onClick={criarTurma} className="w-full">
+            <Plus className="h-4 w-4 mr-2" /> Criar Turma
+          </Button>
         </div>
       </aside>
 
-      <main className="flex-1 p-6 overflow-y-auto">
+      <main className="flex-1 p-6">
         <header className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold">Painel de Turmas</h1>
-            <p className="text-sm text-muted-foreground">Abra uma turma para ver a relação de alunos e a grade de aulas.</p>
-          </div>
-          <div className="flex gap-4 items-center">
-            <div className="text-sm">{activeTurma ? `Turma ativa: ${activeTurma.nome}` : "Nenhuma turma selecionada"}</div>
-            <div className="text-xs text-muted-foreground">Horário: Manhã 08:00–12:00 | Tarde 13:00–17:00</div>
+            <h1 className="text-2xl font-bold">Grade de Horários</h1>
+            <p className="text-sm text-muted-foreground">
+              {activeTurma ? `Turma ativa: ${activeTurma.nome}` : "Selecione uma turma"}
+            </p>
           </div>
         </header>
 
         {!activeTurma && (
-          <div className="p-6 bg-card border rounded">Selecione uma turma na barra lateral para começar.</div>
+          <Card className="p-6">
+            <p className="text-center text-muted-foreground">Selecione uma turma na barra lateral para começar.</p>
+          </Card>
         )}
 
         {activeTurma && (
-          <div className="space-y-6">
-            <section className="bg-card p-4 rounded border">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold text-lg">Alunos - {activeTurma.nome}</h2>
-                <div className="flex items-center gap-2">
-                  <input
-                    value={novoAlunoNome}
-                    onChange={(e) => setNovoAlunoNome(e.target.value)}
-                    placeholder="Novo aluno"
-                    className="p-2 border rounded bg-background"
-                  />
-                  <button onClick={criarAluno} className="p-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors">
-                    Adicionar
-                  </button>
-                </div>
-              </div>
+          <Tabs defaultValue="diaria" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="diaria">Grade Diária</TabsTrigger>
+              <TabsTrigger value="semanal">
+                <Calendar className="w-4 h-4 mr-2" />
+                Grade Anual (52 Semanas)
+              </TabsTrigger>
+            </TabsList>
 
-              <div className="grid grid-cols-3 gap-2">
-                {alunos.map((al) => (
-                  <div key={al.id} className="p-2 border rounded flex items-center justify-between bg-background">
-                    <div className="flex items-center gap-2">
+            <TabsContent value="diaria" className="space-y-6">
+              <Card className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-semibold text-lg">Alunos - {activeTurma.nome}</h2>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={novoAlunoNome}
+                      onChange={e => setNovoAlunoNome(e.target.value)}
+                      placeholder="Novo aluno"
+                      className="w-48"
+                    />
+                    <Button onClick={criarAluno}>Adicionar</Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  {alunos.map(al => (
+                    <div key={al.id} className="p-2 border rounded flex items-center gap-2">
                       <User className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <div className="font-medium">{al.nome_completo}</div>
-                        <div className="text-xs text-muted-foreground">ID: {al.id.slice(0, 8)}</div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="bg-card p-4 rounded border">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">Disciplinas</h2>
-                <div className="flex items-center gap-2">
-                  <input
-                    value={novaDisciplinaNome}
-                    onChange={(e) => setNovaDisciplinaNome(e.target.value)}
-                    placeholder="Nova disciplina"
-                    className="p-2 border rounded bg-background"
-                  />
-                  <button onClick={criarDisciplina} className="p-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors">
-                    Criar
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex gap-2 flex-wrap">
-                {disciplinas
-                  .filter((d) => d.turma_id === activeTurma.id)
-                  .map((d) => (
-                    <div key={d.id} className="px-3 py-1 border rounded text-sm bg-background">
-                      {d.nome}
-                    </div>
                   ))}
-                {disciplinas.filter((d) => d.turma_id === activeTurma.id).length === 0 && (
-                  <div className="text-sm text-muted-foreground">Nenhuma disciplina nesta turma.</div>
-                )}
-              </div>
-            </section>
+                </div>
+              </Card>
 
-            <section className="bg-card p-4 rounded border">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">Grade Semanal</h2>
-                <div className="text-sm text-muted-foreground">Edite um bloco e clique em Salvar.</div>
-              </div>
+              <Card className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-semibold">Disciplinas</h2>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={novaDisciplinaNome}
+                      onChange={e => setNovaDisciplinaNome(e.target.value)}
+                      placeholder="Nova disciplina"
+                      className="w-48"
+                    />
+                    <Button onClick={criarDisciplina}>Criar</Button>
+                  </div>
+                </div>
 
-              <div className="overflow-x-auto">
-                <div className="grid grid-cols-5 gap-3">
-                  {DIAS.map((dia, di) => (
-                    <div key={dia} className="bg-accent/50 p-2 rounded">
-                      <div className="font-medium mb-2">{dia}</div>
-                      <div className="space-y-2">
-                        {grade
-                          .filter((g) => g.dia_semana === dia)
-                          .map((b) => {
+                <div className="flex gap-2 flex-wrap">
+                  {disciplinas.map(d => (
+                    <div key={d.id} className="px-3 py-1 border rounded text-sm">{d.nome}</div>
+                  ))}
+                </div>
+              </Card>
+
+              <Card className="p-4">
+                <h2 className="font-semibold mb-4">Grade Semanal Padrão</h2>
+                <div className="overflow-x-auto">
+                  <div className="grid grid-cols-5 gap-3">
+                    {DIAS.map((dia, di) => (
+                      <div key={dia} className="bg-accent/50 p-2 rounded">
+                        <div className="font-medium mb-2 text-center">{dia}</div>
+                        <div className="space-y-2">
+                          {grade.filter((g: any) => g.dia_semana === dia).map((b: any, idx: number) => {
                             const globalIndex = di * 8 + (b.aula_numero - 1);
                             const isManha = b.aula_numero <= 4;
                             return (
@@ -388,52 +436,131 @@ export default function Horarios() {
                                   <div className="text-xs font-semibold">
                                     {isManha ? `Manhã - Aula ${b.aula_numero}` : `Tarde - Aula ${b.aula_numero - 4}`}
                                   </div>
-                                  <div className="text-xs text-muted-foreground">50 min</div>
                                 </div>
 
-                                <input
+                                <Input
                                   placeholder="Disciplina"
-                                  value={b.disciplina || ""}
-                                  onChange={(e) => onChangeBlock(globalIndex, "disciplina", e.target.value)}
-                                  className="w-full p-1 border rounded mb-1 text-sm bg-background"
+                                  value={b.disciplina}
+                                  onChange={e => onChangeBlock(globalIndex, "disciplina", e.target.value)}
+                                  className="mb-1 text-sm"
                                 />
-                                <input
+                                <Input
                                   placeholder="Professor"
-                                  value={b.professor || ""}
-                                  onChange={(e) => onChangeBlock(globalIndex, "professor", e.target.value)}
-                                  className="w-full p-1 border rounded mb-1 text-sm bg-background"
+                                  value={b.professor}
+                                  onChange={e => onChangeBlock(globalIndex, "professor", e.target.value)}
+                                  className="mb-1 text-sm"
                                 />
-                                <input
+                                <Input
                                   placeholder="Sala"
-                                  value={b.sala || ""}
-                                  onChange={(e) => onChangeBlock(globalIndex, "sala", e.target.value)}
-                                  className="w-full p-1 border rounded mb-1 text-sm bg-background"
+                                  value={b.sala}
+                                  onChange={e => onChangeBlock(globalIndex, "sala", e.target.value)}
+                                  className="mb-1 text-sm"
                                 />
-                                <input
-                                  placeholder="Observação"
-                                  value={b.observacao || ""}
-                                  onChange={(e) => onChangeBlock(globalIndex, "observacao", e.target.value)}
-                                  className="w-full p-1 border rounded mb-1 text-sm bg-background"
-                                />
-
-                                <div className="flex gap-2 justify-end">
-                                  <button
-                                    onClick={() => onSaveBlock(globalIndex)}
-                                    className="text-sm px-2 py-1 border rounded hover:bg-accent transition-colors"
-                                  >
-                                    Salvar
-                                  </button>
+                                <div className="flex gap-2 justify-end mt-2">
+                                  <Button onClick={() => onSaveBlock(globalIndex)} size="sm" variant="outline">
+                                    <Save className="w-3 h-3 mr-1" /> Salvar
+                                  </Button>
                                 </div>
                               </div>
                             );
                           })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="semanal">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Grade Anual - Semana {semanaAtual} de 52</span>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSemanaAtual(Math.max(1, semanaAtual - 1))}
+                        disabled={semanaAtual === 1}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSemanaAtual(Math.min(52, semanaAtual + 1))}
+                        disabled={semanaAtual === 52}
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {gradeSemanal[semanaAtual - 1] && (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-5 gap-3">
+                        {DIAS.map((dia, diaIdx) => {
+                          const diaData = gradeSemanal[semanaAtual - 1].dias[diaIdx];
+                          return (
+                            <div key={dia} className="space-y-2">
+                              <div className="font-semibold text-center p-2 bg-primary text-primary-foreground rounded">
+                                {dia}
+                                <div className="text-xs">{format(diaData.dia, 'dd/MM')}</div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <div className="text-sm font-medium">Manhã</div>
+                                {[0, 1, 2, 3].map((aulaIdx) => (
+                                  <Input
+                                    key={`m-${aulaIdx}`}
+                                    placeholder={`Aula ${aulaIdx + 1}`}
+                                    value={diaData.aulasManha[aulaIdx]}
+                                    onChange={(e) =>
+                                      atualizarAulaSemanal(
+                                        semanaAtual - 1,
+                                        diaIdx,
+                                        'aulasManha',
+                                        aulaIdx,
+                                        e.target.value
+                                      )
+                                    }
+                                    className="text-sm"
+                                  />
+                                ))}
+                              </div>
+
+                              <div className="space-y-2">
+                                <div className="text-sm font-medium">Tarde</div>
+                                {[0, 1, 2, 3].map((aulaIdx) => (
+                                  <Input
+                                    key={`t-${aulaIdx}`}
+                                    placeholder={`Aula ${aulaIdx + 5}`}
+                                    value={diaData.aulasTarde[aulaIdx]}
+                                    onChange={(e) =>
+                                      atualizarAulaSemanal(
+                                        semanaAtual - 1,
+                                        diaIdx,
+                                        'aulasTarde',
+                                        aulaIdx,
+                                        e.target.value
+                                      )
+                                    }
+                                    className="text-sm"
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-          </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         )}
       </main>
     </div>

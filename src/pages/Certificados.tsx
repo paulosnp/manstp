@@ -7,8 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
-import { FileDown, Plus, Image as ImageIcon, Type } from "lucide-react";
+import Draggable from "react-draggable";
+import { ResizableBox } from "react-resizable";
+import { useReactToPrint } from "react-to-print";
+import { FileDown, Plus, Image as ImageIcon, Type, Trash2 } from "lucide-react";
+import "react-resizable/css/styles.css";
 
 interface Aluno {
   id: string;
@@ -37,82 +40,87 @@ interface EditorProps {
 
 const CertificateEditor = ({ elements, onElementsChange, editorId }: EditorProps) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
-  const handleMouseDown = (e: React.MouseEvent, id: string) => {
-    const element = elements.find(el => el.id === id);
-    if (element) {
-      setDraggedId(id);
-      setSelectedId(id);
-      setDragOffset({
-        x: e.clientX - element.x,
-        y: e.clientY - element.y
-      });
-    }
+  const handleDrag = (id: string, data: any) => {
+    const newElements = elements.map(el =>
+      el.id === id ? { ...el, x: data.x, y: data.y } : el
+    );
+    onElementsChange(newElements);
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (draggedId) {
-      const newElements = elements.map(el =>
-        el.id === draggedId
-          ? { ...el, x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y }
-          : el
-      );
-      onElementsChange(newElements);
-    }
+  const handleResize = (id: string, width: number, height: number) => {
+    const newElements = elements.map(el =>
+      el.id === id ? { ...el, width, height } : el
+    );
+    onElementsChange(newElements);
   };
 
-  const handleMouseUp = () => {
-    setDraggedId(null);
+  const handleDelete = (id: string) => {
+    onElementsChange(elements.filter(el => el.id !== id));
   };
 
   return (
-    <div
-      className="relative w-full h-[600px] border-4 border-primary rounded-lg bg-background overflow-hidden"
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-    >
+    <div className="relative w-full h-[600px] border-4 border-primary rounded-lg bg-white overflow-hidden">
       {elements.map((element) => (
-        <div
+        <Draggable
           key={element.id}
-          className={`absolute cursor-move border-2 ${
-            selectedId === element.id ? "border-destructive" : "border-dashed border-primary"
-          } p-1`}
-          style={{
-            left: element.x,
-            top: element.y,
-            width: element.width,
-            height: element.height,
-          }}
-          onMouseDown={(e) => handleMouseDown(e, element.id)}
+          position={{ x: element.x, y: element.y }}
+          onStop={(e, data) => handleDrag(element.id, data)}
         >
-          {element.type === "image" ? (
-            <img src={element.content} alt="" className="w-full h-full object-contain" />
-          ) : (
-            <div
-              contentEditable
-              suppressContentEditableWarning
-              style={{
-                fontSize: element.fontSize,
-                fontFamily: element.fontFamily,
-                color: element.color,
-                textAlign: element.textAlign as any,
-              }}
-              className="w-full h-full outline-none"
-              onBlur={(e) => {
-                const newElements = elements.map(el =>
-                  el.id === element.id
-                    ? { ...el, content: e.currentTarget.textContent || "" }
-                    : el
-                );
-                onElementsChange(newElements);
-              }}
+          <div className="absolute">
+            <ResizableBox
+              width={element.width}
+              height={element.height}
+              onResizeStop={(e, data) => handleResize(element.id, data.size.width, data.size.height)}
+              minConstraints={[50, 30]}
+              maxConstraints={[800, 500]}
             >
-              {element.content}
-            </div>
-          )}
-        </div>
+              <div
+                className={`w-full h-full border-2 ${
+                  selectedId === element.id ? "border-destructive" : "border-dashed border-primary"
+                } p-2 cursor-move bg-white`}
+                onClick={() => setSelectedId(element.id)}
+              >
+                {element.type === "image" ? (
+                  <img src={element.content} alt="" className="w-full h-full object-contain" />
+                ) : (
+                  <div
+                    contentEditable
+                    suppressContentEditableWarning
+                    style={{
+                      fontSize: element.fontSize,
+                      fontFamily: element.fontFamily,
+                      color: element.color,
+                      textAlign: element.textAlign as any,
+                    }}
+                    className="w-full h-full outline-none"
+                    onBlur={(e) => {
+                      const newElements = elements.map(el =>
+                        el.id === element.id
+                          ? { ...el, content: e.currentTarget.textContent || "" }
+                          : el
+                      );
+                      onElementsChange(newElements);
+                    }}
+                  >
+                    {element.content}
+                  </div>
+                )}
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="absolute top-0 right-0 h-6 w-6 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(element.id);
+                  }}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            </ResizableBox>
+          </div>
+        </Draggable>
       ))}
     </div>
   );
@@ -131,6 +139,12 @@ export default function Certificados() {
   const [textAlign, setTextAlign] = useState("left");
   const fileInputFrente = useRef<HTMLInputElement>(null);
   const fileInputVerso = useRef<HTMLInputElement>(null);
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Certificado_${alunos.find(a => a.id === selectedAluno)?.nome_completo || 'aluno'}`,
+  });
 
   useEffect(() => {
     fetchAlunos();
@@ -203,14 +217,31 @@ export default function Certificados() {
     setElementosVerso(updateElements(elementosVerso));
   };
 
-  const gerarPDF = () => {
+  const gerarPDF = async () => {
     const aluno = alunos.find(a => a.id === selectedAluno);
     if (!aluno) {
       toast.error("Selecione um aluno");
       return;
     }
 
+    // Use html2canvas para converter o preview em imagem e adicionar ao PDF
+    const element = printRef.current;
+    if (!element) return;
+
+    const html2canvas = (await import("html2canvas")).default;
+    const jsPDF = (await import("jspdf")).default;
+    
+    const canvas = await html2canvas(element);
+    const imgData = canvas.toDataURL("image/png");
+    
     const doc = new jsPDF("landscape", "pt", "a4");
+    const pdfWidth = doc.internal.pageSize.getWidth();
+    const pdfHeight = doc.internal.pageSize.getHeight();
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+    
+    doc.addImage(imgData, "PNG", 0, 0, imgWidth * ratio, imgHeight * ratio);
     
     // Frente
     doc.setFontSize(22);
@@ -364,10 +395,52 @@ export default function Certificados() {
         />
       </Card>
 
-      <Button onClick={gerarPDF} className="w-full" size="lg">
-        <FileDown className="w-4 h-4 mr-2" />
-        Gerar Certificado PDF
-      </Button>
+      <div className="flex gap-4">
+        <Button onClick={gerarPDF} className="flex-1" size="lg">
+          <FileDown className="w-4 h-4 mr-2" />
+          Gerar PDF (jsPDF)
+        </Button>
+        <Button onClick={handlePrint} className="flex-1" size="lg" variant="outline">
+          <FileDown className="w-4 h-4 mr-2" />
+          Imprimir/Salvar PDF
+        </Button>
+      </div>
+
+      {/* Preview para impressão */}
+      <div ref={printRef} className="hidden print:block">
+        <div className="w-full min-h-screen p-8 bg-white">
+          <h1 className="text-4xl font-bold text-center mb-8">{titulo}</h1>
+          <div className="relative w-full h-[800px]">
+            {elementosFrente.map((el) => (
+              <div
+                key={el.id}
+                style={{
+                  position: 'absolute',
+                  left: el.x,
+                  top: el.y,
+                  width: el.width,
+                  height: el.height,
+                }}
+              >
+                {el.type === "image" ? (
+                  <img src={el.content} alt="" className="w-full h-full object-contain" />
+                ) : (
+                  <div
+                    style={{
+                      fontSize: el.fontSize,
+                      fontFamily: el.fontFamily,
+                      color: el.color,
+                      textAlign: el.textAlign as any,
+                    }}
+                  >
+                    {el.content}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
