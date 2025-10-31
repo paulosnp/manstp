@@ -11,16 +11,20 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const DIAS = ["SEGUNDA-FEIRA", "TERÇA-FEIRA", "QUARTA-FEIRA", "QUINTA-FEIRA", "SEXTA-FEIRA", "SÁBADO"];
+const DIAS = ["SEGUNDA-FEIRA", "TERÇA-FEIRA", "QUARTA-FEIRA", "QUINTA-FEIRA", "SEXTA-FEIRA"];
 const HORARIOS = [
-  "07:00 às 11:55",
-  "07:00 às 12:00",
-  "08:00 às 12:00",
-  "12:00 às 13:00",
-  "13:00 às 18:30",
-  "13:00 às 18:35",
-  "18:00 às 21:00",
-  "19:00 às 21:40"
+  "08:00 - 08:50",
+  "08:50 - 09:40",
+  "09:40 - 10:30",
+  "10:30 - 11:20",
+  "11:20 - 12:10",
+  "12:10 - 13:00",
+  "13:00 - 13:50",
+  "13:50 - 14:40",
+  "14:40 - 15:30",
+  "15:30 - 16:20",
+  "16:20 - 17:10",
+  "17:10 - 18:00"
 ];
 
 interface HorarioCell {
@@ -28,8 +32,8 @@ interface HorarioCell {
   dia_semana: string;
   horario: string;
   disciplina: string;
-  professor: string;
-  sala: string;
+  aula: string;
+  instrutor: string;
 }
 
 const defaultCell = (turma_id: string, dia_semana: string, horario: string): HorarioCell => ({
@@ -37,8 +41,8 @@ const defaultCell = (turma_id: string, dia_semana: string, horario: string): Hor
   dia_semana,
   horario,
   disciplina: "",
-  professor: "",
-  sala: "",
+  aula: "",
+  instrutor: "",
 });
 
 export default function Horarios() {
@@ -139,8 +143,8 @@ export default function Horarios() {
             dia_semana: found.dia_semana,
             horario: found.horario,
             disciplina: found.disciplina || "",
-            professor: found.professor || "",
-            sala: found.sala || "",
+            aula: found.aula || "",
+            instrutor: found.instrutor || "",
           });
         } else {
           cells.push(defaultCell(turmaId, dia, horario));
@@ -251,8 +255,8 @@ export default function Horarios() {
       dia_semana: cell.dia_semana,
       horario: cell.horario,
       disciplina: cell.disciplina,
-      professor: cell.professor,
-      sala: cell.sala,
+      aula: cell.aula,
+      instrutor: cell.instrutor,
     };
 
     const { error } = await supabase
@@ -427,16 +431,16 @@ export default function Horarios() {
                                   className="text-xs h-7 border-0 bg-transparent focus:bg-background"
                                 />
                                 <Input
-                                  placeholder="Professor"
-                                  value={cell.professor}
-                                  onChange={e => onChangeCell(cellIndex, "professor", e.target.value)}
+                                  placeholder="Aula"
+                                  value={cell.aula}
+                                  onChange={e => onChangeCell(cellIndex, "aula", e.target.value)}
                                   onBlur={() => onBlurCell(cellIndex)}
                                   className="text-xs h-7 border-0 bg-transparent focus:bg-background"
                                 />
                                 <Input
-                                  placeholder="Sala"
-                                  value={cell.sala}
-                                  onChange={e => onChangeCell(cellIndex, "sala", e.target.value)}
+                                  placeholder="Instrutor"
+                                  value={cell.instrutor}
+                                  onChange={e => onChangeCell(cellIndex, "instrutor", e.target.value)}
                                   onBlur={() => onBlurCell(cellIndex)}
                                   className="text-xs h-7 border-0 bg-transparent focus:bg-background"
                                 />

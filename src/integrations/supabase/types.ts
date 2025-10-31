@@ -312,35 +312,35 @@ export type Database = {
       }
       grade_aulas: {
         Row: {
+          aula: string | null
           created_at: string | null
           dia_semana: string
           disciplina: string | null
           horario: string
           id: string
-          professor: string | null
-          sala: string | null
+          instrutor: string | null
           turma_id: string
           updated_at: string | null
         }
         Insert: {
+          aula?: string | null
           created_at?: string | null
           dia_semana: string
           disciplina?: string | null
           horario: string
           id?: string
-          professor?: string | null
-          sala?: string | null
+          instrutor?: string | null
           turma_id: string
           updated_at?: string | null
         }
         Update: {
+          aula?: string | null
           created_at?: string | null
           dia_semana?: string
           disciplina?: string | null
           horario?: string
           id?: string
-          professor?: string | null
-          sala?: string | null
+          instrutor?: string | null
           turma_id?: string
           updated_at?: string | null
         }
