@@ -14,17 +14,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const DIAS = ["SEGUNDA-FEIRA", "TERÇA-FEIRA", "QUARTA-FEIRA", "QUINTA-FEIRA", "SEXTA-FEIRA"];
 const HORARIOS = [
   "08:00 - 08:50",
-  "08:50 - 09:40",
-  "09:40 - 10:30",
-  "10:30 - 11:20",
-  "11:20 - 12:10",
-  "12:10 - 13:00",
+  "09:00 - 09:50",
+  "10:00 - 10:50",
+  "11:00 - 11:50",
+  "12:00 - 12:50",
   "13:00 - 13:50",
-  "13:50 - 14:40",
-  "14:40 - 15:30",
-  "15:30 - 16:20",
-  "16:20 - 17:10",
-  "17:10 - 18:00"
+  "14:00 - 14:50",
+  "15:00 - 15:50",
+  "16:00 - 16:50",
+  "17:00 - 17:50"
 ];
 
 interface HorarioCell {
