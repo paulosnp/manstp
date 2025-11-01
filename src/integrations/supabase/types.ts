@@ -466,6 +466,7 @@ export type Database = {
           disciplina_id: string
           id: string
           nota: number
+          nota_recuperacao: number | null
           turma_id: string
           updated_at: string | null
         }
@@ -475,6 +476,7 @@ export type Database = {
           disciplina_id: string
           id?: string
           nota?: number
+          nota_recuperacao?: number | null
           turma_id: string
           updated_at?: string | null
         }
@@ -484,6 +486,7 @@ export type Database = {
           disciplina_id?: string
           id?: string
           nota?: number
+          nota_recuperacao?: number | null
           turma_id?: string
           updated_at?: string | null
         }

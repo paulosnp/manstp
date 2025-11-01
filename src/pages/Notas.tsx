@@ -13,6 +13,9 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 import { Line } from 'react-chartjs-2';
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { useUserRole } from "@/hooks/useUserRole";
+import { playBlockSound } from "@/lib/blockSound";
+import { PermissionBlockModal } from "@/components/PermissionBlockModal";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -40,10 +43,12 @@ interface Nota {
   aluno_id: string;
   disciplina_id: string;
   nota: number;
+  nota_recuperacao?: number | null;
 }
 
 export default function Notas() {
   const { t } = useTranslation();
+  const { role, isVisualizador } = useUserRole();
   const [turmas, setTurmas] = useState<Turma[]>([]);
   const [selectedTurma, setSelectedTurma] = useState<Turma | null>(null);
   const [alunos, setAlunos] = useState<Aluno[]>([]);
@@ -53,6 +58,7 @@ export default function Notas() {
   const [logoMarcaDagua, setLogoMarcaDagua] = useState<string>("");
   const [editandoCurso, setEditandoCurso] = useState(false);
   const [infoTurma, setInfoTurma] = useState({ curso: "", nome: "", local: "" });
+  const [blockModal, setBlockModal] = useState({ open: false, message: "" });
   const tableRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -77,7 +83,7 @@ export default function Notas() {
     
     const { data, error } = await supabase
       .from("notas")
-      .select("aluno_id, disciplina_id, nota")
+      .select("aluno_id, disciplina_id, nota, nota_recuperacao")
       .eq("turma_id", selectedTurma.id);
     
     if (error) {
@@ -137,6 +143,12 @@ export default function Notas() {
   };
 
   const adicionarDisciplina = async () => {
+    if (isVisualizador) {
+      playBlockSound();
+      setBlockModal({ open: true, message: "Você não pode adicionar disciplinas. Apenas coordenadores têm essa permissão." });
+      return;
+    }
+
     if (!novaDisciplina.trim()) {
       toast.error("Digite o nome da disciplina");
       return;
@@ -168,6 +180,12 @@ export default function Notas() {
   };
 
   const removerDisciplina = async (disciplinaId: string) => {
+    if (isVisualizador) {
+      playBlockSound();
+      setBlockModal({ open: true, message: "Você não pode remover disciplinas. Apenas coordenadores têm essa permissão." });
+      return;
+    }
+
     const { error } = await supabase
       .from("disciplinas")
       .delete()
@@ -184,6 +202,12 @@ export default function Notas() {
   };
 
   const atualizarNota = async (alunoId: string, disciplinaId: string, valor: string) => {
+    if (isVisualizador) {
+      playBlockSound();
+      setBlockModal({ open: true, message: "Você não pode modificar notas. Apenas coordenadores têm essa permissão." });
+      return;
+    }
+
     const nota = parseFloat(valor);
     if (isNaN(nota) || nota < 0 || nota > 20) return;
 
@@ -214,9 +238,47 @@ export default function Notas() {
     }
   };
 
+  const atualizarNotaRecuperacao = async (alunoId: string, disciplinaId: string, valor: string) => {
+    if (isVisualizador) {
+      playBlockSound();
+      setBlockModal({ open: true, message: "Você não pode modificar notas de recuperação. Apenas coordenadores têm essa permissão." });
+      return;
+    }
+
+    const notaRecuperacao = parseFloat(valor);
+    if (isNaN(notaRecuperacao) || notaRecuperacao < 0 || notaRecuperacao > 20) return;
+
+    if (!selectedTurma) return;
+
+    const { error } = await supabase
+      .from("notas")
+      .upsert({
+        turma_id: selectedTurma.id,
+        aluno_id: alunoId,
+        disciplina_id: disciplinaId,
+        nota: getNota(alunoId, disciplinaId),
+        nota_recuperacao: notaRecuperacao
+      }, {
+        onConflict: 'turma_id,aluno_id,disciplina_id'
+      });
+
+    if (error) {
+      console.error("Erro ao salvar nota de recuperação:", error);
+      toast.error("Erro ao salvar nota de recuperação");
+      return;
+    }
+
+    await fetchNotas();
+  };
+
   const getNota = (alunoId: string, disciplinaId: string): number => {
     const nota = notas.find(n => n.aluno_id === alunoId && n.disciplina_id === disciplinaId);
     return nota?.nota || 0;
+  };
+
+  const getNotaRecuperacao = (alunoId: string, disciplinaId: string): number | null => {
+    const nota = notas.find(n => n.aluno_id === alunoId && n.disciplina_id === disciplinaId);
+    return nota?.nota_recuperacao || null;
   };
 
   const calcularMedia = (alunoId: string): string => {
@@ -506,17 +568,39 @@ export default function Notas() {
                             </TableCell>
                             {disciplinas.map((disc) => {
                               const nota = getNota(aluno.id, disc.id);
+                              const notaRec = getNotaRecuperacao(aluno.id, disc.id);
+                              const precisaRecuperacao = nota < 10;
+                              
                               return (
                                  <TableCell key={disc.id} className="text-center p-2">
-                                   <Input
-                                     type="number"
-                                     min="0"
-                                     max="20"
-                                     step="0.1"
-                                     value={nota || ""}
-                                     onChange={(e) => atualizarNota(aluno.id, disc.id, e.target.value)}
-                                     className={`w-20 text-center font-semibold border-2 ${getNotaColor(nota)} transition-all focus:scale-105`}
-                                   />
+                                   <div className="flex flex-col gap-1">
+                                     <Input
+                                       type="number"
+                                       min="0"
+                                       max="20"
+                                       step="0.1"
+                                       value={nota || ""}
+                                       onChange={(e) => atualizarNota(aluno.id, disc.id, e.target.value)}
+                                       className={`w-20 text-center font-semibold border-2 ${getNotaColor(nota)} transition-all focus:scale-105`}
+                                     />
+                                     {precisaRecuperacao && (
+                                       <div className="space-y-1">
+                                         <div className="text-xs text-red-600 dark:text-red-400 font-semibold">
+                                           Recuperação
+                                         </div>
+                                         <Input
+                                           type="number"
+                                           min="0"
+                                           max="20"
+                                           step="0.1"
+                                           value={notaRec || ""}
+                                           onChange={(e) => atualizarNotaRecuperacao(aluno.id, disc.id, e.target.value)}
+                                           placeholder="Rec."
+                                           className="w-20 text-center text-sm bg-yellow-50 dark:bg-yellow-950/20 border-yellow-400"
+                                         />
+                                       </div>
+                                     )}
+                                   </div>
                                  </TableCell>
                               );
                             })}
@@ -604,6 +688,12 @@ export default function Notas() {
           </Card>
         )}
       </div>
+
+      <PermissionBlockModal
+        open={blockModal.open}
+        onClose={() => setBlockModal({ open: false, message: "" })}
+        message={blockModal.message}
+      />
     </div>
   );
 }

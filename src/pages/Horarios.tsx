@@ -10,6 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUserRole } from "@/hooks/useUserRole";
+import { playBlockSound } from "@/lib/blockSound";
+import { PermissionBlockModal } from "@/components/PermissionBlockModal";
 
 const DIAS = ["SEGUNDA-FEIRA", "TERÇA-FEIRA", "QUARTA-FEIRA", "QUINTA-FEIRA", "SEXTA-FEIRA"];
 const HORARIOS = [
@@ -46,6 +49,7 @@ const defaultCell = (turma_id: string, dia_semana: string, horario: string): Hor
 
 export default function Horarios() {
   const { t } = useTranslation();
+  const { isVisualizador } = useUserRole();
   
   const [turmas, setTurmas] = useState<any[]>([]);
   const [alunos, setAlunos] = useState<any[]>([]);
@@ -61,6 +65,7 @@ export default function Horarios() {
   const [novoAlunoNome, setNovoAlunoNome] = useState("");
   const [novaDisciplinaNome, setNovaDisciplinaNome] = useState("");
   const [showAllTurmas, setShowAllTurmas] = useState(false);
+  const [blockModal, setBlockModal] = useState({ open: false, message: "" });
 
   // Filter turmas based on keywords
   const filteredTurmas = showAllTurmas 
@@ -209,6 +214,12 @@ export default function Horarios() {
   }
 
   async function criarTurma() {
+    if (isVisualizador) {
+      playBlockSound();
+      setBlockModal({ open: true, message: "Você não pode criar turmas. Apenas coordenadores têm essa permissão." });
+      return;
+    }
+
     if (!novaTurmaNome.trim()) return;
     
     const { data: user } = await supabase.auth.getUser();
@@ -240,6 +251,12 @@ export default function Horarios() {
   }
 
   async function criarAluno() {
+    if (isVisualizador) {
+      playBlockSound();
+      setBlockModal({ open: true, message: "Você não pode adicionar alunos. Apenas coordenadores têm essa permissão." });
+      return;
+    }
+
     if (!novoAlunoNome.trim() || !activeTurma) return;
 
     const { data: user } = await supabase.auth.getUser();
@@ -276,6 +293,12 @@ export default function Horarios() {
   }
 
   async function criarDisciplina() {
+    if (isVisualizador) {
+      playBlockSound();
+      setBlockModal({ open: true, message: "Você não pode criar disciplinas. Apenas coordenadores têm essa permissão." });
+      return;
+    }
+
     if (!novaDisciplinaNome.trim() || !activeTurma) return;
     const { data, error } = await supabase
       .from("disciplinas")
@@ -334,12 +357,19 @@ export default function Horarios() {
   }
 
   function onChangeCell(index: number, field: keyof HorarioCell, value: string) {
+    if (isVisualizador) {
+      playBlockSound();
+      setBlockModal({ open: true, message: "Você não pode modificar a grade de horários. Apenas coordenadores têm essa permissão." });
+      return;
+    }
+
     const copy = [...grade];
     copy[index] = { ...copy[index], [field]: value };
     setGrade(copy);
   }
 
   async function onBlurCell(index: number) {
+    if (isVisualizador) return;
     await salvarGradeSemana();
   }
 
@@ -573,6 +603,12 @@ export default function Horarios() {
           </div>
         )}
       </main>
+
+      <PermissionBlockModal
+        open={blockModal.open}
+        onClose={() => setBlockModal({ open: false, message: "" })}
+        message={blockModal.message}
+      />
     </div>
   );
 }
