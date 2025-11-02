@@ -167,12 +167,6 @@ export default function Dashboard() {
       });
 
       const newCards: DashboardCard[] = [
-        {
-          titulo: "Total Geral de Alunos",
-          valor: totalGeral,
-          subtitulo: `Atualizado: ${timeStr}`,
-          cor: "border-l-blue-400"
-        },
         ...(copaaznavTotal > 0 ? [{
           titulo: "Alunos no curso COPPAZNAV",
           valor: copaaznavTotal,
@@ -214,12 +208,6 @@ export default function Dashboard() {
           valor: rovEbTotal,
           subtitulo: `Andamento: ${rovEbAndamento} • Aguardando: ${rovEbAguardando}`,
           cor: "border-l-red-600"
-        },
-        {
-          titulo: "Cursos em Andamento (Brasil)",
-          valor: cursosAndamentoBrasil,
-          subtitulo: `Última atualização: ${timeStr}`,
-          cor: "border-l-cyan-500"
         }
       ];
 

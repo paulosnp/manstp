@@ -102,7 +102,12 @@ export default function Notas() {
       toast.error("Erro ao carregar turmas");
       return;
     }
-    setTurmas(data || []);
+    // Filtrar turmas que contenham FSG, FMN, GAT ou FSD
+    const turmasFiltradas = (data || []).filter(turma => {
+      const nome = turma.nome?.toLowerCase() || '';
+      return nome.includes('fsg') || nome.includes('fmn') || nome.includes('gat') || nome.includes('fsd');
+    });
+    setTurmas(turmasFiltradas);
   };
 
   const fetchAlunosDaTurma = async () => {
@@ -320,14 +325,27 @@ export default function Notas() {
       });
       
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('l', 'mm', 'a4');
+      const pdf = new jsPDF('l', 'mm', 'a4'); // landscape A4
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      // Adicionar cabeçalho
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`Boletim de Notas - ${selectedTurma?.nome || 'Turma'}`, pdfWidth / 2, 15, { align: 'center' });
+      
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Curso: ${infoTurma.curso}`, 15, 25);
+      pdf.text(`Local: ${infoTurma.local}`, 15, 32);
+      pdf.text(`Ano: ${selectedTurma?.ano || ''}`, pdfWidth - 15, 25, { align: 'right' });
+      
+      // Adicionar tabela
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const ratio = Math.min(pdfWidth / imgWidth, (pdfHeight - 45) / imgHeight);
       const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 10;
+      const imgY = 40;
 
       pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
       pdf.save(`boletim_${selectedTurma?.nome || 'turma'}.pdf`);
