@@ -654,7 +654,7 @@ export default function Horarios() {
                             <td key={dia} className="border border-border p-1">
                               <div className="space-y-1">
                                 <Select
-                                  value={cell.disciplina}
+                                  value={cell.disciplina || undefined}
                                   onValueChange={(value) => {
                                     onChangeCell(cellIndex, "disciplina", value);
                                     onBlurCell(cellIndex);
@@ -664,7 +664,6 @@ export default function Horarios() {
                                     <SelectValue placeholder="Disciplina" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="">-- Selecione --</SelectItem>
                                     {disciplinas.map(d => (
                                       <SelectItem key={d.id} value={d.nome}>
                                         {d.nome}
