@@ -68,6 +68,7 @@ export default function Horarios() {
   const [novaDisciplinaNome, setNovaDisciplinaNome] = useState("");
   const [showAllTurmas, setShowAllTurmas] = useState(false);
   const [blockModal, setBlockModal] = useState({ open: false, message: "" });
+  const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
 
   // Filter turmas based on keywords
   const filteredTurmas = showAllTurmas 
@@ -102,7 +103,7 @@ export default function Horarios() {
       loadGradeSemana(activeTurma.id, semanaAtual);
       calcularDataSemana(semanaAtual);
     }
-  }, [semanaAtual]);
+  }, [semanaAtual, anoSelecionado]);
 
   async function loadAll() {
     setLoading(true);
@@ -155,7 +156,7 @@ export default function Horarios() {
   }
 
   function calcularDataSemana(numeroSemana: number) {
-    const ano = new Date().getFullYear();
+    const ano = anoSelecionado;
     const inicioAno = startOfYear(new Date(ano, 0, 1));
     const dataInicio = addDays(inicioAno, (numeroSemana - 1) * 7);
     setDataInicioSemana(dataInicio);
@@ -594,6 +595,27 @@ export default function Horarios() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold">Grade de Horários - Semana {semanaAtual} de 52</h2>
                 <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Label>Ano:</Label>
+                    <Select 
+                      value={anoSelecionado.toString()} 
+                      onValueChange={(value) => {
+                        setAnoSelecionado(parseInt(value));
+                        calcularDataSemana(semanaAtual);
+                      }}
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 2 + i).map((ano) => (
+                          <SelectItem key={ano} value={ano.toString()}>
+                            {ano}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <span className="text-sm text-muted-foreground">
                     {format(dataInicioSemana, "dd/MM/yyyy")} - {format(addDays(dataInicioSemana, 4), "dd/MM/yyyy")}
                   </span>

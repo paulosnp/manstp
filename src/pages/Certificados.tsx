@@ -137,6 +137,7 @@ export default function Certificados() {
   const [fontColor, setFontColor] = useState("#000000");
   const [fontFamily, setFontFamily] = useState("Arial");
   const [textAlign, setTextAlign] = useState("left");
+  const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
   const fileInputFrente = useRef<HTMLInputElement>(null);
   const fileInputVerso = useRef<HTMLInputElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
@@ -297,6 +298,22 @@ export default function Certificados() {
           <div className="space-y-2">
             <Label>Título do Certificado</Label>
             <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex: Certificado de Conclusão" />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Ano</Label>
+            <Select value={anoSelecionado.toString()} onValueChange={(value) => setAnoSelecionado(parseInt(value))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 2 + i).map((ano) => (
+                  <SelectItem key={ano} value={ano.toString()}>
+                    {ano}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

@@ -287,7 +287,17 @@ export default function Notas() {
   };
 
   const calcularMedia = (alunoId: string): string => {
-    const notasAluno = disciplinas.map(d => getNota(alunoId, d.id));
+    const notasAluno = disciplinas.map(d => {
+      const nota = getNota(alunoId, d.id);
+      const notaRec = getNotaRecuperacao(alunoId, d.id);
+      
+      // Se a nota é menor que 10 e tem recuperação preenchida, usar a recuperação
+      if (nota > 0 && nota < 10 && notaRec !== null && notaRec > 0) {
+        return notaRec;
+      }
+      return nota;
+    });
+    
     if (notasAluno.length === 0) return "0.00";
     
     const soma = notasAluno.reduce((acc, n) => acc + n, 0);
@@ -559,12 +569,17 @@ export default function Notas() {
                         <TableHead className="text-center font-bold min-w-[100px]">Média</TableHead>
                       </TableRow>
                     </TableHeader>
-                    <TableBody>
-                       {alunos.map((aluno, index) => {
-                         const media = parseFloat(calcularMedia(aluno.id));
+                     <TableBody>
+                       {alunos
+                         .map((aluno) => ({
+                           aluno,
+                           media: parseFloat(calcularMedia(aluno.id))
+                         }))
+                         .sort((a, b) => b.media - a.media) // Ordenar da maior para menor média
+                         .map(({ aluno, media }, index) => {
                          const isRecuperacao = media < 10;
                         
-                        const disciplinasAbaixo10 = notas.filter(n => n.aluno_id === aluno.id && n.nota < 10).length;
+                        const disciplinasAbaixo10 = notas.filter(n => n.aluno_id === aluno.id && n.nota > 0 && n.nota < 10).length;
                         
                         return (
                           <TableRow 
@@ -590,7 +605,7 @@ export default function Notas() {
                               const precisaRecuperacao = nota < 10;
                               
                               return (
-                                 <TableCell key={disc.id} className="text-center p-2">
+                                   <TableCell key={disc.id} className="text-center p-2">
                                    <div className="flex flex-col gap-1">
                                      <Input
                                        type="number"
@@ -601,7 +616,7 @@ export default function Notas() {
                                        onChange={(e) => atualizarNota(aluno.id, disc.id, e.target.value)}
                                        className={`w-20 text-center font-semibold border-2 ${getNotaColor(nota)} transition-all focus:scale-105`}
                                      />
-                                     {precisaRecuperacao && (
+                                     {precisaRecuperacao && nota > 0 && (
                                        <div className="space-y-1">
                                          <div className="text-xs text-red-600 dark:text-red-400 font-semibold">
                                            Recuperação

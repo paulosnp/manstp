@@ -20,20 +20,33 @@ const Estatisticas = () => {
 
   useEffect(() => {
     fetchData();
+    // Configurar atualização automática a cada 30 segundos
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchData = async () => {
     try {
-      // Buscar totais
-      const [alunosResult, instrutoresResult, cursosResult, turmasResult] = await Promise.all([
-        supabase.from("alunos").select("id", { count: "exact", head: true }),
+      // Buscar alunos vinculados a turmas (mesma lógica do gráfico)
+      const { data: alunoTurma, error: errorAT } = await supabase
+        .from("aluno_turma")
+        .select("aluno_id");
+
+      if (errorAT) throw errorAT;
+
+      // Contar alunos únicos
+      const alunosUnicos = new Set(alunoTurma?.map(at => at.aluno_id) || []);
+      const totalAlunos = alunosUnicos.size;
+
+      // Buscar outros totais
+      const [instrutoresResult, cursosResult, turmasResult] = await Promise.all([
         supabase.from("instrutores").select("id", { count: "exact", head: true }),
         supabase.from("cursos").select("id", { count: "exact", head: true }),
         supabase.from("turmas").select("id", { count: "exact", head: true }),
       ]);
 
       setStats({
-        totalAlunos: alunosResult.count || 0,
+        totalAlunos: totalAlunos,
         totalInstrutores: instrutoresResult.count || 0,
         totalCursos: cursosResult.count || 0,
         totalTurmas: turmasResult.count || 0,
