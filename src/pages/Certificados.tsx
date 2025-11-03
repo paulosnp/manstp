@@ -10,8 +10,9 @@ import { toast } from "sonner";
 import Draggable from "react-draggable";
 import { ResizableBox } from "react-resizable";
 import { useReactToPrint } from "react-to-print";
-import { FileDown, Plus, Image as ImageIcon, Type, Trash2 } from "lucide-react";
+import { FileDown, Plus, Image as ImageIcon, Type, Trash2, FileText } from "lucide-react";
 import "react-resizable/css/styles.css";
+import diplomaTemplate from "@/assets/diploma-template.jpg";
 
 interface Aluno {
   id: string;
@@ -36,9 +37,10 @@ interface EditorProps {
   elements: DraggableElement[];
   onElementsChange: (elements: DraggableElement[]) => void;
   editorId: string;
+  backgroundImage?: string;
 }
 
-const CertificateEditor = ({ elements, onElementsChange, editorId }: EditorProps) => {
+const CertificateEditor = ({ elements, onElementsChange, editorId, backgroundImage }: EditorProps) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const handleDrag = (id: string, data: any) => {
@@ -60,7 +62,15 @@ const CertificateEditor = ({ elements, onElementsChange, editorId }: EditorProps
   };
 
   return (
-    <div className="relative w-full h-[600px] border-4 border-primary rounded-lg bg-white overflow-hidden">
+    <div 
+      className="relative w-full h-[600px] border-4 border-primary rounded-lg bg-white overflow-hidden"
+      style={{
+        backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
+        backgroundSize: 'contain',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
       {elements.map((element) => (
         <Draggable
           key={element.id}
@@ -138,6 +148,8 @@ export default function Certificados() {
   const [fontFamily, setFontFamily] = useState("Arial");
   const [textAlign, setTextAlign] = useState("left");
   const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
+  const [backgroundFrente, setBackgroundFrente] = useState<string>("");
+  const [backgroundVerso, setBackgroundVerso] = useState<string>("");
   const fileInputFrente = useRef<HTMLInputElement>(null);
   const fileInputVerso = useRef<HTMLInputElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
@@ -216,6 +228,15 @@ export default function Certificados() {
 
     setElementosFrente(updateElements(elementosFrente));
     setElementosVerso(updateElements(elementosVerso));
+  };
+
+  const carregarTemplateDiploma = (editor: "frente" | "verso") => {
+    if (editor === "frente") {
+      setBackgroundFrente(diplomaTemplate);
+    } else {
+      setBackgroundVerso(diplomaTemplate);
+    }
+    toast.success("Template de diploma carregado com sucesso!");
   };
 
   const gerarPDF = async () => {
@@ -318,6 +339,14 @@ export default function Certificados() {
         </div>
 
         <div className="flex flex-wrap gap-2">
+          <Button onClick={() => carregarTemplateDiploma("frente")} variant="default" size="sm">
+            <FileText className="w-4 h-4 mr-2" />
+            Template Diploma (Frente)
+          </Button>
+          <Button onClick={() => carregarTemplateDiploma("verso")} variant="default" size="sm">
+            <FileText className="w-4 h-4 mr-2" />
+            Template Diploma (Verso)
+          </Button>
           <Button onClick={() => adicionarTexto("frente")} variant="outline" size="sm">
             <Type className="w-4 h-4 mr-2" />
             Texto Frente
@@ -400,6 +429,7 @@ export default function Certificados() {
           elements={elementosFrente}
           onElementsChange={setElementosFrente}
           editorId="frente"
+          backgroundImage={backgroundFrente}
         />
       </Card>
 
@@ -409,6 +439,7 @@ export default function Certificados() {
           elements={elementosVerso}
           onElementsChange={setElementosVerso}
           editorId="verso"
+          backgroundImage={backgroundVerso}
         />
       </Card>
 
@@ -427,7 +458,15 @@ export default function Certificados() {
       <div ref={printRef} className="hidden print:block">
         <div className="w-full min-h-screen p-8 bg-white">
           <h1 className="text-4xl font-bold text-center mb-8">{titulo}</h1>
-          <div className="relative w-full h-[800px]">
+          <div 
+            className="relative w-full h-[800px]"
+            style={{
+              backgroundImage: backgroundFrente ? `url(${backgroundFrente})` : undefined,
+              backgroundSize: 'contain',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            }}
+          >
             {elementosFrente.map((el) => (
               <div
                 key={el.id}
