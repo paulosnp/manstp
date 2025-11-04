@@ -1,59 +1,43 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useReactToPrint } from "react-to-print";
-import { FileDown } from "lucide-react";
+import { Eye, Save } from "lucide-react";
+import { Canvas as FabricCanvas, Textbox, FabricImage, util } from "fabric";
 import diplomaTemplate from "@/assets/diploma-template.jpg";
-import {
-  CertificateEditor,
-  DraggableElement,
-} from "@/components/certificados/CertificateEditor";
-import { CertificateToolbar } from "@/components/certificados/CertificateToolbar";
-import { TextStyleControls } from "@/components/certificados/TextStyleControls";
-import { CertificatePrintPreview } from "@/components/certificados/CertificatePrintPreview";
+import { CertificateTemplateSelector } from "@/components/certificados/CertificateTemplateSelector";
+import { CertificateGeneralSettings } from "@/components/certificados/CertificateGeneralSettings";
+import { CertificateElementToolbar } from "@/components/certificados/CertificateElementToolbar";
+import { CertificateCanvas } from "@/components/certificados/CertificateCanvas";
 
 interface Aluno {
   id: string;
   nome_completo: string;
 }
 
+interface Template {
+  id: string;
+  name: string;
+  thumbnail?: string;
+  data: any;
+}
+
 export default function Certificados() {
   const { t } = useTranslation();
   const [alunos, setAlunos] = useState<Aluno[]>([]);
-  const [selectedAluno, setSelectedAluno] = useState("");
-  const [titulo, setTitulo] = useState("");
-  const [elementosFrente, setElementosFrente] = useState<DraggableElement[]>([]);
-  const [elementosVerso, setElementosVerso] = useState<DraggableElement[]>([]);
-  const [fontSize, setFontSize] = useState(16);
-  const [fontColor, setFontColor] = useState("#000000");
-  const [fontFamily, setFontFamily] = useState("Arial");
-  const [textAlign, setTextAlign] = useState("center");
-  const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
-  const [backgroundFrente, setBackgroundFrente] = useState<string>("");
-  const [backgroundVerso, setBackgroundVerso] = useState<string>("");
-  const printRef = useRef<HTMLDivElement>(null);
-
-  const handlePrint = useReactToPrint({
-    contentRef: printRef,
-    documentTitle: `Certificado_${
-      alunos.find((a) => a.id === selectedAluno)?.nome_completo || "aluno"
-    }`,
-  });
+  const [orientation, setOrientation] = useState<"landscape" | "portrait">("landscape");
+  const [backgroundImage, setBackgroundImage] = useState<string>("");
+  const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [templateName, setTemplateName] = useState("");
 
   useEffect(() => {
     fetchAlunos();
+    setBackgroundImage(diplomaTemplate);
   }, []);
 
   const fetchAlunos = async () => {
@@ -65,237 +49,238 @@ export default function Certificados() {
     setAlunos(data || []);
   };
 
-  const adicionarTexto = (editor: "frente" | "verso") => {
-    const novoElemento: DraggableElement = {
-      id: `txt-${Date.now()}`,
-      type: "text",
-      content: "Digite aqui o texto",
-      x: 100,
-      y: 100,
-      width: 300,
-      height: 60,
-      fontSize: 16,
-      fontFamily: "Arial",
-      color: "#000000",
-      textAlign: "center",
-    };
-
-    if (editor === "frente") {
-      setElementosFrente([...elementosFrente, novoElemento]);
-    } else {
-      setElementosVerso([...elementosVerso, novoElemento]);
+  const handleBackgroundChange = (file: File | null) => {
+    if (!file) {
+      setBackgroundImage("");
+      return;
     }
-    toast.success(`Texto adicionado ao ${editor}`);
-  };
 
-  const adicionarImagem = (file: File, editor: "frente" | "verso") => {
     const reader = new FileReader();
     reader.onload = () => {
-      const novoElemento: DraggableElement = {
-        id: `img-${Date.now()}`,
-        type: "image",
-        content: reader.result as string,
-        x: 50,
-        y: 50,
-        width: 150,
-        height: 150,
-      };
-
-      if (editor === "frente") {
-        setElementosFrente([...elementosFrente, novoElemento]);
-      } else {
-        setElementosVerso([...elementosVerso, novoElemento]);
-      }
-      toast.success(`Imagem adicionada ao ${editor}`);
+      setBackgroundImage(reader.result as string);
     };
     reader.readAsDataURL(file);
   };
 
-  const aplicarEstilo = () => {
-    const updateElements = (elements: DraggableElement[]) =>
-      elements.map((el) => {
-        if (el.type === "text") {
-          return { ...el, fontSize, fontFamily, color: fontColor, textAlign };
-        }
-        return el;
+  const handleCanvasReady = (canvas: FabricCanvas) => {
+    setFabricCanvas(canvas);
+  };
+
+  const addText = () => {
+    if (!fabricCanvas) return;
+
+    const text = new Textbox("Digite seu texto", {
+      left: 100,
+      top: 100,
+      width: 300,
+      fontSize: 20,
+      fontFamily: "Arial",
+      fill: "#000000",
+    });
+
+    fabricCanvas.add(text);
+    fabricCanvas.setActiveObject(text);
+    fabricCanvas.renderAll();
+    toast.success("Texto adicionado");
+  };
+
+  const addCourseName = () => {
+    if (!fabricCanvas) return;
+
+    const text = new Textbox("Nome do Curso", {
+      left: 100,
+      top: 200,
+      width: 400,
+      fontSize: 24,
+      fontFamily: "Arial",
+      fontWeight: "bold",
+      fill: "#000000",
+      textAlign: "center",
+    });
+
+    fabricCanvas.add(text);
+    fabricCanvas.setActiveObject(text);
+    fabricCanvas.renderAll();
+    toast.success("Campo de nome do curso adicionado");
+  };
+
+  const addStudentName = () => {
+    if (!fabricCanvas) return;
+
+    const text = new Textbox("Nome do Aluno", {
+      left: 100,
+      top: 150,
+      width: 400,
+      fontSize: 28,
+      fontFamily: "Arial",
+      fontWeight: "bold",
+      fill: "#000000",
+      textAlign: "center",
+    });
+
+    fabricCanvas.add(text);
+    fabricCanvas.setActiveObject(text);
+    fabricCanvas.renderAll();
+    toast.success("Campo de nome do aluno adicionado");
+  };
+
+  const addInstructor = () => {
+    if (!fabricCanvas) return;
+
+    const text = new Textbox("Instrutor", {
+      left: 100,
+      top: 250,
+      width: 300,
+      fontSize: 18,
+      fontFamily: "Arial",
+      fill: "#000000",
+    });
+
+    fabricCanvas.add(text);
+    fabricCanvas.setActiveObject(text);
+    fabricCanvas.renderAll();
+    toast.success("Campo de instrutor adicionado");
+  };
+
+  const addImage = (file: File) => {
+    if (!fabricCanvas) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      util.loadImage(reader.result as string, { crossOrigin: "anonymous" }).then((img) => {
+        const fabricImg = new FabricImage(img, {
+          left: 50,
+          top: 50,
+          scaleX: 0.3,
+          scaleY: 0.3,
+        });
+
+        fabricCanvas.add(fabricImg);
+        fabricCanvas.setActiveObject(fabricImg);
+        fabricCanvas.renderAll();
+        toast.success("Imagem adicionada");
       });
-
-    setElementosFrente(updateElements(elementosFrente));
-    setElementosVerso(updateElements(elementosVerso));
-    toast.success("Estilo aplicado aos textos");
+    };
+    reader.readAsDataURL(file);
   };
 
-  const carregarTemplateDiploma = (editor: "frente" | "verso") => {
-    if (editor === "frente") {
-      setBackgroundFrente(diplomaTemplate);
-    } else {
-      setBackgroundVerso(diplomaTemplate);
-    }
-    toast.success(`Template de diploma carregado no ${editor}`);
-  };
-
-  const gerarPDF = async () => {
-    const aluno = alunos.find((a) => a.id === selectedAluno);
-    if (!aluno) {
-      toast.error("Selecione um aluno");
+  const saveTemplate = () => {
+    if (!fabricCanvas) return;
+    if (!templateName.trim()) {
+      toast.error("Digite um nome para o template");
       return;
     }
 
-    const element = printRef.current;
-    if (!element) return;
+    const json = fabricCanvas.toJSON();
+    const thumbnail = fabricCanvas.toDataURL({ multiplier: 0.5, format: "png", quality: 0.5 });
 
-    try {
-      const html2canvas = (await import("html2canvas")).default;
-      const jsPDF = (await import("jspdf")).default;
+    const newTemplate: Template = {
+      id: Date.now().toString(),
+      name: templateName,
+      thumbnail,
+      data: { json, orientation, backgroundImage },
+    };
 
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-      });
-      const imgData = canvas.toDataURL("image/png");
+    const saved = localStorage.getItem("certificate_templates");
+    const templates: Template[] = saved ? JSON.parse(saved) : [];
+    templates.push(newTemplate);
+    localStorage.setItem("certificate_templates", JSON.stringify(templates));
 
-      const doc = new jsPDF("landscape", "pt", "a4");
-      const pdfWidth = doc.internal.pageSize.getWidth();
-      const pdfHeight = doc.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+    toast.success("Template salvo com sucesso!");
+    setTemplateName("");
+  };
 
-      doc.addImage(imgData, "PNG", 0, 0, imgWidth * ratio, imgHeight * ratio);
-
-      // Adicionar verso se houver elementos
-      if (elementosVerso.length > 0 || backgroundVerso) {
-        doc.addPage();
-        doc.setFontSize(18);
-        doc.text("Verso do Certificado", pdfWidth / 2, 50, { align: "center" });
+  const handleSelectTemplate = (template: Template | null) => {
+    if (!template) {
+      setSelectedTemplate(null);
+      if (fabricCanvas) {
+        fabricCanvas.clear();
+        fabricCanvas.backgroundColor = "#ffffff";
+        fabricCanvas.renderAll();
       }
+      return;
+    }
 
-      doc.save(`${aluno.nome_completo}_certificado_${anoSelecionado}.pdf`);
-      toast.success("Certificado gerado com sucesso!");
-    } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      toast.error("Erro ao gerar o PDF");
+    setSelectedTemplate(template);
+    setOrientation(template.data.orientation);
+    setBackgroundImage(template.data.backgroundImage);
+
+    if (fabricCanvas) {
+      fabricCanvas.loadFromJSON(template.data.json).then(() => {
+        fabricCanvas.renderAll();
+        toast.success("Template carregado");
+      });
+    }
+  };
+
+  const handlePreview = () => {
+    if (!fabricCanvas) return;
+
+    const dataUrl = fabricCanvas.toDataURL({ multiplier: 2, format: "png", quality: 1.0 });
+    const win = window.open();
+    if (win) {
+      win.document.write(`<img src="${dataUrl}" style="width:100%;"/>`);
     }
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">
-          {t("certificates") || "Certificados e Diplomas"}
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Crie e personalize certificados profissionais com templates editáveis
-        </p>
-      </div>
-
-      <Card className="p-6 space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Informações do Certificado</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Selecionar Aluno</Label>
-              <Select value={selectedAluno} onValueChange={setSelectedAluno}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Escolha um aluno" />
-                </SelectTrigger>
-                <SelectContent>
-                  {alunos.map((aluno) => (
-                    <SelectItem key={aluno.id} value={aluno.id}>
-                      {aluno.nome_completo}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Título do Certificado</Label>
-              <Input
-                value={titulo}
-                onChange={(e) => setTitulo(e.target.value)}
-                placeholder="Ex: Certificado de Conclusão"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Ano</Label>
-              <Select
-                value={anoSelecionado.toString()}
-                onValueChange={(value) => setAnoSelecionado(parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 2 + i).map(
-                    (ano) => (
-                      <SelectItem key={ano} value={ano.toString()}>
-                        {ano}
-                      </SelectItem>
-                    )
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+    <div className="min-h-screen bg-background">
+      <div className="border-b bg-muted/30">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Certificate Builder</h1>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handlePreview}>
+              <Eye className="w-4 h-4 mr-2" />
+              Preview
+            </Button>
+            <Button onClick={saveTemplate}>
+              <Save className="w-4 h-4 mr-2" />
+              Salvar Template
+            </Button>
           </div>
         </div>
-
-        <CertificateToolbar
-          onAddText={adicionarTexto}
-          onAddImage={adicionarImagem}
-          onLoadTemplate={carregarTemplateDiploma}
-        />
-
-        <TextStyleControls
-          fontFamily={fontFamily}
-          fontSize={fontSize}
-          fontColor={fontColor}
-          textAlign={textAlign}
-          onFontFamilyChange={setFontFamily}
-          onFontSizeChange={setFontSize}
-          onFontColorChange={setFontColor}
-          onTextAlignChange={setTextAlign}
-          onApplyStyle={aplicarEstilo}
-        />
-      </Card>
-
-      <Card className="p-6">
-        <CertificateEditor
-          elements={elementosFrente}
-          onElementsChange={setElementosFrente}
-          backgroundImage={backgroundFrente}
-          editorTitle="Editor - Frente do Certificado"
-        />
-      </Card>
-
-      <Card className="p-6">
-        <CertificateEditor
-          elements={elementosVerso}
-          onElementsChange={setElementosVerso}
-          backgroundImage={backgroundVerso}
-          editorTitle="Editor - Verso do Certificado"
-        />
-      </Card>
-
-      <div className="flex gap-4">
-        <Button onClick={gerarPDF} className="flex-1" size="lg">
-          <FileDown className="w-4 h-4 mr-2" />
-          Gerar PDF
-        </Button>
-        <Button onClick={handlePrint} className="flex-1" size="lg" variant="outline">
-          <FileDown className="w-4 h-4 mr-2" />
-          Imprimir/Salvar PDF
-        </Button>
       </div>
 
-      <CertificatePrintPreview
-        ref={printRef}
-        titulo={titulo}
-        backgroundFrente={backgroundFrente}
-        elementosFrente={elementosFrente}
-      />
+      <div className="container mx-auto px-6 py-6 space-y-6">
+        <Card className="p-6">
+          <CertificateTemplateSelector
+            onSelectTemplate={handleSelectTemplate}
+            selectedTemplateId={selectedTemplate?.id || "new"}
+          />
+        </Card>
+
+        <Card className="p-6 space-y-6">
+          <CertificateGeneralSettings
+            orientation={orientation}
+            onOrientationChange={setOrientation}
+            backgroundImage={backgroundImage}
+            onBackgroundChange={handleBackgroundChange}
+          />
+
+          <CertificateElementToolbar
+            onAddText={addText}
+            onAddCourseName={addCourseName}
+            onAddStudentName={addStudentName}
+            onAddImage={addImage}
+            onAddInstructor={addInstructor}
+          />
+
+          <div className="space-y-2 pt-4 border-t">
+            <Label>Nome do Template (para salvar)</Label>
+            <Input
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              placeholder="Digite o nome do template..."
+            />
+          </div>
+        </Card>
+
+        <CertificateCanvas
+          orientation={orientation}
+          backgroundImage={backgroundImage}
+          onCanvasReady={handleCanvasReady}
+        />
+      </div>
     </div>
   );
 }
