@@ -20,6 +20,7 @@ interface CertificateKonvaCanvasProps {
   onSelectElement: (id: string | null) => void;
   onUpdateElement: (element: Element) => void;
   onStageReady: (stage: any) => void;
+  backgroundOpacity: number;
 }
 
 export const CertificateKonvaCanvas = ({
@@ -30,10 +31,10 @@ export const CertificateKonvaCanvas = ({
   onSelectElement,
   onUpdateElement,
   onStageReady,
+  backgroundOpacity,
 }: CertificateKonvaCanvasProps) => {
   const stageRef = useRef<any>(null);
   const [bgImage] = useImage(backgroundImage || "");
-  const [backgroundOpacity, setBackgroundOpacity] = useState(1);
 
   const width = orientation === "landscape" ? 900 : 600;
   const height = orientation === "landscape" ? 600 : 900;
@@ -52,30 +53,15 @@ export const CertificateKonvaCanvas = ({
   };
 
   return (
-    <div className="w-full flex flex-col items-center gap-4">
-      <div className="w-full max-w-md">
-        <label className="text-sm font-medium text-muted-foreground mb-2 block">
-          Transparência do fundo
-        </label>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={backgroundOpacity}
-          onChange={(e) => setBackgroundOpacity(parseFloat(e.target.value))}
-          className="w-full"
-        />
-      </div>
-
-      <div className="bg-muted/30 rounded-lg p-8 shadow-xl">
+    <div className="w-full flex justify-center">
+      <div className="bg-muted/10 rounded-lg p-4 border shadow-sm inline-block">
         <Stage
           width={width}
           height={height}
           ref={stageRef}
           onMouseDown={checkDeselect}
           onTouchStart={checkDeselect}
-          className="bg-white shadow-lg"
+          className="bg-white"
         >
           <Layer>
             {bgImage && (
@@ -115,13 +101,6 @@ export const CertificateKonvaCanvas = ({
             })}
           </Layer>
         </Stage>
-      </div>
-
-      <div className="text-xs text-muted-foreground max-w-[600px] text-center">
-        <p>
-          Clique duplo no texto para editar. Arraste elementos para reposicionar.
-          Use os pontos de controle para redimensionar.
-        </p>
       </div>
     </div>
   );

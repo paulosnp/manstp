@@ -1,17 +1,9 @@
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { Card } from "@/components/ui/card";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Eye, Save } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import diplomaTemplate from "@/assets/diploma-template.jpg";
-import { CertificateTemplateSelector } from "@/components/certificados/CertificateTemplateSelector";
-import { CertificateGeneralSettings } from "@/components/certificados/CertificateGeneralSettings";
-import { CertificateElementToolbar } from "@/components/certificados/CertificateElementToolbar";
 import { CertificateKonvaCanvas } from "@/components/certificados/CertificateKonvaCanvas";
 
 interface Element {
@@ -34,7 +26,6 @@ interface Template {
 }
 
 export default function Certificados() {
-  const { t } = useTranslation();
   const [orientation, setOrientation] = useState<"landscape" | "portrait">("landscape");
   const [backgroundImage, setBackgroundImage] = useState<string>("");
   const [elements, setElements] = useState<Element[]>([]);
@@ -42,6 +33,8 @@ export default function Certificados() {
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [templateName, setTemplateName] = useState("");
   const [stageRef, setStageRef] = useState<any>(null);
+  const [backgroundOpacity, setBackgroundOpacity] = useState(1);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setBackgroundImage(diplomaTemplate);
@@ -124,7 +117,14 @@ export default function Certificados() {
     toast.success("Campo de instrutor adicionado");
   };
 
-  const addImage = (file: File) => {
+  const addImage = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     const reader = new FileReader();
     reader.onload = () => {
       const newElement: Element = {
@@ -227,60 +227,114 @@ export default function Certificados() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b bg-muted/30">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Editor de Certificados</h1>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handlePreview}>
-              <Eye className="w-4 h-4 mr-2" />
-              Visualizar
+    <div className="min-h-screen bg-background flex">
+      {/* Input escondido para upload de imagens */}
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
+        ref={fileInputRef}
+        onChange={handleImageUpload}
+      />
+      
+      {/* Sidebar à esquerda */}
+      <div className="w-72 border-r bg-card p-6 space-y-4 overflow-y-auto">
+        <h2 className="text-lg font-semibold mb-6">Controles</h2>
+        
+        {/* Botões principais */}
+        <div className="space-y-2">
+          <Button 
+            variant="outline" 
+            className="w-full justify-start"
+            onClick={addText}
+          >
+            Adicionar Texto
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="w-full justify-start"
+            onClick={addImage}
+          >
+            Adicionar Imagem
+          </Button>
+          
+          <Button 
+            variant="default" 
+            className="w-full justify-start"
+            onClick={handlePreview}
+          >
+            Exportar Certificado
+          </Button>
+        </div>
+
+        {/* Imagem de fundo */}
+        <div className="pt-4 space-y-3">
+          <Label className="text-base">Imagem de Fundo:</Label>
+          <div className="space-y-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleBackgroundChange(file);
+              }}
+            />
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Escolher arquivo
             </Button>
-            <Button onClick={saveTemplate}>
-              <Save className="w-4 h-4 mr-2" />
-              Salvar Template
-            </Button>
+            <p className="text-xs text-muted-foreground">
+              {backgroundImage ? "Arquivo selecionado" : "Nenhum arquivo selecionado"}
+            </p>
           </div>
         </div>
+
+        {/* Slider de transparência */}
+        <div className="pt-4 space-y-3">
+          <Label className="text-base">Transparência:</Label>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={backgroundOpacity}
+            onChange={(e) => setBackgroundOpacity(parseFloat(e.target.value))}
+            className="w-full"
+          />
+          <p className="text-xs text-right text-muted-foreground">
+            {backgroundOpacity.toFixed(2)}
+          </p>
+        </div>
+
+        {/* Controles de camada (aparecem quando algo está selecionado) */}
+        {selectedId && (
+          <div className="pt-4 space-y-2 border-t">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => moveLayer("front")}
+            >
+              Trazer para Frente
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => moveLayer("back")}
+            >
+              Enviar para Trás
+            </Button>
+          </div>
+        )}
       </div>
 
-      <div className="container mx-auto px-6 py-6 space-y-6">
-        <Card className="p-6">
-          <CertificateTemplateSelector
-            onSelectTemplate={handleSelectTemplate}
-            selectedTemplateId={selectedTemplate?.id || "new"}
-          />
-        </Card>
-
-        <Card className="p-6 space-y-6">
-          <CertificateGeneralSettings
-            orientation={orientation}
-            onOrientationChange={setOrientation}
-            backgroundImage={backgroundImage}
-            onBackgroundChange={handleBackgroundChange}
-          />
-
-          <CertificateElementToolbar
-            onAddText={addText}
-            onAddCourseName={addCourseName}
-            onAddStudentName={addStudentName}
-            onAddImage={addImage}
-            onAddInstructor={addInstructor}
-            selectedId={selectedId}
-            onMoveLayer={moveLayer}
-            onDelete={deleteElement}
-          />
-
-          <div className="space-y-2 pt-4 border-t">
-            <Label>Nome do Template (para salvar)</Label>
-            <Input
-              value={templateName}
-              onChange={(e) => setTemplateName(e.target.value)}
-              placeholder="Digite o nome do template..."
-            />
-          </div>
-        </Card>
-
+      {/* Canvas à direita */}
+      <div className="flex-1 p-8 overflow-auto">
         <CertificateKonvaCanvas
           orientation={orientation}
           backgroundImage={backgroundImage}
@@ -289,6 +343,7 @@ export default function Certificados() {
           onSelectElement={setSelectedId}
           onUpdateElement={updateElement}
           onStageReady={setStageRef}
+          backgroundOpacity={backgroundOpacity}
         />
       </div>
     </div>
