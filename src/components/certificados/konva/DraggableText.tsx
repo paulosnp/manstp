@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Text, Transformer } from "react-konva";
 
 interface DraggableTextProps {
@@ -28,6 +28,7 @@ export const DraggableText = ({
 }: DraggableTextProps) => {
   const textRef = useRef<any>();
   const trRef = useRef<any>();
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (isSelected && trRef.current && textRef.current) {
@@ -37,10 +38,63 @@ export const DraggableText = ({
   }, [isSelected]);
 
   const handleDblClick = () => {
-    const newText = prompt("Editar texto:", element.text);
-    if (newText !== null) {
-      onChange({ ...element, text: newText });
-    }
+    setIsEditing(true);
+    
+    const textNode = textRef.current;
+    const stage = textNode.getStage();
+    const stageBox = stage.container().getBoundingClientRect();
+    const areaPosition = {
+      x: stageBox.left + textNode.absolutePosition().x,
+      y: stageBox.top + textNode.absolutePosition().y,
+    };
+
+    const textarea = document.createElement("textarea");
+    document.body.appendChild(textarea);
+
+    textarea.value = element.text;
+    textarea.style.position = "absolute";
+    textarea.style.top = areaPosition.y + "px";
+    textarea.style.left = areaPosition.x + "px";
+    textarea.style.width = (element.width || textNode.width()) + "px";
+    textarea.style.fontSize = element.fontSize + "px";
+    textarea.style.fontFamily = element.fontFamily || "Arial";
+    textarea.style.color = element.fill || "#000000";
+    textarea.style.fontWeight = element.fontWeight || "normal";
+    textarea.style.fontStyle = element.fontStyle || "normal";
+    textarea.style.textAlign = element.textAlign || "left";
+    textarea.style.border = "2px solid #4CAF50";
+    textarea.style.padding = "4px";
+    textarea.style.margin = "0px";
+    textarea.style.overflow = "hidden";
+    textarea.style.background = "white";
+    textarea.style.outline = "none";
+    textarea.style.resize = "none";
+    textarea.style.lineHeight = "1.2";
+    textarea.style.transformOrigin = "left top";
+    textarea.style.zIndex = "1000";
+
+    textarea.focus();
+    textarea.select();
+
+    const removeTextarea = () => {
+      textarea.parentNode?.removeChild(textarea);
+      setIsEditing(false);
+    };
+
+    textarea.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        removeTextarea();
+      }
+      if (e.key === "Enter" && e.ctrlKey) {
+        onChange({ ...element, text: textarea.value });
+        removeTextarea();
+      }
+    });
+
+    textarea.addEventListener("blur", () => {
+      onChange({ ...element, text: textarea.value });
+      removeTextarea();
+    });
   };
 
   return (
