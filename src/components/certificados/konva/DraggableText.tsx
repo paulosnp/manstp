@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect } from "react";
 import { Text, Transformer } from "react-konva";
 
 interface DraggableTextProps {
@@ -28,7 +28,6 @@ export const DraggableText = ({
 }: DraggableTextProps) => {
   const textRef = useRef<any>();
   const trRef = useRef<any>();
-  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (isSelected && trRef.current && textRef.current) {
@@ -37,65 +36,43 @@ export const DraggableText = ({
     }
   }, [isSelected]);
 
-  const handleDblClick = () => {
-    setIsEditing(true);
-    
-    const textNode = textRef.current;
-    const stage = textNode.getStage();
-    const stageBox = stage.container().getBoundingClientRect();
-    const areaPosition = {
-      x: stageBox.left + textNode.absolutePosition().x,
-      y: stageBox.top + textNode.absolutePosition().y,
+  useEffect(() => {
+    if (!isSelected) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Evita processar quando estão em inputs/textareas
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // Backspace - apagar último caractere
+      if (e.key === "Backspace") {
+        e.preventDefault();
+        const newText = element.text.slice(0, -1);
+        onChange({ ...element, text: newText });
+      }
+      // Delete - apagar primeiro caractere (ou limpar se não houver seleção específica)
+      else if (e.key === "Delete") {
+        e.preventDefault();
+        onChange({ ...element, text: "" });
+      }
+      // Enter - adicionar quebra de linha
+      else if (e.key === "Enter") {
+        e.preventDefault();
+        onChange({ ...element, text: element.text + "\n" });
+      }
+      // Caracteres imprimíveis
+      else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        onChange({ ...element, text: element.text + e.key });
+      }
     };
 
-    const textarea = document.createElement("textarea");
-    document.body.appendChild(textarea);
-
-    textarea.value = element.text;
-    textarea.style.position = "absolute";
-    textarea.style.top = areaPosition.y + "px";
-    textarea.style.left = areaPosition.x + "px";
-    textarea.style.width = (element.width || textNode.width()) + "px";
-    textarea.style.fontSize = element.fontSize + "px";
-    textarea.style.fontFamily = element.fontFamily || "Arial";
-    textarea.style.color = element.fill || "#000000";
-    textarea.style.fontWeight = element.fontWeight || "normal";
-    textarea.style.fontStyle = element.fontStyle || "normal";
-    textarea.style.textAlign = element.textAlign || "left";
-    textarea.style.border = "2px solid #4CAF50";
-    textarea.style.padding = "4px";
-    textarea.style.margin = "0px";
-    textarea.style.overflow = "hidden";
-    textarea.style.background = "white";
-    textarea.style.outline = "none";
-    textarea.style.resize = "none";
-    textarea.style.lineHeight = "1.2";
-    textarea.style.transformOrigin = "left top";
-    textarea.style.zIndex = "1000";
-
-    textarea.focus();
-    textarea.select();
-
-    const removeTextarea = () => {
-      textarea.parentNode?.removeChild(textarea);
-      setIsEditing(false);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
     };
-
-    textarea.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        removeTextarea();
-      }
-      if (e.key === "Enter" && e.ctrlKey) {
-        onChange({ ...element, text: textarea.value });
-        removeTextarea();
-      }
-    });
-
-    textarea.addEventListener("blur", () => {
-      onChange({ ...element, text: textarea.value });
-      removeTextarea();
-    });
-  };
+  }, [isSelected, element, onChange]);
 
   return (
     <>
@@ -116,7 +93,6 @@ export const DraggableText = ({
         onDragEnd={(e) =>
           onChange({ ...element, x: e.target.x(), y: e.target.y() })
         }
-        onDblClick={handleDblClick}
         onTransformEnd={(e) => {
           const node = textRef.current;
           const scaleX = node.scaleX();
