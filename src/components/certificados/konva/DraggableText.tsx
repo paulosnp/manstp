@@ -560,6 +560,7 @@ export const DraggableText = ({
         fontStyle={`${element.fontWeight === "bold" ? "bold " : ""}${element.fontStyle === "italic" ? "italic" : ""}`.trim() || "normal"}
         align={element.textAlign || "left"}
         width={element.width}
+        wrap="word"
         draggable
         onClick={handleTextClick}
         onTap={handleTextClick}
