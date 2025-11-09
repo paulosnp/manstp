@@ -10,6 +10,7 @@ import { CertificateKonvaCanvas } from "@/components/certificados/CertificateKon
 import { TurmaAssociation } from "@/components/certificados/TurmaAssociation";
 import { StudentCertificatesList } from "@/components/certificados/StudentCertificatesList";
 import { PowerPointToolbar } from "@/components/certificados/PowerPointToolbar";
+import { SlidesPanel } from "@/components/certificados/SlidesPanel";
 import { useCertificateTemplates } from "@/hooks/useCertificateTemplates";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,6 +21,14 @@ interface Element {
   x: number;
   y: number;
   [key: string]: any;
+}
+
+interface Slide {
+  id: string;
+  thumbnail?: string;
+  elements: Element[];
+  orientation: "landscape" | "portrait";
+  backgroundImage: string;
 }
 
 interface Template {
@@ -36,9 +45,16 @@ interface Template {
 
 export default function Certificados() {
   const { saveTemplate: saveTemplateToDb, updateTemplate } = useCertificateTemplates();
-  const [orientation, setOrientation] = useState<"landscape" | "portrait">("landscape");
-  const [backgroundImage, setBackgroundImage] = useState<string>("");
-  const [elements, setElements] = useState<Element[]>([]);
+  const [slides, setSlides] = useState<Slide[]>([
+    {
+      id: uuidv4(),
+      elements: [],
+      orientation: "landscape",
+      backgroundImage: "",
+      thumbnail: undefined,
+    },
+  ]);
+  const [activeSlideId, setActiveSlideId] = useState<string>(slides[0].id);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [templateName, setTemplateName] = useState("");
@@ -46,9 +62,49 @@ export default function Certificados() {
   const [currentFont, setCurrentFont] = useState<string>("Arial");
   const [selectedTurmaId, setSelectedTurmaId] = useState<string | null>(null);
 
+  const activeSlide = slides.find((s) => s.id === activeSlideId) || slides[0];
+  const orientation = activeSlide.orientation;
+  const backgroundImage = activeSlide.backgroundImage;
+  const elements = activeSlide.elements;
+
   useEffect(() => {
-    setBackgroundImage(diplomaTemplate);
+    setSlides([
+      {
+        id: uuidv4(),
+        elements: [],
+        orientation: "landscape",
+        backgroundImage: diplomaTemplate,
+        thumbnail: undefined,
+      },
+    ]);
   }, []);
+
+  const updateActiveSlide = (updates: Partial<Slide>) => {
+    setSlides((prev) =>
+      prev.map((slide) =>
+        slide.id === activeSlideId ? { ...slide, ...updates } : slide
+      )
+    );
+  };
+
+  const updateSlideThumbnail = () => {
+    if (!stageRef) return;
+    const thumbnail = stageRef.toDataURL({ pixelRatio: 0.3 });
+    updateActiveSlide({ thumbnail });
+  };
+
+  const setOrientation = (newOrientation: "landscape" | "portrait") => {
+    updateActiveSlide({ orientation: newOrientation });
+  };
+
+  const setBackgroundImage = (image: string) => {
+    updateActiveSlide({ backgroundImage: image });
+  };
+
+  const setElements = (newElements: Element[]) => {
+    updateActiveSlide({ elements: newElements });
+    setTimeout(updateSlideThumbnail, 100);
+  };
 
   const handleBackgroundChange = (file: File | null) => {
     if (!file) {
@@ -317,7 +373,15 @@ export default function Certificados() {
   const handleSelectTemplate = (template: Template | null) => {
     if (!template) {
       setSelectedTemplate(null);
-      setElements([]);
+      setSlides([
+        {
+          id: uuidv4(),
+          elements: [],
+          orientation: "landscape",
+          backgroundImage: diplomaTemplate,
+          thumbnail: undefined,
+        },
+      ]);
       setSelectedId(null);
       setSelectedTurmaId(null);
       setTemplateName("");
@@ -325,12 +389,66 @@ export default function Certificados() {
     }
 
     setSelectedTemplate(template);
-    setOrientation(template.data.orientation);
-    setBackgroundImage(template.data.backgroundImage);
-    setElements(template.data.elements);
+    setSlides([
+      {
+        id: uuidv4(),
+        elements: template.data.elements,
+        orientation: template.data.orientation,
+        backgroundImage: template.data.backgroundImage,
+        thumbnail: undefined,
+      },
+    ]);
+    setActiveSlideId(slides[0]?.id || uuidv4());
     setSelectedTurmaId(template.turmaId || null);
     setTemplateName(template.name);
     toast.success("Template carregado");
+  };
+
+  const handleAddSlide = () => {
+    const newSlide: Slide = {
+      id: uuidv4(),
+      elements: [],
+      orientation: "landscape",
+      backgroundImage: diplomaTemplate,
+      thumbnail: undefined,
+    };
+    setSlides([...slides, newSlide]);
+    setActiveSlideId(newSlide.id);
+    toast.success("Novo slide adicionado");
+  };
+
+  const handleDuplicateSlide = (slideId: string) => {
+    const slideToDuplicate = slides.find((s) => s.id === slideId);
+    if (!slideToDuplicate) return;
+
+    const duplicatedSlide: Slide = {
+      ...slideToDuplicate,
+      id: uuidv4(),
+      elements: slideToDuplicate.elements.map((el) => ({ ...el, id: uuidv4() })),
+    };
+
+    const slideIndex = slides.findIndex((s) => s.id === slideId);
+    const newSlides = [...slides];
+    newSlides.splice(slideIndex + 1, 0, duplicatedSlide);
+    setSlides(newSlides);
+    setActiveSlideId(duplicatedSlide.id);
+    toast.success("Slide duplicado");
+  };
+
+  const handleDeleteSlide = (slideId: string) => {
+    if (slides.length === 1) {
+      toast.error("Não é possível excluir o último slide");
+      return;
+    }
+
+    const newSlides = slides.filter((s) => s.id !== slideId);
+    setSlides(newSlides);
+    
+    if (activeSlideId === slideId) {
+      setActiveSlideId(newSlides[0].id);
+    }
+    
+    toast.success("Slide excluído");
   };
 
   const handlePreview = () => {
@@ -401,6 +519,16 @@ export default function Certificados() {
 
       {/* Conteúdo principal */}
       <div className="flex-1 flex overflow-hidden">
+        {/* Painel de Slides (miniaturas) */}
+        <SlidesPanel
+          slides={slides}
+          activeSlideId={activeSlideId}
+          onSelectSlide={setActiveSlideId}
+          onDuplicateSlide={handleDuplicateSlide}
+          onDeleteSlide={handleDeleteSlide}
+          onAddSlide={handleAddSlide}
+        />
+
         {/* Painel lateral esquerdo - Templates e Configurações */}
         <div className="w-80 border-r bg-muted/20">
           <Tabs defaultValue="templates" className="h-full flex flex-col">
