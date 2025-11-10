@@ -11,6 +11,7 @@ import { TurmaAssociation } from "@/components/certificados/TurmaAssociation";
 import { StudentCertificatesList } from "@/components/certificados/StudentCertificatesList";
 import { PowerPointToolbar } from "@/components/certificados/PowerPointToolbar";
 import { SlidesPanel } from "@/components/certificados/SlidesPanel";
+import { OpacityControl } from "@/components/certificados/OpacityControl";
 import { useCertificateTemplates } from "@/hooks/useCertificateTemplates";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -613,6 +614,8 @@ export default function Certificados() {
         onFontChange={setCurrentFont}
         templateName={templateName}
         onTemplateNameChange={setTemplateName}
+        selectedTemplateId={selectedTemplate?.id || "new"}
+        onSelectTemplate={handleSelectTemplate}
       />
 
       {/* Conteúdo principal */}
@@ -634,23 +637,15 @@ export default function Certificados() {
           }}
         />
 
-        {/* Painel lateral esquerdo - Templates e Configurações */}
+        {/* Painel lateral esquerdo - Elementos e Configurações */}
         <div className="w-80 border-r bg-muted/20">
-          <Tabs defaultValue="templates" className="h-full flex flex-col">
+          <Tabs defaultValue="elements" className="h-full flex flex-col">
             <TabsList className="w-full rounded-none border-b">
-              <TabsTrigger value="templates" className="flex-1">Templates</TabsTrigger>
               <TabsTrigger value="elements" className="flex-1">Elementos</TabsTrigger>
               <TabsTrigger value="settings" className="flex-1">Configurações</TabsTrigger>
             </TabsList>
 
             <ScrollArea className="flex-1">
-              <TabsContent value="templates" className="p-4 mt-0">
-                <CertificateTemplateSelector
-                  onSelectTemplate={handleSelectTemplate}
-                  selectedTemplateId={selectedTemplate?.id || "new"}
-                />
-              </TabsContent>
-
               <TabsContent value="elements" className="p-4 mt-0 space-y-4">
                 <div>
                   <h3 className="font-semibold mb-3">Adicionar Elementos</h3>
@@ -770,6 +765,16 @@ export default function Certificados() {
                     onSelectTurma={setSelectedTurmaId}
                   />
                 </div>
+
+                {selectedElement && (
+                  <div className="border-t pt-4">
+                    <h3 className="font-semibold mb-3">Transparência</h3>
+                    <OpacityControl
+                      selectedElement={selectedElement}
+                      onUpdateElement={updateElement}
+                    />
+                  </div>
+                )}
               </TabsContent>
             </ScrollArea>
           </Tabs>

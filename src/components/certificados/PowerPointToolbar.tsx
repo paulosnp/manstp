@@ -43,6 +43,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { TemplateDropdown } from "./TemplateDropdown";
 
 interface PowerPointToolbarProps {
   selectedElement: any;
@@ -60,6 +61,8 @@ interface PowerPointToolbarProps {
   onFontChange: (font: string) => void;
   templateName: string;
   onTemplateNameChange: (name: string) => void;
+  selectedTemplateId: string;
+  onSelectTemplate: (template: any) => void;
 }
 
 export const PowerPointToolbar = ({
@@ -78,17 +81,40 @@ export const PowerPointToolbar = ({
   onFontChange,
   templateName,
   onTemplateNameChange,
+  selectedTemplateId,
+  onSelectTemplate,
 }: PowerPointToolbarProps) => {
   const fonts = [
     "Arial",
+    "Calibri",
     "Times New Roman",
     "Courier New",
     "Georgia",
     "Verdana",
-    "Comic Sans MS",
-    "Impact",
+    "Tahoma",
     "Trebuchet MS",
     "Palatino",
+    "Garamond",
+    "Comic Sans MS",
+    "Impact",
+    "Roboto",
+    "Open Sans",
+    "Lato",
+    "Montserrat",
+    "Source Sans 3",
+    "Raleway",
+    "PT Sans",
+    "Merriweather",
+    "Noto Sans",
+    "Ubuntu",
+    "Playfair Display",
+    "Oswald",
+    "Crimson Text",
+    "Libre Baskerville",
+    "Dancing Script",
+    "Pacifico",
+    "Caveat",
+    "Permanent Marker",
   ];
 
   const fontSizes = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72];
@@ -154,6 +180,12 @@ export const PowerPointToolbar = ({
     <div className="bg-background border-b">
       {/* Primeira linha - Arquivo e ações principais */}
       <div className="flex items-center gap-2 px-4 py-2 border-b">
+        <div className="flex items-center gap-2">
+          <TemplateDropdown
+            selectedTemplateId={selectedTemplateId}
+            onSelectTemplate={onSelectTemplate}
+          />
+        </div>
         <div className="flex items-center gap-2 flex-1">
           <Input
             placeholder="Nome do template"
@@ -188,7 +220,15 @@ export const PowerPointToolbar = ({
       <div className="flex items-center gap-2 px-4 py-2">
         {/* Fonte */}
         <div className="flex items-center gap-2">
-          <Select value={currentFont} onValueChange={onFontChange}>
+          <Select 
+            value={selectedElement?.type === "text" ? selectedElement.fontFamily : currentFont} 
+            onValueChange={(font) => {
+              onFontChange(font);
+              if (selectedElement?.type === "text") {
+                onUpdateElement({ ...selectedElement, fontFamily: font });
+              }
+            }}
+          >
             <SelectTrigger className="w-[140px] h-8">
               <SelectValue />
             </SelectTrigger>
@@ -335,15 +375,6 @@ export const PowerPointToolbar = ({
                 className="hidden"
               />
             </label>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onAddShape("rectangle")}
-            className="h-8"
-          >
-            <Square className="w-4 h-4 mr-2" />
-            Forma
           </Button>
         </div>
 

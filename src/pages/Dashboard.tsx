@@ -61,7 +61,7 @@ export default function Dashboard() {
       let totalGeral = 0;
       let eadTotal = 0, eadTurmasAtivas = 0;
       let cenpemTotal = 0, cenpemAguardando = 0, cenpemAndamento = 0;
-      let expeditosTotal = 0, expeditosAndamento = 0;
+      let expeditosTotal = 0, expeditosAndamento = 0, expeditosAguardando = 0;
       let efommCiagaTotal = 0, efommCiagaAndamento = 0, efommCiagaAguardando = 0;
       let efommCiabaTotal = 0, efommCiabaAndamento = 0, efommCiabaAguardando = 0;
       let rovEbTotal = 0, rovEbAndamento = 0, rovEbAguardando = 0;
@@ -119,9 +119,10 @@ export default function Dashboard() {
                       localCurso.includes('stp') || localCurso.includes('príncipe') || 
                       localCurso.includes('principe');
         
-        if ((tipoCurso.includes('expedito') || nomeCurso.includes('stp')) && isSTP && isAndamento) {
+        if ((tipoCurso.includes('expedito') || nomeCurso.includes('stp')) && isSTP) {
           expeditosTotal++;
-          expeditosAndamento++;
+          if (isAndamento) expeditosAndamento++;
+          if (isAguardando) expeditosAguardando++;
         }
 
         // EFOMM CIAGA
@@ -188,9 +189,9 @@ export default function Dashboard() {
           cor: "border-l-blue-600"
         },
         {
-          titulo: "Cursos Expeditos (STP)",
+          titulo: "Cursos Expeditos São Tomé e Príncipe",
           valor: expeditosTotal,
-          subtitulo: `Andamento: ${expeditosAndamento}`,
+          subtitulo: `Em Andamento: ${expeditosAndamento} • Aguardando: ${expeditosAguardando}`,
           cor: "border-l-orange-500"
         },
         {
