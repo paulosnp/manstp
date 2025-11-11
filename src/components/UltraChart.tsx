@@ -48,21 +48,21 @@ export default function UltraChart() {
       // Criar mapa de alunos
       const alunosMap = new Map(alunos?.map(a => [a.id, a]) || []);
 
-      // Agrupar por ano - contando alunos únicos
+      // Agrupar por ano - contando inscrições (aluno pode aparecer em múltiplas turmas)
       const dadosPorAno: Record<string, { 
-        fuzileiro: Set<string>; 
-        marinheiro: Set<string>; 
-        exercito: Set<string>; 
-        civil: Set<string>;
-        total: Set<string>;
+        fuzileiro: number; 
+        marinheiro: number; 
+        exercito: number; 
+        civil: number;
+        total: number;
       }> = {};
 
-      // Totais gerais (alunos únicos em todos os anos)
-      const totalGeralFuzileiro = new Set<string>();
-      const totalGeralMarinheiro = new Set<string>();
-      const totalGeralExercito = new Set<string>();
-      const totalGeralCivil = new Set<string>();
-      const totalGeralTodos = new Set<string>();
+      // Totais gerais (soma de todas as inscrições)
+      let totalGeralFuzileiro = 0;
+      let totalGeralMarinheiro = 0;
+      let totalGeralExercito = 0;
+      let totalGeralCivil = 0;
+      let totalGeralTodos = 0;
 
       alunoTurma?.forEach((at) => {
         const ano = (at.turmas as any)?.ano?.toString() || "Sem Ano";
@@ -72,42 +72,36 @@ export default function UltraChart() {
         if (!aluno) return;
 
         if (!dadosPorAno[ano]) {
-          dadosPorAno[ano] = { 
-            fuzileiro: new Set(), 
-            marinheiro: new Set(), 
-            exercito: new Set(), 
-            civil: new Set(), 
-            total: new Set() 
-          };
+          dadosPorAno[ano] = { fuzileiro: 0, marinheiro: 0, exercito: 0, civil: 0, total: 0 };
         }
 
         const tipo = aluno.tipo_militar?.toLowerCase() || "civil";
         const concluido = status === "Concluído";
 
-        // Para Total de cada ano: contar TODOS os alunos únicos
-        dadosPorAno[ano].total.add(at.aluno_id);
-        totalGeralTodos.add(at.aluno_id);
+        // Para Total de cada ano: contar TODAS as inscrições
+        dadosPorAno[ano].total++;
+        totalGeralTodos++;
 
         // Para categorias específicas: só contar se concluído
         if (tipo.includes("fuzileiro")) {
           if (concluido) {
-            dadosPorAno[ano].fuzileiro.add(at.aluno_id);
-            totalGeralFuzileiro.add(at.aluno_id);
+            dadosPorAno[ano].fuzileiro++;
+            totalGeralFuzileiro++;
           }
         } else if (tipo.includes("marinheiro")) {
           if (concluido) {
-            dadosPorAno[ano].marinheiro.add(at.aluno_id);
-            totalGeralMarinheiro.add(at.aluno_id);
+            dadosPorAno[ano].marinheiro++;
+            totalGeralMarinheiro++;
           }
         } else if (tipo.includes("exército") || tipo.includes("exercito")) {
           if (concluido) {
-            dadosPorAno[ano].exercito.add(at.aluno_id);
-            totalGeralExercito.add(at.aluno_id);
+            dadosPorAno[ano].exercito++;
+            totalGeralExercito++;
           }
         } else {
           if (concluido) {
-            dadosPorAno[ano].civil.add(at.aluno_id);
-            totalGeralCivil.add(at.aluno_id);
+            dadosPorAno[ano].civil++;
+            totalGeralCivil++;
           }
         }
       });
@@ -117,21 +111,21 @@ export default function UltraChart() {
         .sort()
         .map((ano) => ({
           ano,
-          total: dadosPorAno[ano].total.size,
-          marinheiro: dadosPorAno[ano].marinheiro.size,
-          fuzileiro: dadosPorAno[ano].fuzileiro.size,
-          exercito: dadosPorAno[ano].exercito.size,
-          civil: dadosPorAno[ano].civil.size
+          total: dadosPorAno[ano].total,
+          marinheiro: dadosPorAno[ano].marinheiro,
+          fuzileiro: dadosPorAno[ano].fuzileiro,
+          exercito: dadosPorAno[ano].exercito,
+          civil: dadosPorAno[ano].civil
         }));
 
       // Adicionar Total Geral no início
       resultado.unshift({
         ano: "TOTAL GERAL",
-        total: totalGeralTodos.size,
-        marinheiro: totalGeralMarinheiro.size,
-        fuzileiro: totalGeralFuzileiro.size,
-        exercito: totalGeralExercito.size,
-        civil: totalGeralCivil.size
+        total: totalGeralTodos,
+        marinheiro: totalGeralMarinheiro,
+        fuzileiro: totalGeralFuzileiro,
+        exercito: totalGeralExercito,
+        civil: totalGeralCivil
       });
 
       setYearData(resultado);

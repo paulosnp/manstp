@@ -27,16 +27,15 @@ const Estatisticas = () => {
 
   const fetchData = async () => {
     try {
-      // Buscar alunos vinculados a turmas (mesma lógica do gráfico)
+      // Buscar total de inscrições (aluno_turma)
       const { data: alunoTurma, error: errorAT } = await supabase
         .from("aluno_turma")
         .select("aluno_id");
 
       if (errorAT) throw errorAT;
 
-      // Contar alunos únicos
-      const alunosUnicos = new Set(alunoTurma?.map(at => at.aluno_id) || []);
-      const totalAlunos = alunosUnicos.size;
+      // Contar total de inscrições (não alunos únicos)
+      const totalAlunos = alunoTurma?.length || 0;
 
       // Buscar outros totais
       const [instrutoresResult, cursosResult, turmasResult] = await Promise.all([
@@ -64,7 +63,7 @@ const Estatisticas = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Total de Alunos</CardTitle>
+            <CardTitle>Total de Inscrições</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-4xl font-bold">{stats.totalAlunos}</p>
