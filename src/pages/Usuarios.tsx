@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Search, UserPlus, Mail, Trash2, Edit } from "lucide-react";
+import { Search, UserPlus, Mail, Trash2, Edit, Key } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
@@ -52,6 +52,12 @@ export default function Usuarios() {
     id: "",
     email: "",
     nome_completo: "",
+  });
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [resetPasswordData, setResetPasswordData] = useState({
+    userId: "",
+    userName: "",
+    newPassword: "",
   });
 
   useEffect(() => {
@@ -263,6 +269,56 @@ export default function Usuarios() {
     }
   };
 
+  const openResetPasswordDialog = (user: User) => {
+    setResetPasswordData({
+      userId: user.id,
+      userName: user.nome_completo,
+      newPassword: "",
+    });
+    setResetPasswordOpen(true);
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (resetPasswordData.newPassword.length < 8) {
+      toast.error("A senha deve ter no mínimo 8 caracteres");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reset-user-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          userId: resetPasswordData.userId,
+          newPassword: resetPasswordData.newPassword,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao resetar senha');
+      }
+
+      toast.success("Senha alterada com sucesso!");
+      setResetPasswordOpen(false);
+      setResetPasswordData({ userId: "", userName: "", newPassword: "" });
+    } catch (error: any) {
+      console.error("Erro ao resetar senha:", error);
+      toast.error(error.message || "Erro ao resetar senha");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -434,6 +490,15 @@ export default function Usuarios() {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => openResetPasswordDialog(user)}
+                              className="gap-2"
+                              title="Definir nova senha"
+                            >
+                              <Key className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => handleSendPasswordReset(user.email)}
                               className="gap-2"
                               disabled={!user.email}
@@ -495,6 +560,54 @@ export default function Usuarios() {
                   </Button>
                   <Button type="submit" disabled={submitting} className="flex-1">
                     {submitting ? "Salvando..." : "Salvar"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={resetPasswordOpen} onOpenChange={setResetPasswordOpen}>
+            <DialogContent className="max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+              <DialogHeader>
+                <DialogTitle>Redefinir Senha</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Usuário</Label>
+                  <Input
+                    value={resetPasswordData.userName}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nova Senha (mínimo 8 caracteres)</Label>
+                  <Input
+                    type="password"
+                    value={resetPasswordData.newPassword}
+                    onChange={(e) => setResetPasswordData({ ...resetPasswordData, newPassword: e.target.value })}
+                    required
+                    minLength={8}
+                    placeholder="Digite a nova senha"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    ⚠️ Por segurança, não é possível visualizar senhas existentes. Esta ação define uma nova senha para o usuário.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setResetPasswordOpen(false);
+                      setResetPasswordData({ userId: "", userName: "", newPassword: "" });
+                    }} 
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={submitting} className="flex-1">
+                    {submitting ? "Alterando..." : "Alterar Senha"}
                   </Button>
                 </div>
               </form>
