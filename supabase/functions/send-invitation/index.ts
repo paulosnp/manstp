@@ -72,24 +72,41 @@ serve(async (req) => {
     const { email, role, nome } = validation.data;
 
     // Verificar se o email já está cadastrado
-    const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();
-    const emailExists = existingUser.users.some(u => u.email === email);
+    const { data: existingUser, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    
+    if (listError) {
+      console.error('Erro ao listar usuários:', listError);
+      throw new Error('Erro ao verificar usuários existentes');
+    }
+    
+    const emailExists = existingUser?.users?.some(u => u.email?.toLowerCase() === email.toLowerCase());
 
     if (emailExists) {
-      throw new Error('Este email já está cadastrado no sistema');
+      return new Response(
+        JSON.stringify({ error: 'Este email já está cadastrado no sistema' }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Verificar se já existe convite pendente para este email
-    const { data: existingInvitation } = await supabaseAdmin
+    const { data: existingInvitation, error: inviteCheckError } = await supabaseAdmin
       .from('invitations')
       .select('*')
-      .eq('email', email)
+      .eq('email', email.toLowerCase())
       .eq('used', false)
       .gte('expires_at', new Date().toISOString())
       .maybeSingle();
 
+    if (inviteCheckError) {
+      console.error('Erro ao verificar convites:', inviteCheckError);
+      throw new Error('Erro ao verificar convites pendentes');
+    }
+
     if (existingInvitation) {
-      throw new Error('Já existe um convite pendente para este email');
+      return new Response(
+        JSON.stringify({ error: 'Já existe um convite pendente para este email' }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Gerar token único
@@ -101,7 +118,7 @@ serve(async (req) => {
     const { error: insertError } = await supabaseAdmin
       .from('invitations')
       .insert({
-        email,
+        email: email.toLowerCase(),
         token: inviteToken,
         invited_by: currentUser.id,
         role,
@@ -110,13 +127,25 @@ serve(async (req) => {
 
     if (insertError) {
       console.error('Erro ao criar convite:', insertError);
-      throw new Error('Erro ao criar convite');
+      throw new Error(`Erro ao criar convite: ${insertError.message}`);
     }
 
     // Enviar email via Resend
-    const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
-    const appUrl = Deno.env.get('SUPABASE_URL')?.replace('dymartdymmgnsqonmdxu.supabase.co', 'lovable.app') || 'https://seu-app.lovable.app';
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    if (!resendApiKey) {
+      console.error('RESEND_API_KEY não configurada');
+      throw new Error('Configuração de email não encontrada');
+    }
+    
+    const resend = new Resend(resendApiKey);
+    
+    // Construir URL do convite de forma mais robusta
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1];
+    const appUrl = projectRef ? `https://${projectRef}.lovable.app` : 'https://lovable.app';
     const inviteUrl = `${appUrl}/auth?invite=${inviteToken}`;
+    
+    console.log('URL do convite:', inviteUrl);
 
     const { error: emailError } = await resend.emails.send({
       from: 'GESTOR ESCOLAR <onboarding@resend.dev>',
@@ -185,7 +214,14 @@ serve(async (req) => {
 
     if (emailError) {
       console.error('Erro ao enviar email:', emailError);
-      throw new Error('Erro ao enviar email de convite');
+      
+      // Deletar convite se o email falhar
+      await supabaseAdmin
+        .from('invitations')
+        .delete()
+        .eq('token', inviteToken);
+      
+      throw new Error(`Erro ao enviar email: ${emailError.message || 'Verifique se o domínio está validado no Resend'}`);
     }
 
     console.log(`Convite enviado com sucesso para ${email}`);

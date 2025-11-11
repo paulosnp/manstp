@@ -70,7 +70,10 @@ export function InviteUserDialog() {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro na invocação:", error);
+        throw new Error(error.message || "Erro ao enviar convite");
+      }
 
       if (data?.error) {
         throw new Error(data.error);
