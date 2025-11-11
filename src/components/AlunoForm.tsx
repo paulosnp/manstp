@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CustomizableSelect } from "@/components/ui/customizable-select";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -165,7 +166,7 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
 
             <div className="space-y-2">
               <Label htmlFor="tipo_militar">{t("militaryType")} *</Label>
-              <Select
+              <CustomizableSelect
                 required
                 value={formData.tipo_militar}
                 onValueChange={(value) => {
@@ -176,45 +177,41 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
                     local_servico: value === "Civil" ? "Nenhuma" : formData.local_servico
                   });
                 }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t("selectType")} />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
-                  <SelectItem value="Marinheiro">Marinheiro</SelectItem>
-                  <SelectItem value="Marinha do Brasil">Marinha do Brasil</SelectItem>
-                  <SelectItem value="Exercito">Exército</SelectItem>
-                  <SelectItem value="Bombeiro">Bombeiro</SelectItem>
-                  <SelectItem value="EMAP">EMAP</SelectItem>
-                  <SelectItem value="Civil">Civil</SelectItem>
-                </SelectContent>
-              </Select>
+                defaultOptions={[
+                  "Fuzileiro Naval",
+                  "Marinheiro",
+                  "Marinha do Brasil",
+                  "Exercito",
+                  "Bombeiro",
+                  "EMAP",
+                  "Civil"
+                ]}
+                placeholder={t("selectType")}
+                storageKey="custom_tipo_militar_alunos"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="local_servico">OM ONDE SERVE *</Label>
-              <Select
+              <CustomizableSelect
                 required
                 value={formData.local_servico}
                 onValueChange={(value) => setFormData({ ...formData, local_servico: value })}
                 disabled={formData.tipo_militar === "Civil"}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a OM" />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="Nenhuma">Nenhuma</SelectItem>
-                  <SelectItem value="Guarda Costeira">Guarda Costeira</SelectItem>
-                  <SelectItem value="Quartel de Fuzileiros">Quartel de Fuzileiros</SelectItem>
-                  <SelectItem value="Exército">Exército</SelectItem>
-                  <SelectItem value="Palácio do Governo">Palácio do Governo</SelectItem>
-                  <SelectItem value="Bombeiros">Bombeiros</SelectItem>
-                  <SelectItem value="Polícia">Polícia</SelectItem>
-                  <SelectItem value="Ministério da Defesa">Ministério da Defesa</SelectItem>
-                  <SelectItem value="Missão UPDE">Missão UPDE</SelectItem>
-                </SelectContent>
-              </Select>
+                defaultOptions={[
+                  "Nenhuma",
+                  "Guarda Costeira",
+                  "Quartel de Fuzileiros",
+                  "Exército",
+                  "Palácio do Governo",
+                  "Bombeiros",
+                  "Polícia",
+                  "Ministério da Defesa",
+                  "Missão UPDE"
+                ]}
+                placeholder="Selecione a OM"
+                storageKey="custom_local_servico_alunos"
+              />
             </div>
 
             <div className="space-y-2">

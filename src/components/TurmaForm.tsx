@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CustomizableSelect } from "@/components/ui/customizable-select";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -181,22 +182,20 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
 
             <div className="space-y-2">
               <Label htmlFor="tipo_militar">{t("militaryType")} *</Label>
-              <Select
+              <CustomizableSelect
                 required
                 value={formData.tipo_militar}
                 onValueChange={(value) => setFormData({ ...formData, tipo_militar: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t("selectType")} />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
-                  <SelectItem value="Marinheiro">Marinheiro</SelectItem>
-                  <SelectItem value="Exercito">Exército</SelectItem>
-                  <SelectItem value="Bombeiro">Bombeiro</SelectItem>
-                  <SelectItem value="Civil">Civil</SelectItem>
-                </SelectContent>
-              </Select>
+                defaultOptions={[
+                  "Fuzileiro Naval",
+                  "Marinheiro",
+                  "Exercito",
+                  "Bombeiro",
+                  "Civil"
+                ]}
+                placeholder={t("selectType")}
+                storageKey="custom_tipo_militar_turmas"
+              />
             </div>
 
             <div className="space-y-2">
@@ -221,21 +220,19 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
 
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="situacao">Situação do Curso *</Label>
-              <Select
+              <CustomizableSelect
                 required
                 value={formData.situacao}
                 onValueChange={(value) => setFormData({ ...formData, situacao: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a situação" />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                  <SelectItem value="Concluído">Concluído</SelectItem>
-                  <SelectItem value="Cancelado">Cancelado</SelectItem>
-                  <SelectItem value="Planejado">Planejado</SelectItem>
-                </SelectContent>
-              </Select>
+                defaultOptions={[
+                  "Em Andamento",
+                  "Concluído",
+                  "Cancelado",
+                  "Planejado"
+                ]}
+                placeholder="Selecione a situação"
+                storageKey="custom_situacao_turmas"
+              />
             </div>
 
             <div className="space-y-2 md:col-span-2">

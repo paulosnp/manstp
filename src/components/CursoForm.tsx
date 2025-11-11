@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CustomizableSelect } from "@/components/ui/customizable-select";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -90,9 +91,9 @@ export function CursoForm({ curso, onSuccess }: CursoFormProps) {
             <div className="space-y-2"><Label>{t("institution")}</Label><Input value={formData.instituicao} onChange={(e) => setFormData({ ...formData, instituicao: e.target.value })} /></div>
             <div className="space-y-2"><Label>{t("category")}</Label><Input value={formData.categoria} onChange={(e) => setFormData({ ...formData, categoria: e.target.value })} /></div>
             <div className="space-y-2"><Label>{t("coordinator")}</Label><Input value={formData.coordenador} onChange={(e) => setFormData({ ...formData, coordenador: e.target.value })} /></div>
-            <div className="space-y-2"><Label>{t("countryLocation")}</Label><Select value={formData.local_realizacao} onValueChange={(value) => setFormData({ ...formData, local_realizacao: value })}><SelectTrigger><SelectValue placeholder={t("selectCountry")} /></SelectTrigger><SelectContent className="max-h-[300px] overflow-y-auto bg-background">{countries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
-            <div className="space-y-2"><Label>{t("courseType")}</Label><Select value={formData.tipo_curso} onValueChange={(value) => setFormData({ ...formData, tipo_curso: value })}><SelectTrigger><SelectValue placeholder={t("selectType")} /></SelectTrigger><SelectContent className="bg-background"><SelectItem value="Expedito">{t("expedited")}</SelectItem><SelectItem value="Carreira">{t("career")}</SelectItem></SelectContent></Select></div>
-            <div className="space-y-2"><Label>{t("modality")}</Label><Select value={formData.modalidade} onValueChange={(value) => setFormData({ ...formData, modalidade: value })}><SelectTrigger><SelectValue placeholder={t("selectModality")} /></SelectTrigger><SelectContent className="bg-background"><SelectItem value="Presencial">{t("inPerson")}</SelectItem><SelectItem value="Semipresencial">{t("semiPresential")}</SelectItem><SelectItem value="A Distância">{t("distance")}</SelectItem></SelectContent></Select></div>
+            <div className="space-y-2"><Label>{t("countryLocation")}</Label><CustomizableSelect value={formData.local_realizacao} onValueChange={(value) => setFormData({ ...formData, local_realizacao: value })} defaultOptions={countries} placeholder={t("selectCountry")} storageKey="custom_paises_cursos" /></div>
+            <div className="space-y-2"><Label>{t("courseType")}</Label><CustomizableSelect value={formData.tipo_curso} onValueChange={(value) => setFormData({ ...formData, tipo_curso: value })} defaultOptions={["Expedito", "Carreira"]} placeholder={t("selectType")} storageKey="custom_tipo_curso_cursos" /></div>
+            <div className="space-y-2"><Label>{t("modality")}</Label><CustomizableSelect value={formData.modalidade} onValueChange={(value) => setFormData({ ...formData, modalidade: value })} defaultOptions={["Presencial", "Semipresencial", "A Distância"]} placeholder={t("selectModality")} storageKey="custom_modalidade_cursos" /></div>
             <div className="space-y-2 md:col-span-2"><Label>{t("observations")}</Label><Textarea value={formData.observacoes} onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })} rows={3} /></div>
           </div>
           <div className="flex justify-end gap-2">
