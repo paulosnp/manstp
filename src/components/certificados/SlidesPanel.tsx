@@ -10,6 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toast } from "sonner";
+import { ObjectGallery } from "./ObjectGallery";
 
 interface Slide {
   id: string;
@@ -30,6 +31,9 @@ interface SlidesPanelProps {
   onAddSlide: () => void;
   turmaId: string | null;
   onLinkStudent: (slideId: string, alunoId: string, alunoNome: string) => void;
+  onAddText: () => void;
+  onAddImage: (file: File) => void;
+  onAddShape: (shape: "rectangle" | "circle" | "line") => void;
 }
 
 export const SlidesPanel = ({
@@ -41,6 +45,9 @@ export const SlidesPanel = ({
   onAddSlide,
   turmaId,
   onLinkStudent,
+  onAddText,
+  onAddImage,
+  onAddShape,
 }: SlidesPanelProps) => {
   const [alunos, setAlunos] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -200,6 +207,12 @@ export const SlidesPanel = ({
           ))}
         </div>
       </ScrollArea>
+
+      <ObjectGallery
+        onAddText={onAddText}
+        onAddImage={onAddImage}
+        onAddShape={onAddShape}
+      />
     </div>
   );
 };
