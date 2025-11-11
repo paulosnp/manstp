@@ -318,7 +318,8 @@ export default function Notas() {
   };
 
   const getNotaColor = (nota: number): string => {
-    if (nota < 10) return "bg-red-100 dark:bg-red-900/20 border-red-300";
+    if (!nota || nota === 0) return "bg-blue-100 dark:bg-blue-900/20 border-blue-300"; // Caixas vazias em azul
+    if (nota < 10) return "bg-red-100 dark:bg-red-900/20 border-red-300 animate-pulse"; // Piscar apenas notas < 10
     if (nota < 14) return "bg-yellow-100 dark:bg-yellow-900/20 border-yellow-300";
     return "bg-green-100 dark:bg-green-900/20 border-green-300";
   };
@@ -582,12 +583,12 @@ export default function Notas() {
                         const disciplinasAbaixo10 = notas.filter(n => n.aluno_id === aluno.id && n.nota > 0 && n.nota < 10).length;
                         
                         return (
-                          <TableRow 
+                           <TableRow 
                             key={aluno.id} 
                             className={`
                               ${index % 2 === 0 ? 'bg-white dark:bg-gray-950' : 'bg-gray-50 dark:bg-gray-900'}
-                              ${isRecuperacao ? 'animate-pulse border-l-4 border-l-red-500 bg-red-50 dark:bg-red-950' : ''}
-                              ${disciplinasAbaixo10 > 0 && disciplinasAbaixo10 < 3 ? 'border-l-4 border-l-yellow-500 bg-yellow-50 dark:bg-yellow-950' : ''}
+                              ${isRecuperacao ? 'border-l-4 border-l-red-500' : ''}
+                              ${disciplinasAbaixo10 > 0 && disciplinasAbaixo10 < 3 ? 'border-l-4 border-l-yellow-500' : ''}
                               hover:bg-cyan-50 dark:hover:bg-cyan-950 transition-colors
                             `}
                           >
