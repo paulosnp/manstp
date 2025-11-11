@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, User, Calendar, ChevronLeft, ChevronRight, Save, BookOpen, Download, Eye, EyeOff } from "lucide-react";
+import { User, Calendar, ChevronLeft, ChevronRight, Save, BookOpen, Download, Eye, EyeOff, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { startOfYear, addDays, format } from "date-fns";
@@ -64,7 +64,6 @@ export default function Horarios() {
   const [activeTurma, setActiveTurma] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  const [novaTurmaNome, setNovaTurmaNome] = useState("");
   const [novoAlunoNome, setNovoAlunoNome] = useState("");
   const [novaDisciplinaNome, setNovaDisciplinaNome] = useState("");
   const [showAllTurmas, setShowAllTurmas] = useState(false);
@@ -73,6 +72,7 @@ export default function Horarios() {
   const [showAlunos, setShowAlunos] = useState(true);
   const [exportTurmaInfo, setExportTurmaInfo] = useState("");
   const [exportDateRange, setExportDateRange] = useState("");
+  const [showSidebar, setShowSidebar] = useState(true);
 
   // Filter turmas based on keywords
   const filteredTurmas = showAllTurmas 
@@ -221,43 +221,6 @@ export default function Horarios() {
 
   function openTurma(t: any) {
     setActiveTurma(t);
-  }
-
-  async function criarTurma() {
-    if (isVisualizador) {
-      playBlockSound();
-      setBlockModal({ open: true, message: "Você não pode criar turmas. Apenas coordenadores têm essa permissão." });
-      return;
-    }
-
-    if (!novaTurmaNome.trim()) return;
-    
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) {
-      toast.error("Usuário não autenticado");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("turmas")
-      .insert([{ 
-        nome: novaTurmaNome.trim(), 
-        tipo_militar: "Marinha do Brasil", 
-        situacao: "Em Andamento", 
-        ano: new Date().getFullYear(),
-        user_id: user.user.id,
-        curso_id: "00000000-0000-0000-0000-000000000000"
-      }])
-      .select()
-      .single();
-    if (error) {
-      console.error(error);
-      toast.error("Erro ao criar turma");
-      return;
-    }
-    setTurmas([...turmas, data]);
-    setNovaTurmaNome("");
-    toast.success("Turma criada ✅");
   }
 
   async function criarAluno() {
@@ -469,7 +432,8 @@ export default function Horarios() {
 
   return (
     <div className="min-h-screen flex bg-background">
-      <aside className="w-72 bg-card border-r p-4">
+      {showSidebar && (
+        <aside className="w-72 bg-card border-r p-4">
         <div className="flex items-center gap-3 mb-4">
           <Calendar className="h-6 w-6" />
           <h2 className="text-lg font-semibold">Turmas</h2>
@@ -495,7 +459,7 @@ export default function Horarios() {
           </Button>
         </div>
 
-        <div className="space-y-2 max-h-[calc(100vh-400px)] overflow-y-auto">
+        <div className="space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto">
           {filteredTurmas.map(t => (
             <button
               key={t.id}
@@ -516,27 +480,25 @@ export default function Horarios() {
             </p>
           )}
         </div>
-
-        <div className="mt-6">
-          <Input
-            value={novaTurmaNome}
-            onChange={e => setNovaTurmaNome(e.target.value)}
-            placeholder="Nova turma"
-            className="w-full mb-2"
-          />
-          <Button onClick={criarTurma} className="w-full">
-            <Plus className="h-4 w-4 mr-2" /> Criar Turma
-          </Button>
-        </div>
-      </aside>
+        </aside>
+      )}
 
       <main className="flex-1 p-6">
         <header className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Grade de Horários</h1>
-            <p className="text-sm text-muted-foreground">
-              {activeTurma ? `Turma ativa: ${activeTurma.nome}` : "Selecione uma turma"}
-            </p>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSidebar(!showSidebar)}
+            >
+              {showSidebar ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold">Grade de Horários</h1>
+              <p className="text-sm text-muted-foreground">
+                {activeTurma ? `Turma ativa: ${activeTurma.nome}` : "Selecione uma turma"}
+              </p>
+            </div>
           </div>
         </header>
 
