@@ -101,7 +101,9 @@ export type Database = {
       alunos: {
         Row: {
           created_at: string | null
+          data_nascimento: string | null
           email: string | null
+          funcao: string | null
           graduacao: Database["public"]["Enums"]["graduacao_militar"]
           id: string
           local_servico: string | null
@@ -112,10 +114,13 @@ export type Database = {
           tipo_militar: Database["public"]["Enums"]["tipo_militar"]
           updated_at: string | null
           user_id: string
+          whatsapp: string | null
         }
         Insert: {
           created_at?: string | null
+          data_nascimento?: string | null
           email?: string | null
+          funcao?: string | null
           graduacao: Database["public"]["Enums"]["graduacao_militar"]
           id?: string
           local_servico?: string | null
@@ -126,10 +131,13 @@ export type Database = {
           tipo_militar: Database["public"]["Enums"]["tipo_militar"]
           updated_at?: string | null
           user_id: string
+          whatsapp?: string | null
         }
         Update: {
           created_at?: string | null
+          data_nascimento?: string | null
           email?: string | null
+          funcao?: string | null
           graduacao?: Database["public"]["Enums"]["graduacao_militar"]
           id?: string
           local_servico?: string | null
@@ -140,6 +148,7 @@ export type Database = {
           tipo_militar?: Database["public"]["Enums"]["tipo_militar"]
           updated_at?: string | null
           user_id?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }

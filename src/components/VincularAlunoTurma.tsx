@@ -75,9 +75,14 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
   
   const [newAlunoData, setNewAlunoData] = useState({
     nome_completo: "",
+    email: "",
+    telefone: "",
+    whatsapp: "",
     graduacao: "",
     tipo_militar: "",
     local_servico: "",
+    funcao: "",
+    data_nascimento: "",
     local_curso: "",
     sigla_curso: "",
   });
@@ -90,8 +95,6 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
 
     const validation = alunoSchema.safeParse({
       ...newAlunoData,
-      email: "",
-      telefone: "",
       observacoes: "",
     });
     
@@ -108,9 +111,14 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
         .from("alunos")
         .insert([{ 
           nome_completo: newAlunoData.nome_completo,
+          email: newAlunoData.email || null,
+          telefone: newAlunoData.telefone || null,
+          whatsapp: newAlunoData.whatsapp || null,
           graduacao: (newAlunoData.tipo_militar === "Civil" ? "Civil" : rankMap[newAlunoData.graduacao]) as Database['public']['Enums']['graduacao_militar'],
           tipo_militar: newAlunoData.tipo_militar as Database['public']['Enums']['tipo_militar'],
-          local_servico: newAlunoData.tipo_militar === "Civil" ? "Nenhuma" : newAlunoData.local_servico,
+          local_servico: newAlunoData.local_servico || null,
+          funcao: newAlunoData.funcao || null,
+          data_nascimento: newAlunoData.data_nascimento || null,
           user_id: user.id 
         } as Database['public']['Tables']['alunos']['Insert']])
         .select()
@@ -134,9 +142,14 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
       toast.success("Aluno criado e vinculado com sucesso!");
       setNewAlunoData({
         nome_completo: "",
+        email: "",
+        telefone: "",
+        whatsapp: "",
         graduacao: "",
         tipo_militar: "",
         local_servico: "",
+        funcao: "",
+        data_nascimento: "",
         local_curso: "",
         sigla_curso: "",
       });
@@ -172,6 +185,45 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
                   value={newAlunoData.nome_completo}
                   onChange={(e) => setNewAlunoData({ ...newAlunoData, nome_completo: e.target.value })}
                   placeholder="Digite o nome completo"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={newAlunoData.email}
+                  onChange={(e) => setNewAlunoData({ ...newAlunoData, email: e.target.value })}
+                  placeholder="Digite o email"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Data de Nascimento</Label>
+                <Input
+                  type="date"
+                  value={newAlunoData.data_nascimento}
+                  onChange={(e) => setNewAlunoData({ ...newAlunoData, data_nascimento: e.target.value })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Telemóvel</Label>
+                <Input
+                  type="tel"
+                  value={newAlunoData.telefone}
+                  onChange={(e) => setNewAlunoData({ ...newAlunoData, telefone: e.target.value })}
+                  placeholder="Digite o telemóvel"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>WhatsApp</Label>
+                <Input
+                  type="tel"
+                  value={newAlunoData.whatsapp}
+                  onChange={(e) => setNewAlunoData({ ...newAlunoData, whatsapp: e.target.value })}
+                  placeholder="Digite o WhatsApp"
                 />
               </div>
               
@@ -226,26 +278,22 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
               </div>
               
               <div className="space-y-2 md:col-span-2">
-                <Label>OM de Registro *</Label>
-                <Select
-                  required
+                <Label>OM de Registro</Label>
+                <Input
                   value={newAlunoData.local_servico}
-                  onValueChange={(value) => setNewAlunoData({ ...newAlunoData, local_servico: value })}
+                  onChange={(e) => setNewAlunoData({ ...newAlunoData, local_servico: e.target.value })}
+                  placeholder="Digite a OM de registro"
                   disabled={newAlunoData.tipo_militar === "Civil"}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a OM" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background">
-                    <SelectItem value="Nenhuma">Nenhuma</SelectItem>
-                    <SelectItem value="Guarda Costeira">Guarda Costeira</SelectItem>
-                    <SelectItem value="Quartel de Fuzileiros">Quartel de Fuzileiros</SelectItem>
-                    <SelectItem value="Exército">Exército</SelectItem>
-                    <SelectItem value="Palácio do Governo">Palácio do Governo</SelectItem>
-                    <SelectItem value="Bombeiros">Bombeiros</SelectItem>
-                    <SelectItem value="Polícia">Polícia</SelectItem>
-                  </SelectContent>
-                </Select>
+                />
+              </div>
+              
+              <div className="space-y-2 md:col-span-2">
+                <Label>Função que Exerce</Label>
+                <Input
+                  value={newAlunoData.funcao}
+                  onChange={(e) => setNewAlunoData({ ...newAlunoData, funcao: e.target.value })}
+                  placeholder="Digite a função que exerce"
+                />
               </div>
               
               <div className="space-y-2 md:col-span-2">
@@ -300,7 +348,7 @@ export function VincularAlunoTurma({ turmaId, turmaNome, onSuccess }: VincularAl
               </Button>
               <Button 
                 onClick={handleCreateAndVincular} 
-                disabled={loading || !newAlunoData.nome_completo || !newAlunoData.graduacao || !newAlunoData.tipo_militar || !newAlunoData.local_servico}
+                disabled={loading || !newAlunoData.nome_completo || !newAlunoData.graduacao || !newAlunoData.tipo_militar}
               >
                 {loading ? "Criando..." : "Criar e Vincular"}
               </Button>

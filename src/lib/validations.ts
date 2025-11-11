@@ -33,9 +33,12 @@ export const alunoSchema = z.object({
   nome_completo: nameSchema,
   email: emailSchema,
   telefone: phoneSchema,
+  whatsapp: phoneSchema,
   graduacao: z.string().min(1, { message: "Posto / Graduação é obrigatório" }),
   tipo_militar: z.string().min(1, { message: "Tipo militar é obrigatório" }),
   local_servico: z.string().trim().max(200).optional().or(z.literal("")),
+  funcao: z.string().trim().max(200).optional().or(z.literal("")),
+  data_nascimento: z.string().optional().or(z.literal("")),
   observacoes: textAreaSchema,
 });
 
