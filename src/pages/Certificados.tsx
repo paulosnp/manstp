@@ -64,6 +64,9 @@ export default function Certificados() {
   const [stageRef, setStageRef] = useState<any>(null);
   const [currentFont, setCurrentFont] = useState<string>("Arial");
   const [selectedTurmaId, setSelectedTurmaId] = useState<string | null>(null);
+  const [showSlidesPanel, setShowSlidesPanel] = useState(true);
+  const [showElementsPanel, setShowElementsPanel] = useState(true);
+  const [showCertificatesPanel, setShowCertificatesPanel] = useState(true);
 
   const activeSlide = slides.find((s) => s.id === activeSlideId) || slides[0];
   const orientation = activeSlide.orientation;
@@ -598,47 +601,80 @@ export default function Certificados() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Toolbar tipo PowerPoint */}
-      <PowerPointToolbar
-        selectedElement={selectedElement}
-        onUpdateElement={updateElement}
-        onAddText={addText}
-        onAddImage={addImage}
-        onAddShape={addShape}
-        onDelete={deleteElement}
-        onMoveLayer={moveLayer}
-        onSave={saveTemplate}
-        onPreview={handlePreview}
-        onExport={exportToPDF}
-        onExportAll={exportAllToPDF}
-        currentFont={currentFont}
-        onFontChange={setCurrentFont}
-        templateName={templateName}
-        onTemplateNameChange={setTemplateName}
-        selectedTemplateId={selectedTemplate?.id || "new"}
-        onSelectTemplate={handleSelectTemplate}
-      />
+      <div className="flex items-center gap-2 border-b bg-background px-2 py-1">
+        <div className="flex gap-1 border-r pr-2">
+          <Button
+            variant={showSlidesPanel ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowSlidesPanel(!showSlidesPanel)}
+            title="Exibir/Ocultar Slides"
+          >
+            📑
+          </Button>
+          <Button
+            variant={showElementsPanel ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowElementsPanel(!showElementsPanel)}
+            title="Exibir/Ocultar Elementos e Configurações"
+          >
+            🎨
+          </Button>
+          <Button
+            variant={showCertificatesPanel ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowCertificatesPanel(!showCertificatesPanel)}
+            title="Exibir/Ocultar Certificados"
+          >
+            📋
+          </Button>
+        </div>
+        <div className="flex-1">
+          <PowerPointToolbar
+            selectedElement={selectedElement}
+            onUpdateElement={updateElement}
+            onAddText={addText}
+            onAddImage={addImage}
+            onAddShape={addShape}
+            onDelete={deleteElement}
+            onMoveLayer={moveLayer}
+            onSave={saveTemplate}
+            onPreview={handlePreview}
+            onExport={exportToPDF}
+            onExportAll={exportAllToPDF}
+            currentFont={currentFont}
+            onFontChange={setCurrentFont}
+            templateName={templateName}
+            onTemplateNameChange={setTemplateName}
+            selectedTemplateId={selectedTemplate?.id || "new"}
+            onSelectTemplate={handleSelectTemplate}
+          />
+        </div>
+      </div>
 
       {/* Conteúdo principal */}
       <div className="flex-1 flex overflow-hidden">
         {/* Painel de Slides (miniaturas) */}
-        <SlidesPanel
-          slides={slides}
-          activeSlideId={activeSlideId}
-          onSelectSlide={setActiveSlideId}
-          onDuplicateSlide={handleDuplicateSlide}
-          onDeleteSlide={handleDeleteSlide}
-          onAddSlide={handleAddSlide}
-          turmaId={selectedTurmaId}
-          onLinkStudent={(slideId, alunoId, alunoNome) => {
-            setSlides(prev => prev.map(s => 
-              s.id === slideId ? { ...s, alunoId, alunoNome } : s
-            ));
-            toast.success(`Slide vinculado a ${alunoNome}`);
-          }}
-        />
+        {showSlidesPanel && (
+          <SlidesPanel
+            slides={slides}
+            activeSlideId={activeSlideId}
+            onSelectSlide={setActiveSlideId}
+            onDuplicateSlide={handleDuplicateSlide}
+            onDeleteSlide={handleDeleteSlide}
+            onAddSlide={handleAddSlide}
+            turmaId={selectedTurmaId}
+            onLinkStudent={(slideId, alunoId, alunoNome) => {
+              setSlides(prev => prev.map(s => 
+                s.id === slideId ? { ...s, alunoId, alunoNome } : s
+              ));
+              toast.success(`Slide vinculado a ${alunoNome}`);
+            }}
+          />
+        )}
 
         {/* Painel lateral esquerdo - Elementos e Configurações */}
-        <div className="w-80 border-r bg-muted/20">
+        {showElementsPanel && (
+          <div className="w-80 border-r bg-muted/20">
           <Tabs defaultValue="elements" className="h-full flex flex-col">
             <TabsList className="w-full rounded-none border-b">
               <TabsTrigger value="elements" className="flex-1">Elementos</TabsTrigger>
@@ -778,7 +814,8 @@ export default function Certificados() {
               </TabsContent>
             </ScrollArea>
           </Tabs>
-        </div>
+          </div>
+        )}
 
         {/* Área central - Canvas */}
         <div className="flex-1 flex flex-col bg-muted/30">
@@ -798,7 +835,7 @@ export default function Certificados() {
         </div>
 
         {/* Painel lateral direito - Gerar certificados */}
-        {selectedTurmaId && selectedTemplate?.id && selectedTemplate.id !== "new" && (
+        {showCertificatesPanel && selectedTurmaId && selectedTemplate?.id && selectedTemplate.id !== "new" && (
           <div className="w-80 border-l bg-muted/20">
             <ScrollArea className="h-full">
               <div className="p-4">

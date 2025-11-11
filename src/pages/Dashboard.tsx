@@ -113,13 +113,13 @@ export default function Dashboard() {
           if (isAndamento) cenpemAndamento++;
         }
 
-        // Expeditos (STP) - apenas cursos em São Tomé e Príncipe
+        // Expeditos (STP) - TODOS os cursos em São Tomé e Príncipe
         const localCurso = (vinculo.local_curso || curso.local_realizacao || '').toLowerCase();
         const isSTP = localCurso.includes('são tomé') || localCurso.includes('sao tome') || 
                       localCurso.includes('stp') || localCurso.includes('príncipe') || 
                       localCurso.includes('principe');
         
-        if ((tipoCurso.includes('expedito') || nomeCurso.includes('stp')) && isSTP) {
+        if (isSTP) {
           expeditosTotal++;
           if (isAndamento) expeditosAndamento++;
           if (isAguardando) expeditosAguardando++;
