@@ -4,8 +4,11 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RealtimeChannel } from "@supabase/supabase-js";
+import { DashboardCardConfig, DashboardCardType } from "@/components/DashboardCardConfig";
 
 interface DashboardCard {
+  id: string;
+  type: DashboardCardType;
   titulo: string;
   valor: number;
   subtitulo?: string;
@@ -21,12 +24,26 @@ interface AlunoAndamento {
   instrutores: string[];
 }
 
+const DEFAULT_CARD_CONFIGS: { [key in DashboardCardType]: string } = {
+  coppaznav: "Alunos no curso COPPAZNAV",
+  ead: "Cursos a Distância (EAD)",
+  cenpem: "Cursos CENPEM",
+  expeditos_stp: "Cursos Expeditos São Tomé e Príncipe",
+  efomm_ciaga: "EFOMM CIAGA (And/Agd)",
+  efomm_ciaba: "EFOMM CIABA (And/Agd)",
+  rov_eb: "ROV - EB"
+};
+
 export default function Dashboard() {
   const { user } = useAuth();
   const [cards, setCards] = useState<DashboardCard[]>([]);
   const [alunosAndamento, setAlunosAndamento] = useState<AlunoAndamento[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<string>("");
+  const [cardConfigs, setCardConfigs] = useState<{ [key: string]: { type: DashboardCardType; titulo: string } }>(() => {
+    const saved = localStorage.getItem("dashboardCardConfigs");
+    return saved ? JSON.parse(saved) : {};
+  });
 
   const fetchDashboardData = async () => {
     try {
@@ -185,50 +202,92 @@ export default function Dashboard() {
         }
       });
 
-      const newCards: DashboardCard[] = [
+      // Helper function to get card config
+      const getCardConfig = (type: DashboardCardType, id: string) => {
+        const saved = cardConfigs[id];
+        if (saved) {
+          return { type: saved.type, titulo: saved.titulo };
+        }
+        return { type, titulo: DEFAULT_CARD_CONFIGS[type] };
+      };
+
+      const allCards: DashboardCard[] = [
         ...(copaaznavTotal > 0 ? [{
-          titulo: "Alunos no curso COPPAZNAV",
+          id: "coppaznav",
+          ...getCardConfig("coppaznav", "coppaznav"),
           valor: copaaznavTotal,
           subtitulo: `Cursando ou Aguardando`,
           cor: "border-l-teal-500"
         }] : []),
         {
-          titulo: "Cursos a Distância (EAD)",
+          id: "ead",
+          ...getCardConfig("ead", "ead"),
           valor: eadTotal,
           subtitulo: `Turmas ativas: ${eadTurmasAtivas}`,
           cor: "border-l-green-500"
         },
         {
-          titulo: "Cursos CENPEM",
+          id: "cenpem",
+          ...getCardConfig("cenpem", "cenpem"),
           valor: cenpemTotal,
           subtitulo: `Aguardando: ${cenpemAguardando} • Andamento: ${cenpemAndamento}`,
           cor: "border-l-blue-600"
         },
         {
-          titulo: "Cursos Expeditos São Tomé e Príncipe",
+          id: "expeditos_stp",
+          ...getCardConfig("expeditos_stp", "expeditos_stp"),
           valor: expeditosTotal,
           subtitulo: `Em Andamento: ${expeditosAndamento} • Aguardando: ${expeditosAguardando}`,
           cor: "border-l-orange-500"
         },
         {
-          titulo: "EFOMM CIAGA (And/Agd)",
+          id: "efomm_ciaga",
+          ...getCardConfig("efomm_ciaga", "efomm_ciaga"),
           valor: efommCiagaTotal,
           subtitulo: `Andamento: ${efommCiagaAndamento} • Aguardando: ${efommCiagaAguardando}`,
           cor: "border-l-purple-600"
         },
         {
-          titulo: "EFOMM CIABA (And/Agd)",
+          id: "efomm_ciaba",
+          ...getCardConfig("efomm_ciaba", "efomm_ciaba"),
           valor: efommCiabaTotal,
           subtitulo: `Andamento: ${efommCiabaAndamento} • Aguardando: ${efommCiabaAguardando}`,
           cor: "border-l-indigo-600"
         },
         {
-          titulo: "ROV - EB",
+          id: "rov_eb",
+          ...getCardConfig("rov_eb", "rov_eb"),
           valor: rovEbTotal,
           subtitulo: `Andamento: ${rovEbAndamento} • Aguardando: ${rovEbAguardando}`,
           cor: "border-l-red-600"
         }
       ];
+
+      // Apply custom type configurations - recalculate values based on saved type
+      const newCards = allCards.map(card => {
+        const savedConfig = cardConfigs[card.id];
+        if (savedConfig && savedConfig.type !== card.type) {
+          // Recalculate based on the saved type
+          const type = savedConfig.type;
+          switch (type) {
+            case "coppaznav":
+              return { ...card, type, valor: copaaznavTotal, subtitulo: `Cursando ou Aguardando` };
+            case "ead":
+              return { ...card, type, valor: eadTotal, subtitulo: `Turmas ativas: ${eadTurmasAtivas}` };
+            case "cenpem":
+              return { ...card, type, valor: cenpemTotal, subtitulo: `Aguardando: ${cenpemAguardando} • Andamento: ${cenpemAndamento}` };
+            case "expeditos_stp":
+              return { ...card, type, valor: expeditosTotal, subtitulo: `Em Andamento: ${expeditosAndamento} • Aguardando: ${expeditosAguardando}` };
+            case "efomm_ciaga":
+              return { ...card, type, valor: efommCiagaTotal, subtitulo: `Andamento: ${efommCiagaAndamento} • Aguardando: ${efommCiagaAguardando}` };
+            case "efomm_ciaba":
+              return { ...card, type, valor: efommCiabaTotal, subtitulo: `Andamento: ${efommCiabaAndamento} • Aguardando: ${efommCiabaAguardando}` };
+            case "rov_eb":
+              return { ...card, type, valor: rovEbTotal, subtitulo: `Andamento: ${rovEbAndamento} • Aguardando: ${rovEbAguardando}` };
+          }
+        }
+        return card;
+      });
 
       // Filtrar cards com valor > 0
       setCards(newCards.filter(card => card.valor > 0));
@@ -240,6 +299,17 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSaveCardConfig = (config: { id: string; type: DashboardCardType; titulo: string }) => {
+    const updated = {
+      ...cardConfigs,
+      [config.id]: { type: config.type, titulo: config.titulo }
+    };
+    setCardConfigs(updated);
+    localStorage.setItem("dashboardCardConfigs", JSON.stringify(updated));
+    // Refetch data to apply new configuration
+    fetchDashboardData();
   };
 
   // Initial data fetch
@@ -311,9 +381,13 @@ export default function Dashboard() {
 
       {/* CARDS INFORMATIVOS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {cards.map((card, idx) => (
-          <Card key={idx} className={`shadow-card border-l-4 ${card.cor}`}>
-            <CardContent className="p-5">
+        {cards.map((card) => (
+          <Card key={card.id} className={`shadow-card border-l-4 ${card.cor} relative`}>
+            <DashboardCardConfig 
+              config={{ id: card.id, type: card.type, titulo: card.titulo }}
+              onSave={handleSaveCardConfig}
+            />
+            <CardContent className="p-5 pt-10">
               <h3 className="text-sm font-medium text-muted-foreground mb-2">{card.titulo}</h3>
               <p className="text-3xl font-bold mb-1">{card.valor}</p>
               {card.subtitulo && (
