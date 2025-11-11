@@ -676,9 +676,6 @@ export default function Certificados() {
               ));
               toast.success(`Slide vinculado a ${alunoNome}`);
             }}
-            onAddText={addText}
-            onAddImage={addImage}
-            onAddShape={addShape}
           />
         )}
 
