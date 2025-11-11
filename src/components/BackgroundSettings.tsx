@@ -43,52 +43,27 @@ export function BackgroundSettings() {
       return;
     }
 
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: t("error"),
+        description: "File size must be less than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setUploading(true);
 
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `background-${imageNumber}-${Date.now()}.${fileExt}`;
-      const filePath = fileName;
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('imageNumber', imageNumber.toString());
 
-      const { error: uploadError } = await supabase.storage
-        .from("backgrounds")
-        .upload(filePath, file);
+      const { data, error } = await supabase.functions.invoke('upload-background', {
+        body: formData,
+      });
 
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("backgrounds")
-        .getPublicUrl(filePath);
-
-      const { data: existingSettings } = await supabase
-        .from("appearance_settings")
-        .select("*")
-        .single();
-
-      if (existingSettings) {
-        const updateData =
-          imageNumber === 1
-            ? { background_image_1: publicUrl }
-            : { background_image_2: publicUrl };
-
-        const { error: updateError } = await supabase
-          .from("appearance_settings")
-          .update(updateData)
-          .eq("id", existingSettings.id);
-
-        if (updateError) throw updateError;
-      } else {
-        const insertData =
-          imageNumber === 1
-            ? { background_image_1: publicUrl, background_image_2: null }
-            : { background_image_1: null, background_image_2: publicUrl };
-
-        const { error: insertError } = await supabase
-          .from("appearance_settings")
-          .insert([insertData]);
-
-        if (insertError) throw insertError;
-      }
+      if (error) throw error;
 
       toast({
         title: t("success"),
