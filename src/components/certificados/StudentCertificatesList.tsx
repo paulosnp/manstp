@@ -1,17 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { Download, FileCheck, Loader2 } from "lucide-react";
 import jsPDF from "jspdf";
+import { Stage, Layer, Image as KonvaImage, Text as KonvaText, Rect } from "react-konva";
+import useImage from "use-image";
 
 interface Student {
   id: string;
   nome_completo: string;
   matricula: number;
   hasCertificate?: boolean;
+  thumbnail?: string;
 }
 
 interface StudentCertificatesListProps {
@@ -34,6 +37,7 @@ export const StudentCertificatesList = ({
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
+  const thumbnailStageRef = useRef<any>(null);
 
   useEffect(() => {
     if (turmaId) {
@@ -84,12 +88,39 @@ export const StudentCertificatesList = ({
       })) || [];
 
       setStudents(studentsData);
+      
+      // Gerar miniaturas após carregar os alunos
+      setTimeout(() => generateThumbnails(studentsData), 500);
     } catch (error) {
       console.error("Erro ao buscar alunos:", error);
       toast.error("Erro ao carregar alunos da turma");
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateThumbnails = async (studentsData: Student[]) => {
+    if (!thumbnailStageRef.current || !elements.length) return;
+
+    const thumbnailsMap: { [key: string]: string } = {};
+
+    for (const student of studentsData) {
+      try {
+        // Aguardar um pouco antes de capturar cada thumbnail
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const dataUrl = thumbnailStageRef.current.toDataURL({ pixelRatio: 0.5 });
+        thumbnailsMap[student.id] = dataUrl;
+      } catch (error) {
+        console.error(`Erro ao gerar miniatura para ${student.nome_completo}:`, error);
+      }
+    }
+
+    // Atualizar todos os alunos com suas miniaturas
+    setStudents(prev => prev.map(student => ({
+      ...student,
+      thumbnail: thumbnailsMap[student.id]
+    })));
   };
 
   const generateCertificateForStudent = async (student: Student) => {
@@ -186,77 +217,165 @@ export const StudentCertificatesList = ({
     );
   }
 
+  // Canvas oculto para geração de miniaturas
+  const ThumbnailCanvas = () => (
+    <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+      <Stage
+        width={orientation === "landscape" ? 300 : 200}
+        height={orientation === "landscape" ? 200 : 300}
+        ref={thumbnailStageRef}
+      >
+        <Layer>
+          {elements.map((el) => {
+            const scale = orientation === "landscape" ? 300 / 900 : 200 / 600;
+            
+            if (el.type === "image" && el.src) {
+              return (
+                <ThumbnailImage
+                  key={el.id}
+                  src={el.src}
+                  x={el.x * scale}
+                  y={el.y * scale}
+                  width={(el.width || 100) * scale}
+                  height={(el.height || 100) * scale}
+                  opacity={el.opacity ?? 1}
+                />
+              );
+            }
+            
+            if (el.type === "text") {
+              return (
+                <KonvaText
+                  key={el.id}
+                  x={el.x * scale}
+                  y={el.y * scale}
+                  text={el.text}
+                  fontSize={(el.fontSize || 24) * scale}
+                  fontFamily={el.fontFamily || "Arial"}
+                  fill={el.fill || "#000000"}
+                  fontStyle={`${el.bold ? "bold" : ""} ${el.italic ? "italic" : ""}`.trim()}
+                  align={el.align || "left"}
+                  width={(el.width || 200) * scale}
+                  opacity={el.opacity ?? 1}
+                />
+              );
+            }
+            
+            if (el.type === "shape") {
+              return (
+                <Rect
+                  key={el.id}
+                  x={el.x * scale}
+                  y={el.y * scale}
+                  width={(el.width || 100) * scale}
+                  height={(el.height || 100) * scale}
+                  fill={el.fill || "#cccccc"}
+                  opacity={el.opacity ?? 1}
+                />
+              );
+            }
+            
+            return null;
+          })}
+        </Layer>
+      </Stage>
+    </div>
+  );
+
+  const ThumbnailImage = ({ src, ...props }: any) => {
+    const [image] = useImage(src);
+    return <KonvaImage image={image} {...props} />;
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Alunos da Turma</CardTitle>
-          {students.length > 0 && (
-            <Button
-              onClick={generateAllCertificates}
-              disabled={!templateId || generating !== null}
-              size="sm"
-            >
-              Gerar Todos os Certificados
-            </Button>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin" />
+    <>
+      <ThumbnailCanvas />
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Alunos da Turma</CardTitle>
+            {students.length > 0 && (
+              <Button
+                onClick={generateAllCertificates}
+                disabled={!templateId || generating !== null}
+                size="sm"
+              >
+                Gerar Todos
+              </Button>
+            )}
           </div>
-        ) : students.length === 0 ? (
-          <p className="text-center text-muted-foreground py-4">
-            Nenhum aluno encontrado nesta turma
-          </p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Matrícula</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {students.map((student) => (
-                <TableRow key={student.id}>
-                  <TableCell>{student.matricula}</TableCell>
-                  <TableCell className="font-medium">{student.nome_completo}</TableCell>
-                  <TableCell>
-                    {student.hasCertificate ? (
-                      <span className="inline-flex items-center gap-1 text-green-600">
-                        <FileCheck className="w-4 h-4" />
-                        Gerado
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">Pendente</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      size="sm"
-                      variant={student.hasCertificate ? "outline" : "default"}
-                      onClick={() => generateCertificateForStudent(student)}
-                      disabled={!templateId || generating === student.id}
-                    >
-                      {generating === student.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      ) : (
-                        <Download className="w-4 h-4 mr-2" />
-                      )}
-                      {student.hasCertificate ? "Regerar" : "Gerar"}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin" />
+            </div>
+          ) : students.length === 0 ? (
+            <p className="text-center text-muted-foreground py-4">
+              Nenhum aluno encontrado nesta turma
+            </p>
+          ) : (
+            <ScrollArea className="h-[600px]">
+              <div className="space-y-3">
+                {students.map((student) => (
+                  <Card key={student.id} className="overflow-hidden">
+                    <div className="flex items-center gap-3 p-3">
+                      {/* Miniatura do certificado */}
+                      <div className="flex-shrink-0 w-32 h-24 bg-muted rounded overflow-hidden border">
+                        {student.thumbnail ? (
+                          <img 
+                            src={student.thumbnail} 
+                            alt={`Certificado de ${student.nome_completo}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                            Carregando...
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Informações do aluno */}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate">
+                          {student.nome_completo}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Matrícula: {student.matricula}
+                        </div>
+                        <div className="mt-1">
+                          {student.hasCertificate ? (
+                            <span className="inline-flex items-center gap-1 text-xs text-green-600">
+                              <FileCheck className="w-3 h-3" />
+                              Gerado
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Pendente</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Botão de ação */}
+                      <Button
+                        size="sm"
+                        variant={student.hasCertificate ? "outline" : "default"}
+                        onClick={() => generateCertificateForStudent(student)}
+                        disabled={!templateId || generating === student.id}
+                      >
+                        {generating === student.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Download className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </CardContent>
+      </Card>
+    </>
   );
 };
