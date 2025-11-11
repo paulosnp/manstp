@@ -70,48 +70,45 @@ export function InviteUserDialog() {
         },
       });
 
-      // Verificar se há erro na resposta
-      if (response.error) {
-        console.error("Erro na invocação:", response.error);
-        
-        // Tratar erros de validação (409) de forma amigável
-        if (response.error.message?.includes("409")) {
-          const data = response.data as { error?: string };
-          if (data?.error?.includes("já está cadastrado")) {
-            toast.warning("Email já cadastrado", {
-              description: "Este email já possui uma conta no sistema.",
-            });
-            setFormData({ email: "", nome: "", role: "visualizador" });
-            return;
-          } else if (data?.error?.includes("convite pendente")) {
-            toast.warning("Convite já enviado", {
-              description: "Já existe um convite pendente para este email.",
-            });
-            setFormData({ email: "", nome: "", role: "visualizador" });
-            return;
-          }
-        }
-        
-        throw new Error(response.error.message || "Erro ao enviar convite");
-      }
+      console.log("Resposta da função:", { error: response.error, data: response.data });
 
-      // Verificar se há erro no corpo da resposta
+      // Verificar primeiro se há erro no corpo da resposta (priority)
       const data = response.data as { error?: string; success?: boolean };
+      
+      // Tratar erros de validação retornados no corpo da resposta
       if (data?.error) {
+        console.log("Erro no corpo da resposta:", data.error);
+        
         if (data.error.includes("já está cadastrado")) {
           toast.warning("Email já cadastrado", {
             description: "Este email já possui uma conta no sistema.",
           });
           setFormData({ email: "", nome: "", role: "visualizador" });
           return;
-        } else if (data.error.includes("convite pendente")) {
+        } 
+        
+        if (data.error.includes("convite pendente")) {
           toast.warning("Convite já enviado", {
             description: "Já existe um convite pendente para este email.",
           });
           setFormData({ email: "", nome: "", role: "visualizador" });
           return;
         }
-        throw new Error(data.error);
+        
+        // Outros erros de validação
+        toast.error("Erro ao enviar convite", {
+          description: data.error,
+        });
+        return;
+      }
+
+      // Verificar se há erro no objeto error da resposta
+      if (response.error) {
+        console.error("Erro na invocação:", response.error);
+        toast.error("Erro ao enviar convite", {
+          description: response.error.message || "Erro desconhecido",
+        });
+        return;
       }
 
       toast.success("Convite enviado com sucesso!", {
