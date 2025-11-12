@@ -24,19 +24,41 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch system data for context
-    const [alunosRes, cursosRes, turmasRes, alunoTurmaRes, notasRes] = await Promise.all([
-      supabase.from("alunos").select("id, nome_completo, graduacao, tipo_militar, funcao, local_servico, email, telefone, whatsapp, matricula"),
-      supabase.from("cursos").select("id, nome, tipo_curso, modalidade, local_realizacao, categoria"),
-      supabase.from("turmas").select("id, nome, ano, situacao, data_inicio, data_fim"),
-      supabase.from("aluno_turma").select("aluno_id, turma_id, status, sigla_curso, local_curso"),
-      supabase.from("notas").select("aluno_id, disciplina_id, nota, nota_recuperacao, turma_id")
+    // Fetch ALL system data for complete context
+    const [
+      alunosRes,
+      cursosRes,
+      turmasRes,
+      alunoTurmaRes,
+      notasRes,
+      instrutoresRes,
+      disciplinasRes,
+      instrutorTurmaRes,
+      gradeAulasRes,
+      gradeSemanaRes,
+      profilesRes,
+      userRolesRes
+    ] = await Promise.all([
+      supabase.from("alunos").select("*"),
+      supabase.from("cursos").select("*"),
+      supabase.from("turmas").select("*"),
+      supabase.from("aluno_turma").select("*"),
+      supabase.from("notas").select("*"),
+      supabase.from("instrutores").select("*"),
+      supabase.from("disciplinas").select("*"),
+      supabase.from("instrutor_turma").select("*"),
+      supabase.from("grade_aulas").select("*"),
+      supabase.from("grade_semana").select("*"),
+      supabase.from("profiles").select("*"),
+      supabase.from("user_roles").select("*")
     ]);
 
     const totalAlunos = alunosRes.data?.length || 0;
     const totalCursos = cursosRes.data?.length || 0;
     const totalTurmas = turmasRes.data?.length || 0;
     const totalMatriculas = alunoTurmaRes.data?.length || 0;
+    const totalInstrutores = instrutoresRes.data?.length || 0;
+    const totalDisciplinas = disciplinasRes.data?.length || 0;
 
     // Count students by status
     const statusCounts = alunoTurmaRes.data?.reduce((acc: any, at: any) => {
@@ -50,61 +72,150 @@ serve(async (req) => {
       return acc;
     }, {});
 
-    // Build detailed context with actual data
+    // Build comprehensive context with ALL database data
     const alunosData = alunosRes.data || [];
+    const cursosData = cursosRes.data || [];
     const turmasData = turmasRes.data || [];
     const alunoTurmaData = alunoTurmaRes.data || [];
     const notasData = notasRes.data || [];
+    const instrutoresData = instrutoresRes.data || [];
+    const disciplinasData = disciplinasRes.data || [];
+    const instrutorTurmaData = instrutorTurmaRes.data || [];
+    const gradeAulasData = gradeAulasRes.data || [];
+    const gradeSemanaData = gradeSemanaRes.data || [];
+    const profilesData = profilesRes.data || [];
+    const userRolesData = userRolesRes.data || [];
 
-    const systemPrompt = `Você é um assistente inteligente do GESTOR ESCOLAR, um sistema de gestão educacional militar.
+    const systemPrompt = `Você é um assistente inteligente do GESTOR ESCOLAR, um sistema de gestão educacional militar com ACESSO COMPLETO ao banco de dados.
 
-DADOS DO SISTEMA:
-- Total de alunos cadastrados: ${totalAlunos}
+ESTATÍSTICAS GERAIS:
+- Total de alunos: ${totalAlunos}
 - Total de cursos: ${totalCursos}
 - Total de turmas: ${totalTurmas}
-- Total de matrículas (aluno_turma): ${totalMatriculas}
+- Total de matrículas: ${totalMatriculas}
+- Total de instrutores: ${totalInstrutores}
+- Total de disciplinas: ${totalDisciplinas}
 
-Distribuição de alunos por status:
+DISTRIBUIÇÃO DE STATUS:
+Alunos por status:
 ${Object.entries(statusCounts || {}).map(([status, count]) => `- ${status}: ${count}`).join('\n')}
 
-Distribuição de turmas por situação:
+Turmas por situação:
 ${Object.entries(situacaoCounts || {}).map(([situacao, count]) => `- ${situacao}: ${count}`).join('\n')}
 
-DADOS DETALHADOS DE ALUNOS:
-${alunosData.slice(0, 100).map(a => `- ${a.nome_completo} (${a.graduacao} - ${a.tipo_militar}): ${a.funcao || 'N/A'} | ${a.local_servico || 'N/A'}`).join('\n')}
-${alunosData.length > 100 ? `... e mais ${alunosData.length - 100} alunos` : ''}
+═══════════════════════════════════════════════════════
+DADOS COMPLETOS DO SISTEMA (ACESSO IRRESTRITO)
+═══════════════════════════════════════════════════════
 
-DADOS DE TURMAS:
-${turmasData.map(t => `- ${t.nome} (${t.ano}): ${t.situacao} | ${t.data_inicio || 'N/A'} a ${t.data_fim || 'N/A'}`).join('\n')}
+📚 ALUNOS (${alunosData.length} registros):
+${alunosData.map(a => `
+• ID: ${a.id}
+  Nome: ${a.nome_completo}
+  Matrícula: ${a.matricula}
+  Graduação: ${a.graduacao} | Tipo: ${a.tipo_militar}
+  Função: ${a.funcao || 'N/A'}
+  Local: ${a.local_servico || 'N/A'}
+  Email: ${a.email || 'N/A'}
+  Tel: ${a.telefone || 'N/A'} | WhatsApp: ${a.whatsapp || 'N/A'}
+  Nasc: ${a.data_nascimento || 'N/A'}
+`).join('\n')}
 
-VÍNCULOS ALUNO-TURMA:
-${alunoTurmaData.slice(0, 50).map(at => {
+🎓 CURSOS (${cursosData.length} registros):
+${cursosData.map(c => `
+• ID: ${c.id}
+  Nome: ${c.nome}
+  Tipo: ${c.tipo_curso || 'N/A'} | Modalidade: ${c.modalidade || 'N/A'}
+  Local: ${c.local_realizacao || 'N/A'}
+  Categoria: ${c.categoria || 'N/A'}
+  Coordenador: ${c.coordenador || 'N/A'}
+  Obs: ${c.observacoes || 'N/A'}
+`).join('\n')}
+
+🏫 TURMAS (${turmasData.length} registros):
+${turmasData.map(t => `
+• ID: ${t.id}
+  Nome: ${t.nome} | Ano: ${t.ano}
+  Curso ID: ${t.curso_id}
+  Situação: ${t.situacao}
+  Tipo Militar: ${t.tipo_militar}
+  Período: ${t.data_inicio || 'N/A'} até ${t.data_fim || 'N/A'}
+  Obs: ${t.observacoes || 'N/A'}
+`).join('\n')}
+
+👨‍🏫 INSTRUTORES (${instrutoresData.length} registros):
+${instrutoresData.map(i => `
+• ID: ${i.id}
+  Nome: ${i.nome_completo}
+  Graduação: ${i.graduacao} | Tipo: ${i.tipo_militar}
+  Especialidade: ${i.especialidade || 'N/A'}
+  Email: ${i.email || 'N/A'}
+  Tel: ${i.telefone || 'N/A'}
+  Obs: ${i.observacoes || 'N/A'}
+`).join('\n')}
+
+📖 DISCIPLINAS (${disciplinasData.length} registros):
+${disciplinasData.map(d => `
+• ID: ${d.id}
+  Nome: ${d.nome}
+  Turma ID: ${d.turma_id}
+  Carga Horária: ${d.carga_horaria || 0}h
+`).join('\n')}
+
+📊 NOTAS (${notasData.length} registros):
+${notasData.slice(0, 200).map(n => {
+  const aluno = alunosData.find(a => a.id === n.aluno_id);
+  const disciplina = disciplinasData.find(d => d.id === n.disciplina_id);
+  return `• Aluno: ${aluno?.nome_completo || n.aluno_id} | Disciplina: ${disciplina?.nome || n.disciplina_id} | Nota: ${n.nota} | Rec: ${n.nota_recuperacao || 'N/A'}`;
+}).join('\n')}
+${notasData.length > 200 ? `\n... e mais ${notasData.length - 200} registros de notas` : ''}
+
+🔗 VÍNCULOS ALUNO-TURMA (${alunoTurmaData.length}):
+${alunoTurmaData.map(at => {
   const aluno = alunosData.find(a => a.id === at.aluno_id);
   const turma = turmasData.find(t => t.id === at.turma_id);
-  return `- ${aluno?.nome_completo || 'Aluno'} → ${turma?.nome || 'Turma'}: ${at.status} (${at.sigla_curso || 'N/A'})`;
+  return `• ${aluno?.nome_completo || at.aluno_id} → ${turma?.nome || at.turma_id}: ${at.status} | Sigla: ${at.sigla_curso || 'N/A'} | Local: ${at.local_curso || 'N/A'}`;
 }).join('\n')}
-${alunoTurmaData.length > 50 ? `... e mais ${alunoTurmaData.length - 50} vínculos` : ''}
 
-SUAS CAPACIDADES:
-1. Responder perguntas sobre estatísticas e dados do sistema
-2. Fornecer informações detalhadas sobre alunos específicos (nome, graduação, função, local de serviço, contatos)
-3. Listar alunos de turmas específicas com seus status
-4. Gerar insights sobre desempenho de alunos e cursos
-5. Sugerir relatórios e análises
-6. Ajudar na interpretação de dados
-7. Fornecer recomendações baseadas nos dados
-8. Buscar alunos por nome, graduação, turma ou função
+🔗 VÍNCULOS INSTRUTOR-TURMA (${instrutorTurmaData.length}):
+${instrutorTurmaData.map(it => {
+  const instrutor = instrutoresData.find(i => i.id === it.instrutor_id);
+  const turma = turmasData.find(t => t.id === it.turma_id);
+  return `• ${instrutor?.nome_completo || it.instrutor_id} → ${turma?.nome || it.turma_id}`;
+}).join('\n')}
 
-INSTRUÇÕES:
-- Seja conciso e direto nas respostas
-- Use os dados fornecidos para dar respostas precisas
-- Quando perguntarem sobre um aluno específico, forneça todos os detalhes disponíveis
-- Para perguntas sobre turmas, liste os alunos vinculados
-- Quando não souber algo específico, seja honesto
-- Sugira análises e relatórios relevantes quando apropriado
-- Use linguagem profissional mas acessível
-- Formate respostas com markdown quando necessário (listas, negrito, tabelas)
-- Ao listar alunos, organize por relevância ou ordem alfabética`;
+📅 GRADE DE AULAS (${gradeAulasData.length} horários):
+${gradeAulasData.slice(0, 100).map(ga => `• Turma ${ga.turma_id} | ${ga.dia_semana} ${ga.horario}: ${ga.disciplina || 'N/A'} - ${ga.instrutor || 'N/A'}`).join('\n')}
+${gradeAulasData.length > 100 ? `\n... e mais ${gradeAulasData.length - 100} horários` : ''}
+
+👥 USUÁRIOS (${profilesData.length}):
+${profilesData.map(p => {
+  const roles = userRolesData.filter(r => r.user_id === p.id).map(r => r.role).join(', ');
+  return `• ${p.nome_completo || 'N/A'} | Email: ${p.email || 'N/A'} | Roles: ${roles || 'N/A'}`;
+}).join('\n')}
+
+═══════════════════════════════════════════════════════
+
+🎯 SUAS CAPACIDADES COM ACESSO COMPLETO:
+1. ✅ Consultar QUALQUER dado de alunos (perfil completo, contatos, histórico)
+2. ✅ Acessar informações de cursos (tipo, modalidade, local, coordenador)
+3. ✅ Ver turmas completas (alunos, instrutores, disciplinas, situação)
+4. ✅ Consultar notas individuais e médias de alunos
+5. ✅ Listar instrutores e suas turmas
+6. ✅ Ver grades de horários e disciplinas
+7. ✅ Analisar vínculos entre alunos, turmas e cursos
+8. ✅ Gerar relatórios personalizados e estatísticas
+9. ✅ Buscar por qualquer campo (nome, matrícula, email, função, etc)
+10. ✅ Fornecer insights e recomendações baseadas em dados reais
+
+📋 INSTRUÇÕES DE USO:
+- Você tem acesso COMPLETO E IRRESTRITO a todos os dados acima
+- Responda com precisão usando os dados fornecidos
+- Para buscas específicas, use os IDs e nomes exatos dos registros
+- Formate respostas em markdown (tabelas, listas, negrito)
+- Para grandes volumes, resuma e ofereça detalhamento
+- Seja profissional, objetivo e útil
+- Sugira análises quando relevante
+- Organize informações de forma clara e estruturada`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
