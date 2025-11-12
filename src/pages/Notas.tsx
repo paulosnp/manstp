@@ -378,7 +378,17 @@ export default function Notas() {
       
       // Aplicar estilos para PDF
       const allElements = tableRef.current.querySelectorAll('*');
-      const originalStyles: { element: HTMLElement; background: string; backgroundColor: string; color: string }[] = [];
+      const originalStyles: { 
+        element: HTMLElement; 
+        background: string; 
+        backgroundColor: string; 
+        color: string;
+        border: string;
+        borderTop: string;
+        borderBottom: string;
+        borderLeft: string;
+        borderRight: string;
+      }[] = [];
       
       allElements.forEach((el) => {
         const htmlEl = el as HTMLElement;
@@ -387,6 +397,11 @@ export default function Notas() {
           background: htmlEl.style.background,
           backgroundColor: htmlEl.style.backgroundColor,
           color: htmlEl.style.color,
+          border: htmlEl.style.border,
+          borderTop: htmlEl.style.borderTop,
+          borderBottom: htmlEl.style.borderBottom,
+          borderLeft: htmlEl.style.borderLeft,
+          borderRight: htmlEl.style.borderRight,
         });
         
         // Forçar fundo branco e texto preto
@@ -394,6 +409,20 @@ export default function Notas() {
         htmlEl.style.backgroundColor = '#ffffff';
         if (htmlEl.textContent && htmlEl.textContent.trim()) {
           htmlEl.style.color = '#000000';
+        }
+        
+        // Adicionar bordas visíveis em todas as células
+        if (htmlEl.tagName === 'TD' || htmlEl.tagName === 'TH') {
+          htmlEl.style.border = '1px solid #000000';
+          htmlEl.style.borderTop = '1px solid #000000';
+          htmlEl.style.borderBottom = '1px solid #000000';
+          htmlEl.style.borderLeft = '1px solid #000000';
+          htmlEl.style.borderRight = '1px solid #000000';
+        }
+        
+        // Adicionar bordas em linhas
+        if (htmlEl.tagName === 'TR') {
+          htmlEl.style.borderBottom = '2px solid #000000';
         }
       });
 
@@ -413,10 +442,15 @@ export default function Notas() {
       });
       
       // Restaurar estilos
-      originalStyles.forEach(({ element, background, backgroundColor, color }) => {
+      originalStyles.forEach(({ element, background, backgroundColor, color, border, borderTop, borderBottom, borderLeft, borderRight }) => {
         element.style.background = background;
         element.style.backgroundColor = backgroundColor;
         element.style.color = color;
+        element.style.border = border;
+        element.style.borderTop = borderTop;
+        element.style.borderBottom = borderBottom;
+        element.style.borderLeft = borderLeft;
+        element.style.borderRight = borderRight;
       });
       
       // Gerar PDF
