@@ -22,6 +22,7 @@ export const AIAssistant = () => {
   const [isListening, setIsListening] = useState(false);
   const [waitingForQuestion, setWaitingForQuestion] = useState(false);
   const [userName, setUserName] = useState<string>("");
+  const [selectedVoice, setSelectedVoice] = useState<string>("default");
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const hasGreeted = useRef(false);
@@ -85,11 +86,22 @@ export const AIAssistant = () => {
     const recognition = new SpeechRecognition();
     recognition.lang = 'pt-BR';
     recognition.continuous = true;
-    recognition.interimResults = false;
+    recognition.interimResults = true; // Melhorar sensibilidade com resultados intermediários
+    recognition.maxAlternatives = 3; // Considerar mais alternativas
+    
+    // Ajustes para melhor sensibilidade
+    if ('webkitSpeechRecognition' in window) {
+      recognition.continuous = true;
+    }
 
     recognition.onresult = (event: any) => {
-      const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
-      console.log('Reconhecido:', transcript);
+      const lastResult = event.results[event.results.length - 1];
+      const transcript = lastResult[0].transcript.toLowerCase().trim();
+      
+      // Só processar resultados finais para evitar falsos positivos
+      if (!lastResult.isFinal) return;
+      
+      console.log('Reconhecido (final):', transcript);
 
       if (transcript.includes('gestor')) {
         // Parar qualquer fala em andamento
@@ -106,8 +118,8 @@ export const AIAssistant = () => {
           title: "Aguardando pergunta",
           description: "Pode fazer sua pergunta agora",
         });
-      } else if (waitingForQuestion && transcript.length > 3) {
-        // Processar a pergunta
+      } else if (waitingForQuestion && transcript.length > 5) {
+        // Processar a pergunta (mínimo 5 caracteres para evitar ruído)
         setWaitingForQuestion(false);
         setInput(transcript);
         streamChat(transcript);
@@ -116,9 +128,30 @@ export const AIAssistant = () => {
 
     recognition.onerror = (event: any) => {
       console.error('Erro no reconhecimento de voz:', event.error);
+      
+      // Ignorar erros de "no-speech" e continuar escutando
       if (event.error === 'no-speech') {
         if (listeningEnabled) {
-          recognition.start();
+          setTimeout(() => {
+            try {
+              recognition.start();
+              setIsListening(true);
+            } catch (err) {
+              // Ignorar erro se já estiver rodando
+            }
+          }, 100);
+        }
+      } else if (event.error === 'aborted') {
+        // Reiniciar após abort
+        if (listeningEnabled) {
+          setTimeout(() => {
+            try {
+              recognition.start();
+              setIsListening(true);
+            } catch (err) {
+              // Ignorar erro se já estiver rodando
+            }
+          }, 100);
         }
       }
     };
@@ -126,13 +159,19 @@ export const AIAssistant = () => {
     recognition.onend = () => {
       setIsListening(false);
       if (listeningEnabled) {
-        try {
-          recognition.start();
-          setIsListening(true);
-        } catch (err) {
-          console.error('Erro ao reiniciar reconhecimento:', err);
-        }
+        setTimeout(() => {
+          try {
+            recognition.start();
+            setIsListening(true);
+          } catch (err) {
+            console.error('Erro ao reiniciar reconhecimento:', err);
+          }
+        }, 100);
       }
+    };
+
+    recognition.onstart = () => {
+      setIsListening(true);
     };
 
     recognitionRef.current = recognition;
@@ -142,7 +181,7 @@ export const AIAssistant = () => {
         recognitionRef.current.stop();
       }
     };
-  }, [listeningEnabled, voiceEnabled]);
+  }, [listeningEnabled, voiceEnabled, waitingForQuestion]);
 
   const toggleListening = () => {
     if (!recognitionRef.current) {
@@ -195,8 +234,36 @@ export const AIAssistant = () => {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = 'pt-BR';
+    
+    // Configurar voz baseada na seleção
+    const voices = window.speechSynthesis.getVoices();
+    const ptBrVoices = voices.filter(v => v.lang.startsWith('pt-BR') || v.lang.startsWith('pt'));
+    
+    if (selectedVoice === "female" && ptBrVoices.length > 0) {
+      // Tentar encontrar voz feminina (geralmente tem "female" ou nomes femininos)
+      const femaleVoice = ptBrVoices.find(v => 
+        v.name.toLowerCase().includes('female') || 
+        v.name.toLowerCase().includes('luciana') ||
+        v.name.toLowerCase().includes('maria')
+      ) || ptBrVoices[0];
+      utterance.voice = femaleVoice;
+    } else if (selectedVoice === "male" && ptBrVoices.length > 1) {
+      // Tentar encontrar voz masculina
+      const maleVoice = ptBrVoices.find(v => 
+        v.name.toLowerCase().includes('male') ||
+        v.name.toLowerCase().includes('felipe') ||
+        v.name.toLowerCase().includes('daniel')
+      ) || ptBrVoices[1] || ptBrVoices[0];
+      utterance.voice = maleVoice;
+    } else if (selectedVoice === "neutral" && ptBrVoices.length > 2) {
+      // Usar terceira voz disponível ou primeira
+      utterance.voice = ptBrVoices[2] || ptBrVoices[0];
+    }
+    
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    
     window.speechSynthesis.speak(utterance);
   };
 
@@ -335,6 +402,17 @@ export const AIAssistant = () => {
               <CardTitle className="text-base">Assistente IA</CardTitle>
             </div>
             <div className="flex items-center gap-1">
+              <select
+                value={selectedVoice}
+                onChange={(e) => setSelectedVoice(e.target.value)}
+                className="h-8 px-2 text-xs bg-primary-foreground/10 border-none rounded hover:bg-primary-foreground/20 cursor-pointer"
+                title="Selecionar voz"
+              >
+                <option value="default">Voz Padrão</option>
+                <option value="female">Voz Feminina</option>
+                <option value="male">Voz Masculina</option>
+                <option value="neutral">Voz Neutra</option>
+              </select>
               <Button
                 variant="ghost"
                 size="icon"
