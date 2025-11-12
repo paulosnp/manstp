@@ -364,6 +364,9 @@ export default function Notas() {
         backgroundColor: string;
         color: string;
         borderColor: string;
+        padding: string;
+        height: string;
+        lineHeight: string;
       }[] = [];
       
       allElements.forEach((el) => {
@@ -374,6 +377,9 @@ export default function Notas() {
           backgroundColor: htmlEl.style.backgroundColor,
           color: htmlEl.style.color,
           borderColor: htmlEl.style.borderColor,
+          padding: htmlEl.style.padding,
+          height: htmlEl.style.height,
+          lineHeight: htmlEl.style.lineHeight,
         });
         
         // Forçar fundo branco, texto preto e bordas pretas
@@ -381,11 +387,25 @@ export default function Notas() {
         htmlEl.style.backgroundColor = "#ffffff";
         htmlEl.style.color = "#000000";
         htmlEl.style.borderColor = "#000000";
+        
+        // Ajustar padding e altura para inputs e células
+        if (htmlEl.tagName === 'INPUT') {
+          htmlEl.style.padding = "8px";
+          htmlEl.style.height = "auto";
+          htmlEl.style.lineHeight = "1.5";
+        }
+        if (htmlEl.tagName === 'TD' || htmlEl.tagName === 'TH') {
+          htmlEl.style.padding = "12px";
+          htmlEl.style.lineHeight = "1.5";
+        }
       });
 
       const canvas = await html2canvas(tableRef.current, {
-        scale: 2,
-        backgroundColor: "#ffffff"
+        scale: 3,
+        backgroundColor: "#ffffff",
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
       });
       
       // Restaurar estilos originais
@@ -393,11 +413,14 @@ export default function Notas() {
       tableRef.current.style.background = originalStyles.background;
       tableRef.current.style.backgroundColor = originalStyles.backgroundColor;
       
-      originalElementStyles.forEach(({ element, background, backgroundColor, color, borderColor }) => {
+      originalElementStyles.forEach(({ element, background, backgroundColor, color, borderColor, padding, height, lineHeight }) => {
         element.style.background = background;
         element.style.backgroundColor = backgroundColor;
         element.style.color = color;
         element.style.borderColor = borderColor;
+        element.style.padding = padding;
+        element.style.height = height;
+        element.style.lineHeight = lineHeight;
       });
       
       const imgData = canvas.toDataURL('image/png');
@@ -416,14 +439,16 @@ export default function Notas() {
       pdf.text(`Local: ${infoTurma.local}`, 15, 32);
       pdf.text(`Ano: ${selectedTurma?.ano || ''}`, pdfWidth - 15, 25, { align: 'right' });
       
-      // Adicionar tabela
+      // Adicionar tabela com melhor proporção
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, (pdfHeight - 45) / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const ratio = Math.min((pdfWidth - 10) / imgWidth, (pdfHeight - 50) / imgHeight);
+      const finalWidth = imgWidth * ratio;
+      const finalHeight = imgHeight * ratio;
+      const imgX = (pdfWidth - finalWidth) / 2;
       const imgY = 40;
 
-      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      pdf.addImage(imgData, 'PNG', imgX, imgY, finalWidth, finalHeight);
       pdf.save(`boletim_${selectedTurma?.nome || 'turma'}.pdf`);
       
       toast.success("PDF gerado com sucesso!");
