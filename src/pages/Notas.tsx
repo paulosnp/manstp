@@ -484,47 +484,42 @@ export default function Notas() {
       const fileName = `boletim_${selectedTurma?.nome || 'turma'}.pdf`;
 
       if (saveLocation === 'whatsapp') {
-        // Converter para blob e compartilhar via WhatsApp
+        // Converter para blob e compartilhar via Web Share API
         const pdfBlob = pdf.output('blob');
         const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
         
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: 'Boletim de Notas',
-            text: `Boletim de notas - ${selectedTurma?.nome || 'Turma'}`,
-          });
-          toast.success("Boletim compartilhado!");
-        } else {
-          toast.error("Compartilhamento não disponível neste navegador. Fazendo download...");
-          pdf.save(fileName);
-        }
-      } else {
-        // Salvar com File System Access API ou download normal
-        if ('showSaveFilePicker' in window) {
+        // Verificar se Web Share API está disponível
+        if (navigator.share) {
           try {
-            const handle = await (window as any).showSaveFilePicker({
-              suggestedName: fileName,
-              types: [{
-                description: 'PDF',
-                accept: { 'application/pdf': ['.pdf'] },
-              }],
-            });
-            const writable = await handle.createWritable();
-            const pdfBlob = pdf.output('blob');
-            await writable.write(pdfBlob);
-            await writable.close();
-            toast.success("PDF salvo com sucesso!");
-          } catch (err: any) {
-            if (err.name !== 'AbortError') {
-              console.error('Erro ao salvar:', err);
+            // Verificar se pode compartilhar arquivos
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: 'Boletim de Notas',
+                text: `Boletim de notas - ${selectedTurma?.nome || 'Turma'}`,
+              });
+              toast.success("Boletim compartilhado!");
+            } else {
+              // Fallback: download
               pdf.save(fileName);
+              toast.info("Arquivo salvo. Você pode compartilhá-lo manualmente pelo WhatsApp.");
             }
+          } catch (err: any) {
+            if (err.name === 'AbortError') {
+              return;
+            }
+            console.error('Erro ao compartilhar:', err);
+            pdf.save(fileName);
+            toast.info("Arquivo salvo. Você pode compartilhá-lo manualmente.");
           }
         } else {
           pdf.save(fileName);
-          toast.success("PDF gerado com sucesso!");
+          toast.info("Compartilhamento não disponível neste navegador. Arquivo baixado para compartilhamento manual.");
         }
+      } else {
+        // Download direto
+        pdf.save(fileName);
+        toast.success("PDF baixado com sucesso!");
       }
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
