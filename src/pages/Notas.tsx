@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Upload, FileDown, TrendingUp, X } from "lucide-react";
+import { Plus, Upload, FileDown, TrendingUp, X, Share2 } from "lucide-react";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import jsPDF from "jspdf";
@@ -338,7 +338,7 @@ export default function Notas() {
     return "bg-green-100 dark:bg-green-900/20 border-green-300";
   };
 
-  const gerarBoletimPDF = async () => {
+  const gerarBoletimPDF = async (saveLocation: 'download' | 'whatsapp' = 'download') => {
     if (!tableRef.current) return;
 
     toast.info("Gerando PDF...");
@@ -480,9 +480,52 @@ export default function Notas() {
       const imgY = 40;
 
       pdf.addImage(imgData, 'PNG', imgX, imgY, finalWidth, finalHeight);
-      pdf.save(`boletim_${selectedTurma?.nome || 'turma'}.pdf`);
       
-      toast.success("PDF gerado com sucesso!");
+      const fileName = `boletim_${selectedTurma?.nome || 'turma'}.pdf`;
+
+      if (saveLocation === 'whatsapp') {
+        // Converter para blob e compartilhar via WhatsApp
+        const pdfBlob = pdf.output('blob');
+        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+        
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Boletim de Notas',
+            text: `Boletim de notas - ${selectedTurma?.nome || 'Turma'}`,
+          });
+          toast.success("Boletim compartilhado!");
+        } else {
+          toast.error("Compartilhamento não disponível neste navegador. Fazendo download...");
+          pdf.save(fileName);
+        }
+      } else {
+        // Salvar com File System Access API ou download normal
+        if ('showSaveFilePicker' in window) {
+          try {
+            const handle = await (window as any).showSaveFilePicker({
+              suggestedName: fileName,
+              types: [{
+                description: 'PDF',
+                accept: { 'application/pdf': ['.pdf'] },
+              }],
+            });
+            const writable = await handle.createWritable();
+            const pdfBlob = pdf.output('blob');
+            await writable.write(pdfBlob);
+            await writable.close();
+            toast.success("PDF salvo com sucesso!");
+          } catch (err: any) {
+            if (err.name !== 'AbortError') {
+              console.error('Erro ao salvar:', err);
+              pdf.save(fileName);
+            }
+          }
+        } else {
+          pdf.save(fileName);
+          toast.success("PDF gerado com sucesso!");
+        }
+      }
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
       toast.error("Erro ao gerar PDF");
@@ -647,10 +690,16 @@ export default function Notas() {
               </div>
 
               {selectedTurma && alunos.length > 0 && (
-                <Button onClick={gerarBoletimPDF} variant="default" className="self-end">
-                  <FileDown className="w-4 h-4 mr-2" />
-                  Gerar Boletim PDF
-                </Button>
+                <div className="flex gap-2 self-end">
+                  <Button onClick={() => gerarBoletimPDF('download')} variant="default">
+                    <FileDown className="w-4 h-4 mr-2" />
+                    Salvar no Computador
+                  </Button>
+                  <Button onClick={() => gerarBoletimPDF('whatsapp')} variant="outline">
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Compartilhar WhatsApp
+                  </Button>
+                </div>
               )}
             </div>
           </CardContent>

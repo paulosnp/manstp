@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
-import { FileText, Download, Printer } from "lucide-react";
+import { FileText, Download, Printer, Share2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import UltraChart from "@/components/UltraChart";
 import html2canvas from "html2canvas";
@@ -113,7 +113,7 @@ const Relatorios = () => {
     }
   };
 
-  const exportTurmaReport = async () => {
+  const exportTurmaReport = async (saveLocation: 'download' | 'whatsapp' = 'download') => {
     if (!selectedTurma || alunosTurma.length === 0) {
       toast({
         title: "Aviso",
@@ -212,12 +212,64 @@ const Relatorios = () => {
         );
       }
 
-      pdf.save(`relatorio_turma_${turmaAtualizada.nome.replace(/\s+/g, '_')}.pdf`);
+      const fileName = `relatorio_turma_${turmaAtualizada.nome.replace(/\s+/g, '_')}.pdf`;
 
-      toast({
-        title: "Sucesso",
-        description: "Relatório da turma gerado com sucesso!",
-      });
+      if (saveLocation === 'whatsapp') {
+        // Converter para blob e compartilhar via WhatsApp
+        const pdfBlob = pdf.output('blob');
+        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+        
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Relatório de Turma',
+            text: `Relatório da turma ${turmaAtualizada.nome}`,
+          });
+          toast({
+            title: "Sucesso",
+            description: "Relatório compartilhado!",
+          });
+        } else {
+          toast({
+            title: "Não suportado",
+            description: "Compartilhamento não disponível neste navegador. Fazendo download...",
+            variant: "destructive",
+          });
+          pdf.save(fileName);
+        }
+      } else {
+        // Salvar com File System Access API ou download normal
+        if ('showSaveFilePicker' in window) {
+          try {
+            const handle = await (window as any).showSaveFilePicker({
+              suggestedName: fileName,
+              types: [{
+                description: 'PDF',
+                accept: { 'application/pdf': ['.pdf'] },
+              }],
+            });
+            const writable = await handle.createWritable();
+            const pdfBlob = pdf.output('blob');
+            await writable.write(pdfBlob);
+            await writable.close();
+            toast({
+              title: "Sucesso",
+              description: "Relatório salvo com sucesso!",
+            });
+          } catch (err: any) {
+            if (err.name !== 'AbortError') {
+              console.error('Erro ao salvar:', err);
+              pdf.save(fileName);
+            }
+          }
+        } else {
+          pdf.save(fileName);
+          toast({
+            title: "Sucesso",
+            description: "Relatório da turma gerado com sucesso!",
+          });
+        }
+      }
     } catch (error) {
       console.error("Erro ao gerar relatório:", error);
       toast({
@@ -228,7 +280,7 @@ const Relatorios = () => {
     }
   };
 
-  const exportChartReport = async () => {
+  const exportChartReport = async (saveLocation: 'download' | 'whatsapp' = 'download') => {
     if (!chartRef.current) return;
 
     try {
@@ -298,12 +350,64 @@ const Relatorios = () => {
         }
       });
 
-      pdf.save("relatorio_estatisticas_grafico.pdf");
+      const fileName = "relatorio_estatisticas_grafico.pdf";
 
-      toast({
-        title: "Sucesso",
-        description: "Relatório do gráfico gerado com sucesso!",
-      });
+      if (saveLocation === 'whatsapp') {
+        // Converter para blob e compartilhar via WhatsApp
+        const pdfBlob = pdf.output('blob');
+        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+        
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Relatório de Estatísticas',
+            text: 'Relatório do gráfico de estatísticas de inscrições',
+          });
+          toast({
+            title: "Sucesso",
+            description: "Relatório compartilhado!",
+          });
+        } else {
+          toast({
+            title: "Não suportado",
+            description: "Compartilhamento não disponível neste navegador. Fazendo download...",
+            variant: "destructive",
+          });
+          pdf.save(fileName);
+        }
+      } else {
+        // Salvar com File System Access API ou download normal
+        if ('showSaveFilePicker' in window) {
+          try {
+            const handle = await (window as any).showSaveFilePicker({
+              suggestedName: fileName,
+              types: [{
+                description: 'PDF',
+                accept: { 'application/pdf': ['.pdf'] },
+              }],
+            });
+            const writable = await handle.createWritable();
+            const pdfBlob = pdf.output('blob');
+            await writable.write(pdfBlob);
+            await writable.close();
+            toast({
+              title: "Sucesso",
+              description: "Relatório salvo com sucesso!",
+            });
+          } catch (err: any) {
+            if (err.name !== 'AbortError') {
+              console.error('Erro ao salvar:', err);
+              pdf.save(fileName);
+            }
+          }
+        } else {
+          pdf.save(fileName);
+          toast({
+            title: "Sucesso",
+            description: "Relatório do gráfico gerado com sucesso!",
+          });
+        }
+      }
     } catch (error) {
       console.error("Erro ao gerar relatório do gráfico:", error);
       toast({
@@ -340,14 +444,25 @@ const Relatorios = () => {
                 </SelectContent>
               </Select>
             </div>
-            <Button
-              onClick={exportTurmaReport}
-              disabled={!selectedTurmaId || alunosTurma.length === 0}
-              className="gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Gerar Relatório
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => exportTurmaReport('download')}
+                disabled={!selectedTurmaId || alunosTurma.length === 0}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Salvar no Computador
+              </Button>
+              <Button
+                onClick={() => exportTurmaReport('whatsapp')}
+                disabled={!selectedTurmaId || alunosTurma.length === 0}
+                variant="outline"
+                className="gap-2"
+              >
+                <Share2 className="h-4 w-4" />
+                Compartilhar WhatsApp
+              </Button>
+            </div>
           </div>
 
           {selectedTurma && (
@@ -423,10 +538,14 @@ const Relatorios = () => {
           <CardTitle>Relatório de Gráfico de Estatísticas</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex justify-end">
-            <Button onClick={exportChartReport} className="gap-2">
-              <Printer className="h-4 w-4" />
-              Exportar Gráfico com Explicação
+          <div className="flex justify-end gap-2">
+            <Button onClick={() => exportChartReport('download')} className="gap-2">
+              <Download className="h-4 w-4" />
+              Salvar no Computador
+            </Button>
+            <Button onClick={() => exportChartReport('whatsapp')} variant="outline" className="gap-2">
+              <Share2 className="h-4 w-4" />
+              Compartilhar WhatsApp
             </Button>
           </div>
           
