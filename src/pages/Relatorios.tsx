@@ -124,6 +124,15 @@ const Relatorios = () => {
     }
 
     try {
+      // Buscar dados atualizados da turma antes de exportar
+      const { data: turmaAtualizada, error: turmaError } = await supabase
+        .from("turmas")
+        .select("*")
+        .eq("id", selectedTurmaId)
+        .single();
+
+      if (turmaError) throw turmaError;
+
       const pdf = new jsPDF();
       const pageWidth = pdf.internal.pageSize.getWidth();
       let yPos = 20;
@@ -136,25 +145,25 @@ const Relatorios = () => {
 
       // Informações da Turma
       pdf.setFontSize(14);
-      pdf.text(`Turma: ${selectedTurma.nome}`, 20, yPos);
+      pdf.text(`Turma: ${turmaAtualizada.nome}`, 20, yPos);
       yPos += 8;
       
       pdf.setFontSize(12);
       pdf.setFont("helvetica", "normal");
-      pdf.text(`Ano: ${selectedTurma.ano}`, 20, yPos);
+      pdf.text(`Ano: ${turmaAtualizada.ano}`, 20, yPos);
       yPos += 6;
-      pdf.text(`Situação: ${selectedTurma.situacao}`, 20, yPos);
+      pdf.text(`Situação: ${turmaAtualizada.situacao}`, 20, yPos);
       yPos += 6;
-      pdf.text(`Tipo Militar: ${selectedTurma.tipo_militar}`, 20, yPos);
+      pdf.text(`Tipo Militar: ${turmaAtualizada.tipo_militar}`, 20, yPos);
       yPos += 6;
       
-      if (selectedTurma.data_inicio) {
-        pdf.text(`Data Início: ${new Date(selectedTurma.data_inicio).toLocaleDateString('pt-BR')}`, 20, yPos);
+      if (turmaAtualizada.data_inicio) {
+        pdf.text(`Data Início: ${new Date(turmaAtualizada.data_inicio).toLocaleDateString('pt-BR')}`, 20, yPos);
         yPos += 6;
       }
       
-      if (selectedTurma.data_fim) {
-        pdf.text(`Data Fim: ${new Date(selectedTurma.data_fim).toLocaleDateString('pt-BR')}`, 20, yPos);
+      if (turmaAtualizada.data_fim) {
+        pdf.text(`Data Fim: ${new Date(turmaAtualizada.data_fim).toLocaleDateString('pt-BR')}`, 20, yPos);
         yPos += 6;
       }
 
@@ -203,7 +212,7 @@ const Relatorios = () => {
         );
       }
 
-      pdf.save(`relatorio_turma_${selectedTurma.nome.replace(/\s+/g, '_')}.pdf`);
+      pdf.save(`relatorio_turma_${turmaAtualizada.nome.replace(/\s+/g, '_')}.pdf`);
 
       toast({
         title: "Sucesso",
