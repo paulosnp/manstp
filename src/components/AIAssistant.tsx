@@ -19,6 +19,7 @@ export const AIAssistant = () => {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [listeningEnabled, setListeningEnabled] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [waitingForQuestion, setWaitingForQuestion] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const { toast } = useToast();
@@ -45,14 +46,25 @@ export const AIAssistant = () => {
       console.log('Reconhecido:', transcript);
 
       if (transcript.includes('gestor')) {
-        const question = transcript.replace(/gestor/gi, '').trim();
-        if (question) {
-          setInput(question);
-          streamChat(question);
-          if (voiceEnabled) {
-            speakText('Sim, estou aqui. Processando sua pergunta.');
-          }
+        // Parar qualquer fala em andamento
+        window.speechSynthesis.cancel();
+        
+        // Ativar modo de espera pela pergunta
+        setWaitingForQuestion(true);
+        
+        if (voiceEnabled) {
+          speakText('Sim, estou ouvindo.');
         }
+        
+        toast({
+          title: "Aguardando pergunta",
+          description: "Pode fazer sua pergunta agora",
+        });
+      } else if (waitingForQuestion && transcript.length > 3) {
+        // Processar a pergunta
+        setWaitingForQuestion(false);
+        setInput(transcript);
+        streamChat(transcript);
       }
     };
 
@@ -280,11 +292,11 @@ export const AIAssistant = () => {
                 variant="ghost"
                 size="icon"
                 onClick={toggleListening}
-                className={`h-8 w-8 hover:bg-primary-foreground/20 ${isListening ? 'bg-red-500/20' : ''}`}
+                className={`h-8 w-8 hover:bg-primary-foreground/20 ${waitingForQuestion ? 'bg-green-500/20' : isListening ? 'bg-red-500/20' : ''}`}
                 title={listeningEnabled ? "Desativar escuta de voz" : "Ativar escuta de voz (diga 'Gestor')"}
               >
                 {listeningEnabled ? (
-                  <Mic className={`h-4 w-4 ${isListening ? 'text-red-500 animate-pulse' : ''}`} />
+                  <Mic className={`h-4 w-4 ${waitingForQuestion ? 'text-green-500 animate-pulse' : isListening ? 'text-red-500 animate-pulse' : ''}`} />
                 ) : (
                   <MicOff className="h-4 w-4" />
                 )}
