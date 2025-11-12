@@ -366,7 +366,13 @@ export default function Notas() {
         borderColor: string;
         padding: string;
         height: string;
+        minHeight: string;
         lineHeight: string;
+        display: string;
+        alignItems: string;
+        justifyContent: string;
+        textAlign: string;
+        verticalAlign: string;
       }[] = [];
       
       allElements.forEach((el) => {
@@ -379,7 +385,13 @@ export default function Notas() {
           borderColor: htmlEl.style.borderColor,
           padding: htmlEl.style.padding,
           height: htmlEl.style.height,
+          minHeight: htmlEl.style.minHeight,
           lineHeight: htmlEl.style.lineHeight,
+          display: htmlEl.style.display,
+          alignItems: htmlEl.style.alignItems,
+          justifyContent: htmlEl.style.justifyContent,
+          textAlign: htmlEl.style.textAlign,
+          verticalAlign: htmlEl.style.verticalAlign,
         });
         
         // Forçar fundo branco, texto preto e bordas pretas
@@ -388,15 +400,24 @@ export default function Notas() {
         htmlEl.style.color = "#000000";
         htmlEl.style.borderColor = "#000000";
         
-        // Ajustar padding e altura para inputs e células
+        // Ajustar inputs para melhor visualização
         if (htmlEl.tagName === 'INPUT') {
-          htmlEl.style.padding = "8px";
-          htmlEl.style.height = "auto";
-          htmlEl.style.lineHeight = "1.5";
+          htmlEl.style.padding = "12px 8px";
+          htmlEl.style.height = "45px";
+          htmlEl.style.minHeight = "45px";
+          htmlEl.style.lineHeight = "1.8";
+          htmlEl.style.textAlign = "center";
+          htmlEl.style.display = "flex";
+          htmlEl.style.alignItems = "center";
+          htmlEl.style.justifyContent = "center";
+          htmlEl.style.verticalAlign = "middle";
         }
+        
+        // Ajustar células
         if (htmlEl.tagName === 'TD' || htmlEl.tagName === 'TH') {
-          htmlEl.style.padding = "12px";
-          htmlEl.style.lineHeight = "1.5";
+          htmlEl.style.padding = "14px";
+          htmlEl.style.lineHeight = "1.8";
+          htmlEl.style.verticalAlign = "middle";
         }
       });
 
@@ -406,6 +427,8 @@ export default function Notas() {
         logging: false,
         useCORS: true,
         allowTaint: true,
+        windowWidth: tableRef.current.scrollWidth,
+        windowHeight: tableRef.current.scrollHeight,
       });
       
       // Restaurar estilos originais
@@ -413,14 +436,20 @@ export default function Notas() {
       tableRef.current.style.background = originalStyles.background;
       tableRef.current.style.backgroundColor = originalStyles.backgroundColor;
       
-      originalElementStyles.forEach(({ element, background, backgroundColor, color, borderColor, padding, height, lineHeight }) => {
+      originalElementStyles.forEach(({ element, background, backgroundColor, color, borderColor, padding, height, minHeight, lineHeight, display, alignItems, justifyContent, textAlign, verticalAlign }) => {
         element.style.background = background;
         element.style.backgroundColor = backgroundColor;
         element.style.color = color;
         element.style.borderColor = borderColor;
         element.style.padding = padding;
         element.style.height = height;
+        element.style.minHeight = minHeight;
         element.style.lineHeight = lineHeight;
+        element.style.display = display;
+        element.style.alignItems = alignItems;
+        element.style.justifyContent = justifyContent;
+        element.style.textAlign = textAlign;
+        element.style.verticalAlign = verticalAlign;
       });
       
       const imgData = canvas.toDataURL('image/png');
