@@ -219,9 +219,52 @@ export default function Presencas() {
     toast.info("Gerando PDF...");
 
     try {
+      // Aplicar estilos temporários para PDF
+      const allElements = tableRef.current.querySelectorAll('*');
+      const originalStyles: {
+        element: HTMLElement;
+        background: string;
+        backgroundColor: string;
+        color: string;
+        border: string;
+      }[] = [];
+
+      allElements.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        originalStyles.push({
+          element: htmlEl,
+          background: htmlEl.style.background,
+          backgroundColor: htmlEl.style.backgroundColor,
+          color: htmlEl.style.color,
+          border: htmlEl.style.border,
+        });
+
+        // Forçar fundo branco e texto preto
+        htmlEl.style.background = '#ffffff';
+        htmlEl.style.backgroundColor = '#ffffff';
+        if (htmlEl.textContent && htmlEl.textContent.trim()) {
+          htmlEl.style.color = '#000000';
+        }
+
+        // Manter bordas visíveis
+        if (htmlEl.tagName === 'TD' || htmlEl.tagName === 'TH') {
+          htmlEl.style.border = '1px solid #cccccc';
+        }
+      });
+
       const canvas = await html2canvas(tableRef.current, {
         scale: 2,
         backgroundColor: "#ffffff",
+        logging: false,
+        useCORS: true,
+      });
+
+      // Restaurar estilos originais
+      originalStyles.forEach(({ element, background, backgroundColor, color, border }) => {
+        element.style.background = background;
+        element.style.backgroundColor = backgroundColor;
+        element.style.color = color;
+        element.style.border = border;
       });
 
       const imgData = canvas.toDataURL("image/png");
