@@ -809,7 +809,12 @@ export type Database = {
         | "Civil"
         | "Armada"
         | "Primeiro Cabo"
-      situacao_curso: "Em Andamento" | "Concluído" | "Cancelado" | "Planejado"
+      situacao_curso:
+        | "Em Andamento"
+        | "Concluído"
+        | "Cancelado"
+        | "Planejado"
+        | "Aguardando"
       status_aluno:
         | "Cursando"
         | "Concluído"
@@ -995,7 +1000,13 @@ export const Constants = {
         "Armada",
         "Primeiro Cabo",
       ],
-      situacao_curso: ["Em Andamento", "Concluído", "Cancelado", "Planejado"],
+      situacao_curso: [
+        "Em Andamento",
+        "Concluído",
+        "Cancelado",
+        "Planejado",
+        "Aguardando",
+      ],
       status_aluno: [
         "Cursando",
         "Concluído",
