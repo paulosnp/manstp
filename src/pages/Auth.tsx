@@ -315,7 +315,6 @@ export default function Auth() {
             <Shield className="h-8 w-8 text-primary-foreground" />
           </div>
           <CardTitle className="text-2xl font-bold">GESTOR ESCOLAR</CardTitle>
-          <CardDescription>Sistema de gestão de alunos e cursos militares</CardDescription>
         </CardHeader>
         <CardContent>
           <Alert className="mb-4 border-blue-200 bg-blue-50">
