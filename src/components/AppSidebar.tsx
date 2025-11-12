@@ -23,17 +23,16 @@ export function AppSidebar() {
   const { t } = useTranslation();
 
   const menuItems = [
-    { title: t("dashboard"), url: "/", icon: Home, tour: "dashboard" },
-    { title: t("students"), url: "/alunos", icon: Users, tour: "alunos" },
-    { title: t("instructors"), url: "/instrutores", icon: GraduationCap, tour: "instrutores" },
-    { title: t("courses"), url: "/cursos", icon: BookOpen, tour: "cursos" },
-    { title: t("classes"), url: "/turmas", icon: School, tour: "turmas" },
-    { title: t("weeklySchedule") || "Horários", url: "/horarios", icon: Calendar, tour: "horarios" },
-    { title: t("grades") || "Notas", url: "/notas", icon: ClipboardList, tour: "notas" },
-    { title: t("certificates") || "Certificados", url: "/certificados", icon: Award, tour: "certificados" },
-    { title: t("reports"), url: "/relatorios", icon: FileText, tour: "relatorios" },
-    { title: t("statistics"), url: "/estatisticas", icon: BarChart3, tour: "estatisticas" },
-    { title: t("users"), url: "/usuarios", icon: Shield, tour: "usuarios" },
+    { title: t("dashboard"), url: "/", icon: Home },
+    { title: t("instructors"), url: "/instrutores", icon: GraduationCap },
+    { title: t("courses"), url: "/cursos", icon: BookOpen },
+    { title: t("classes"), url: "/turmas", icon: School },
+    { title: t("certificates") || "Certificados", url: "/certificados", icon: Award },
+    { title: t("grades") || "Notas", url: "/notas", icon: ClipboardList },
+    { title: t("weeklySchedule") || "Horários", url: "/horarios", icon: Calendar },
+    { title: t("statistics"), url: "/estatisticas", icon: BarChart3 },
+    { title: t("reports"), url: "/relatorios", icon: FileText },
+    { title: t("users"), url: "/usuarios", icon: Shield },
   ];
 
   const handleSignOut = async () => {
@@ -56,7 +55,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title} data-tour={item.tour}>
+                <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}

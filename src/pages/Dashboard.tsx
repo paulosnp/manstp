@@ -427,10 +427,10 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">DASHBOARD — CURSOS (Quadros Informativos)</h1>
-          <p className="text-sm text-muted-foreground mt-1">Painel atualizado automaticamente. Cards aparecem/removem conforme turmas com alunos 'CURSANDO' ou 'AGUARDANDO'.</p>
-        </div>
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">DASHBOARD — CURSOS (Quadros Informativos)</h1>
+        <p className="text-sm text-muted-foreground mt-1">Painel atualizado automaticamente. Cards aparecem/removem conforme turmas com alunos 'CURSANDO' ou 'AGUARDANDO'.</p>
+      </div>
 
       {/* CARDS INFORMATIVOS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
