@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { DashboardCardConfig, DashboardCardType, CustomFilter } from "@/components/DashboardCardConfig";
+import { AIAssistant } from "@/components/AIAssistant";
 
 interface DashboardCard {
   id: string;
@@ -426,11 +427,13 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">DASHBOARD — CURSOS (Quadros Informativos)</h1>
-        <p className="text-sm text-muted-foreground mt-1">Painel atualizado automaticamente. Cards aparecem/removem conforme turmas com alunos 'CURSANDO' ou 'AGUARDANDO'.</p>
-      </div>
+    <>
+      <AIAssistant />
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">DASHBOARD — CURSOS (Quadros Informativos)</h1>
+          <p className="text-sm text-muted-foreground mt-1">Painel atualizado automaticamente. Cards aparecem/removem conforme turmas com alunos 'CURSANDO' ou 'AGUARDANDO'.</p>
+        </div>
 
       {/* CARDS INFORMATIVOS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -514,5 +517,6 @@ export default function Dashboard() {
         </Card>
       )}
     </div>
+    </>
   );
 }
