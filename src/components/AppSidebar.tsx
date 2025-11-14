@@ -1,4 +1,4 @@
-import { Home, Users, BookOpen, School, GraduationCap, BarChart3, FileText, Shield, LogOut, Award, ClipboardList, Calendar, CheckSquare } from "lucide-react";
+import { Home, Users, BookOpen, School, GraduationCap, BarChart3, FileText, Shield, LogOut, Award, ClipboardList, Calendar, CheckSquare, StickyNote } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -31,6 +31,7 @@ export function AppSidebar() {
     { title: t("grades") || "Notas", url: "/notas", icon: ClipboardList },
     { title: "Presença", url: "/presencas", icon: CheckSquare },
     { title: t("weeklySchedule") || "Horários", url: "/horarios", icon: Calendar },
+    { title: "Bloco de Notas", url: "/notas-pessoais", icon: StickyNote },
     { title: t("statistics"), url: "/estatisticas", icon: BarChart3 },
     { title: t("reports"), url: "/relatorios", icon: FileText },
     { title: t("users"), url: "/usuarios", icon: Shield },
