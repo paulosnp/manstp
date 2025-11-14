@@ -8,15 +8,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search } from "lucide-react";
+import { Search, StickyNote } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { AlunoForm } from "@/components/AlunoForm";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { ImportarAlunos } from "@/components/ImportarAlunos";
+import { AlunoNotasDialog } from "@/components/AlunoNotasDialog";
 import { useTranslation } from "react-i18next";
 
 interface Aluno {
@@ -37,6 +39,8 @@ export default function Alunos() {
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [notasDialogOpen, setNotasDialogOpen] = useState(false);
+  const [selectedAluno, setSelectedAluno] = useState<{ id: string; nome: string } | null>(null);
 
   // Mapeamento reverso de graduações portuguesas para chaves de tradução
   const rankToKeyMap: { [key: string]: string } = {
@@ -259,6 +263,18 @@ export default function Alunos() {
                     <TableCell className="text-right">
                       {isCoordenador && (
                         <div className="flex justify-end gap-1 sm:gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedAluno({ id: aluno.id, nome: aluno.nome_completo });
+                              setNotasDialogOpen(true);
+                            }}
+                            className="gap-2"
+                          >
+                            <StickyNote className="h-4 w-4" />
+                            <span className="hidden sm:inline">Notas</span>
+                          </Button>
                           <AlunoForm aluno={aluno} onSuccess={fetchAlunos} />
                           <DeleteDialog
                             table="alunos"
@@ -277,6 +293,16 @@ export default function Alunos() {
           )}
         </CardContent>
       </Card>
+
+      {selectedAluno && (
+        <AlunoNotasDialog
+          alunoId={selectedAluno.id}
+          alunoNome={selectedAluno.nome}
+          turmaId={null}
+          open={notasDialogOpen}
+          onOpenChange={setNotasDialogOpen}
+        />
+      )}
     </div>
   );
 }
