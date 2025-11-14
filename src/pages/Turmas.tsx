@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Users, X, GraduationCap, FileDown } from "lucide-react";
+import { Search, Users, X, GraduationCap, FileDown, StickyNote } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import { DeleteDialog } from "@/components/DeleteDialog";
 import { VincularAlunoTurma } from "@/components/VincularAlunoTurma";
 import { VincularInstrutorTurma } from "@/components/VincularInstrutorTurma";
 import { ImportarAlunos } from "@/components/ImportarAlunos";
+import { AlunoNotasDialog } from "@/components/AlunoNotasDialog";
 import type { Database } from "@/integrations/supabase/types";
 import { BulkStatusUpdate } from "@/components/BulkStatusUpdate";
 import { BulkCourseInfoUpdate } from "@/components/BulkCourseInfoUpdate";
@@ -81,6 +82,8 @@ export default function Turmas() {
   const [loadingInstrutores, setLoadingInstrutores] = useState(false);
   const [viewType, setViewType] = useState<'alunos' | 'instrutores'>('alunos');
   const [statusFilter, setStatusFilter] = useState<string>("todos");
+  const [notasDialogOpen, setNotasDialogOpen] = useState(false);
+  const [selectedAlunoNotas, setSelectedAlunoNotas] = useState<{ id: string; nome: string } | null>(null);
 
   useEffect(() => {
     fetchTurmas();
@@ -595,6 +598,17 @@ export default function Turmas() {
                       <TableCell className="text-right">
                         {isCoordenador && (
                           <div className="flex gap-1 justify-end">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedAlunoNotas({ id: aluno.id, nome: aluno.nome_completo });
+                                setNotasDialogOpen(true);
+                              }}
+                              className="gap-2"
+                            >
+                              <StickyNote className="h-4 w-4" />
+                            </Button>
                             <EditAlunoDialog
                               aluno={aluno}
                               onSuccess={() => {
@@ -702,6 +716,16 @@ export default function Turmas() {
           )}
         </DialogContent>
       </Dialog>
+
+      {selectedAlunoNotas && (
+        <AlunoNotasDialog
+          alunoId={selectedAlunoNotas.id}
+          alunoNome={selectedAlunoNotas.nome}
+          turmaId={selectedTurma?.id || null}
+          open={notasDialogOpen}
+          onOpenChange={setNotasDialogOpen}
+        />
+      )}
     </div>
   );
 }
