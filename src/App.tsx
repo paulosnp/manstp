@@ -53,7 +53,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter basename="/vite_react_shadcn_ts/">
         <AuthProvider>
           <PresenceProvider>
             <RouteManager>
