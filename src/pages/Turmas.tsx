@@ -330,7 +330,7 @@ export default function Turmas() {
                   <TableHead>Ano</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Instrutor(es)</TableHead>
-                  <TableHead>Alunos</TableHead>
+                  <TableHead className="text-center">Qtd. Alunos</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -339,11 +339,6 @@ export default function Turmas() {
                   <TableRow key={turma.id}>
                     <TableCell className="font-medium">
                       {turma.nome}
-                      {turma.aluno_count !== undefined && (
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          ({turma.aluno_count} aluno{turma.aluno_count !== 1 ? 's' : ''})
-                        </span>
-                      )}
                     </TableCell>
                     <TableCell>{turma.cursos?.nome || "-"}</TableCell>
                     <TableCell>{turma.ano}</TableCell>
@@ -373,8 +368,11 @@ export default function Turmas() {
                         <span className="text-muted-foreground text-sm">-</span>
                       )}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
+                    <TableCell className="text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <Badge variant="secondary" className="text-base px-3 py-1">
+                          {turma.aluno_count || 0}
+                        </Badge>
                         <Button
                           variant="outline"
                           size="sm"
@@ -382,22 +380,22 @@ export default function Turmas() {
                           className="gap-2"
                         >
                           <Users className="h-4 w-4" />
-                          Gerenciar Alunos
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewInstrutores(turma)}
-                          className="gap-2"
-                        >
-                          <GraduationCap className="h-4 w-4" />
-                          Gerenciar Instrutores
+                          Gerenciar
                         </Button>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
                       {isCoordenador && (
                         <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewInstrutores(turma)}
+                            className="gap-2"
+                          >
+                            <GraduationCap className="h-4 w-4" />
+                            Instrutores
+                          </Button>
                           <TurmaForm turma={turma} onSuccess={fetchTurmas} />
                           <DeleteDialog
                             table="turmas"
