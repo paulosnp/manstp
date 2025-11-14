@@ -20,6 +20,7 @@ import Estatisticas from "./pages/Estatisticas";
 import Relatorios from "./pages/Relatorios";
 import Usuarios from "./pages/Usuarios";
 import Presencas from "./pages/Presencas";
+import NotasPessoais from "./pages/NotasPessoais";
 import NotFound from "./pages/NotFound";
 
 // Componente para gerenciar navegação automática para última rota
@@ -164,6 +165,16 @@ const App = () => (
                 <ProtectedRoute>
                   <MainLayout>
                     <Presencas />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notas-pessoais"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <NotasPessoais />
                   </MainLayout>
                 </ProtectedRoute>
               }
