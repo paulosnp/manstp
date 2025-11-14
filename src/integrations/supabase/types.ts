@@ -606,6 +606,63 @@ export type Database = {
           },
         ]
       }
+      notas_aluno: {
+        Row: {
+          aluno_id: string
+          conteudo: string
+          created_at: string
+          id: string
+          turma_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          aluno_id: string
+          conteudo: string
+          created_at?: string
+          id?: string
+          turma_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          aluno_id?: string
+          conteudo?: string
+          created_at?: string
+          id?: string
+          turma_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notas_pessoais: {
+        Row: {
+          conteudo: string | null
+          created_at: string
+          id: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conteudo?: string | null
+          created_at?: string
+          id?: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conteudo?: string | null
+          created_at?: string
+          id?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       presencas: {
         Row: {
           aluno_id: string

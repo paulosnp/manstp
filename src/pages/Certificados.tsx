@@ -7,11 +7,11 @@ import jsPDF from "jspdf";
 import diplomaTemplate from "@/assets/diploma-template.jpg";
 import { CertificateTemplateSelector } from "@/components/certificados/CertificateTemplateSelector";
 import { CertificateKonvaCanvas } from "@/components/certificados/CertificateKonvaCanvas";
-import { StudentCertificatesList } from "@/components/certificados/StudentCertificatesList";
 import { PowerPointToolbar } from "@/components/certificados/PowerPointToolbar";
 import { SlidesPanel } from "@/components/certificados/SlidesPanel";
 import { useCertificateTemplates } from "@/hooks/useCertificateTemplates";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Element {
   id: string;
@@ -62,7 +62,6 @@ export default function Certificados() {
   const [currentFont, setCurrentFont] = useState<string>("Arial");
   const [selectedTurmaId, setSelectedTurmaId] = useState<string | null>(null);
   const [showSlidesPanel, setShowSlidesPanel] = useState(true);
-  const [showCertificatesPanel, setShowCertificatesPanel] = useState(true);
 
   const activeSlide = slides.find((s) => s.id === activeSlideId) || slides[0];
   const orientation = activeSlide.orientation;
@@ -80,6 +79,63 @@ export default function Certificados() {
       },
     ]);
   }, []);
+
+  // Criar slides automaticamente quando turma é selecionada
+  useEffect(() => {
+    if (selectedTurmaId && selectedTemplate && selectedTemplate.id !== "new") {
+      fetchAlunosAndCreateSlides();
+    }
+  }, [selectedTurmaId, selectedTemplate?.id]);
+
+  const fetchAlunosAndCreateSlides = async () => {
+    if (!selectedTurmaId || !selectedTemplate) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("aluno_turma")
+        .select(`
+          aluno_id,
+          alunos (
+            id,
+            nome_completo,
+            matricula
+          )
+        `)
+        .eq("turma_id", selectedTurmaId);
+
+      if (error) throw error;
+
+      const alunosList = (data || [])
+        .map((at: any) => at.alunos)
+        .filter(Boolean);
+
+      if (alunosList.length === 0) {
+        toast.info("Nenhum aluno encontrado nesta turma");
+        return;
+      }
+
+      // Criar um slide para cada aluno
+      const newSlides: Slide[] = alunosList.map((aluno: any) => ({
+        id: uuidv4(),
+        elements: selectedTemplate.data.elements.map((el: any) => ({
+          ...el,
+          id: uuidv4(),
+        })),
+        orientation: selectedTemplate.data.orientation,
+        backgroundImage: selectedTemplate.data.backgroundImage,
+        thumbnail: undefined,
+        alunoId: aluno.id,
+        alunoNome: aluno.nome_completo,
+      }));
+
+      setSlides(newSlides);
+      setActiveSlideId(newSlides[0].id);
+      toast.success(`${alunosList.length} slides criados para os alunos da turma`);
+    } catch (error) {
+      console.error("Erro ao buscar alunos:", error);
+      toast.error("Erro ao carregar alunos da turma");
+    }
+  };
 
   const updateActiveSlide = (updates: Partial<Slide>) => {
     setSlides((prev) =>
@@ -614,14 +670,6 @@ export default function Certificados() {
           >
             📑
           </Button>
-          <Button
-            variant={showCertificatesPanel ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowCertificatesPanel(!showCertificatesPanel)}
-            title="Exibir/Ocultar Certificados"
-          >
-            📋
-          </Button>
         </div>
         <div className="flex-1">
           <PowerPointToolbar
@@ -694,24 +742,6 @@ export default function Certificados() {
             </div>
           </ScrollArea>
         </div>
-
-        {/* Painel lateral direito - Gerar certificados */}
-        {showCertificatesPanel && selectedTurmaId && selectedTemplate?.id && selectedTemplate.id !== "new" && (
-          <div className="w-80 border-l bg-muted/20">
-            <ScrollArea className="h-full">
-              <div className="p-4">
-                <StudentCertificatesList
-                  turmaId={selectedTurmaId}
-                  templateId={selectedTemplate.id}
-                  stageRef={stageRef}
-                  orientation={orientation}
-                  elements={elements}
-                  onGenerateCertificate={handleGenerateCertificate}
-                />
-              </div>
-            </ScrollArea>
-          </div>
-        )}
       </div>
     </div>
   );
