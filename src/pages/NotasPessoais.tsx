@@ -33,12 +33,12 @@ export default function NotasPessoais() {
   const fetchNotas = async () => {
     try {
       const { data, error } = await supabase
-        .from("notas_pessoais")
+        .from("notas_pessoais" as any)
         .select("*")
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
-      setNotas(data || []);
+      setNotas((data || []) as unknown as Nota[]);
     } catch (error) {
       console.error("Erro ao carregar notas:", error);
       toast.error("Erro ao carregar notas");
@@ -54,7 +54,7 @@ export default function NotasPessoais() {
     }
 
     try {
-      const { error } = await supabase.from("notas_pessoais").insert({
+      const { error } = await supabase.from("notas_pessoais" as any).insert({
         user_id: user?.id,
         titulo: newNote.titulo,
         conteudo: newNote.conteudo,
@@ -74,7 +74,7 @@ export default function NotasPessoais() {
   const handleUpdate = async (id: string, titulo: string, conteudo: string) => {
     try {
       const { error } = await supabase
-        .from("notas_pessoais")
+        .from("notas_pessoais" as any)
         .update({ titulo, conteudo })
         .eq("id", id);
 
@@ -94,7 +94,7 @@ export default function NotasPessoais() {
 
     try {
       const { error } = await supabase
-        .from("notas_pessoais")
+        .from("notas_pessoais" as any)
         .delete()
         .eq("id", id);
 

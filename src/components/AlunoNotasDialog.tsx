@@ -48,13 +48,13 @@ export function AlunoNotasDialog({
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from("notas_aluno")
+        .from("notas_aluno" as any)
         .select("*")
         .eq("aluno_id", alunoId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setNotas(data || []);
+      setNotas((data || []) as unknown as Nota[]);
     } catch (error) {
       console.error("Erro ao carregar notas:", error);
       toast.error("Erro ao carregar notas do aluno");
@@ -70,7 +70,7 @@ export function AlunoNotasDialog({
     }
 
     try {
-      const { error } = await supabase.from("notas_aluno").insert({
+      const { error } = await supabase.from("notas_aluno" as any).insert({
         aluno_id: alunoId,
         turma_id: turmaId || null,
         user_id: user?.id,
@@ -94,7 +94,7 @@ export function AlunoNotasDialog({
 
     try {
       const { error } = await supabase
-        .from("notas_aluno")
+        .from("notas_aluno" as any)
         .delete()
         .eq("id", notaId);
 
