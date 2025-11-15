@@ -15,6 +15,7 @@ interface DraggableTextProps {
     fontStyle?: string;
     width?: number;
     opacity?: number;
+    lineHeight?: number;
   };
   isSelected: boolean;
   onSelect: () => void;
@@ -561,6 +562,7 @@ export const DraggableText = ({
         fontStyle={`${element.fontWeight === "bold" ? "bold " : ""}${element.fontStyle === "italic" ? "italic" : ""}`.trim() || "normal"}
         align={element.textAlign || "left"}
         width={element.width}
+        lineHeight={element.lineHeight || 1.2}
         wrap="word"
         opacity={element.opacity !== undefined ? element.opacity : 1}
         draggable

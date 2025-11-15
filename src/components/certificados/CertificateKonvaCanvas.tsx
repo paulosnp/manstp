@@ -3,6 +3,7 @@ import { Stage, Layer, Image as KonvaImage, Transformer } from "react-konva";
 import useImage from "use-image";
 import { DraggableImage } from "./konva/DraggableImage";
 import { DraggableText } from "./konva/DraggableText";
+import { Rulers } from "./Rulers";
 
 interface Element {
   id: string;
@@ -29,6 +30,7 @@ interface CertificateKonvaCanvasProps {
   onSelectElement: (id: string | null) => void;
   onUpdateElement: (element: Element) => void;
   onStageReady: (stage: any) => void;
+  showRulers?: boolean;
 }
 
 export const CertificateKonvaCanvas = ({
@@ -39,6 +41,7 @@ export const CertificateKonvaCanvas = ({
   onSelectElement,
   onUpdateElement,
   onStageReady,
+  showRulers = false,
 }: CertificateKonvaCanvasProps) => {
   const stageRef = useRef<any>(null);
   const bgRef = useRef<any>(null);
@@ -215,6 +218,7 @@ export const CertificateKonvaCanvas = ({
               return null;
             })}
           </Layer>
+          <Rulers width={width} height={height} visible={showRulers} />
         </Stage>
       </div>
 

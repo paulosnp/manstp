@@ -415,6 +415,108 @@ const Relatorios = () => {
     }
   };
 
+  const exportAllTurmasReport = async () => {
+    if (turmas.length === 0) {
+      toast({
+        title: "Aviso",
+        description: "Nenhuma turma disponível para exportar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      let isFirstPage = true;
+
+      for (const turma of turmas) {
+        if (!isFirstPage) {
+          pdf.addPage();
+        }
+        isFirstPage = false;
+
+        // Buscar alunos da turma
+        const { data: alunoTurmaData } = await supabase
+          .from("aluno_turma")
+          .select("aluno_id")
+          .eq("turma_id", turma.id);
+
+        const alunoIds = alunoTurmaData?.map((at) => at.aluno_id) || [];
+        
+        let alunosData: Aluno[] = [];
+        if (alunoIds.length > 0) {
+          const { data } = await supabase
+            .from("alunos")
+            .select("*")
+            .in("id", alunoIds)
+            .order("nome_completo");
+          alunosData = data || [];
+        }
+
+        // Cabeçalho
+        pdf.setFontSize(16);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`RELATÓRIO - ${turma.nome}`, pageWidth / 2, 20, { align: "center" });
+
+        // Informações da turma
+        pdf.setFontSize(11);
+        pdf.setFont("helvetica", "normal");
+        let yPos = 35;
+        pdf.text(`Ano: ${turma.ano}`, 20, yPos);
+        yPos += 7;
+        pdf.text(`Situação: ${turma.situacao || "N/A"}`, 20, yPos);
+        yPos += 7;
+        if (turma.data_inicio) {
+          pdf.text(`Data de Início: ${new Date(turma.data_inicio).toLocaleDateString("pt-BR")}`, 20, yPos);
+          yPos += 7;
+        }
+        if (turma.data_fim) {
+          pdf.text(`Data de Término: ${new Date(turma.data_fim).toLocaleDateString("pt-BR")}`, 20, yPos);
+          yPos += 7;
+        }
+        pdf.text(`Total de Alunos: ${alunosData.length}`, 20, yPos);
+        yPos += 15;
+
+        // Lista de alunos
+        if (alunosData.length > 0) {
+          pdf.setFont("helvetica", "bold");
+          pdf.text("ALUNOS MATRICULADOS:", 20, yPos);
+          yPos += 7;
+          pdf.setFont("helvetica", "normal");
+
+          alunosData.forEach((aluno, index) => {
+            if (yPos > 270) {
+              pdf.addPage();
+              yPos = 20;
+            }
+            pdf.text(
+              `${index + 1}. ${aluno.graduacao} ${aluno.nome_completo} - Mat: ${aluno.matricula}`,
+              20,
+              yPos
+            );
+            yPos += 7;
+          });
+        }
+      }
+
+      const fileName = `relatorio_todas_turmas_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      
+      toast({
+        title: "Sucesso",
+        description: `Relatório de ${turmas.length} turmas exportado com sucesso!`,
+      });
+    } catch (error) {
+      console.error("Erro ao gerar relatório de todas as turmas:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o relatório.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Relatórios</h1>
@@ -442,6 +544,14 @@ const Relatorios = () => {
               </Select>
             </div>
             <div className="flex gap-2">
+              <Button
+                onClick={exportAllTurmasReport}
+                variant="outline"
+                size="sm"
+              >
+                <Printer className="w-4 h-4 mr-2" />
+                Imprimir Todas
+              </Button>
               <Button
                 onClick={() => exportTurmaReport('download')}
                 disabled={!selectedTurmaId || alunosTurma.length === 0}

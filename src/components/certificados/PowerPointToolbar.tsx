@@ -29,6 +29,7 @@ import {
   Plus,
   Palette,
   Upload,
+  Ruler,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,6 +78,8 @@ interface PowerPointToolbarProps {
   onBackgroundUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   selectedTurmaId: string | null;
   onSelectTurma: (turmaId: string | null) => void;
+  showRulers: boolean;
+  onToggleRulers: () => void;
 }
 
 export const PowerPointToolbar = ({
@@ -107,6 +110,8 @@ export const PowerPointToolbar = ({
   onBackgroundUpload,
   selectedTurmaId,
   onSelectTurma,
+  showRulers,
+  onToggleRulers,
 }: PowerPointToolbarProps) => {
   const fonts = [
     "Arial",
@@ -491,6 +496,40 @@ export const PowerPointToolbar = ({
                   />
                 </div>
               )}
+
+              {isTextSelected && (
+                <div className="border-t pt-4">
+                  <Label className="mb-2 block">Espaçamento Entre Linhas</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min="0.5"
+                      max="3"
+                      step="0.1"
+                      value={selectedElement?.lineHeight || 1.2}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value);
+                        if (!isNaN(value)) {
+                          onUpdateElement({ ...selectedElement, lineHeight: value });
+                        }
+                      }}
+                      className="w-20"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="border-t pt-4">
+                <Button
+                  variant={showRulers ? "default" : "outline"}
+                  size="sm"
+                  onClick={onToggleRulers}
+                  className="w-full"
+                >
+                  <Ruler className="w-4 h-4 mr-2" />
+                  {showRulers ? "Ocultar Réguas" : "Mostrar Réguas"}
+                </Button>
+              </div>
             </div>
           </PopoverContent>
         </Popover>

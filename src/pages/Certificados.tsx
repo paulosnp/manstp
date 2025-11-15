@@ -62,6 +62,7 @@ export default function Certificados() {
   const [currentFont, setCurrentFont] = useState<string>("Arial");
   const [selectedTurmaId, setSelectedTurmaId] = useState<string | null>(null);
   const [showSlidesPanel, setShowSlidesPanel] = useState(true);
+  const [showRulers, setShowRulers] = useState(false);
 
   const activeSlide = slides.find((s) => s.id === activeSlideId) || slides[0];
   const orientation = activeSlide.orientation;
@@ -700,6 +701,8 @@ export default function Certificados() {
             onBackgroundUpload={handleBackgroundUpload}
             selectedTurmaId={selectedTurmaId}
             onSelectTurma={setSelectedTurmaId}
+            showRulers={showRulers}
+            onToggleRulers={() => setShowRulers(!showRulers)}
           />
         </div>
       </div>
@@ -738,6 +741,7 @@ export default function Certificados() {
                 onSelectElement={setSelectedId}
                 onUpdateElement={updateElement}
                 onStageReady={setStageRef}
+                showRulers={showRulers}
               />
             </div>
           </ScrollArea>
