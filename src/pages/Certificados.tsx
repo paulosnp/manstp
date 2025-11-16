@@ -207,6 +207,8 @@ export default function Certificados() {
       fill: "#000000",
       textAlign: "center",
       opacity: 1,
+      width: 600,
+      lineHeight: 1.2,
     };
     setElements([...elements, newElement]);
     toast.success("Campo de nome do curso adicionado");
@@ -225,6 +227,8 @@ export default function Certificados() {
       fill: "#000000",
       textAlign: "center",
       opacity: 1,
+      width: 600,
+      lineHeight: 1.2,
     };
     setElements([...elements, newElement]);
     toast.success("Campo de nome do aluno adicionado");
@@ -241,6 +245,8 @@ export default function Certificados() {
       fontFamily: currentFont,
       fill: "#000000",
       opacity: 1,
+      width: 400,
+      lineHeight: 1.2,
     };
     setElements([...elements, newElement]);
     toast.success("Campo de instrutor adicionado");
@@ -264,6 +270,7 @@ export default function Certificados() {
         textAlign: "center",
         width: 200,
         opacity: 1,
+        lineHeight: 1.2,
       },
       {
         id: uuidv4(),
@@ -277,6 +284,7 @@ export default function Certificados() {
         textAlign: "center",
         width: 200,
         opacity: 1,
+        lineHeight: 1.2,
       },
       {
         id: uuidv4(),
@@ -290,6 +298,7 @@ export default function Certificados() {
         textAlign: "center",
         width: 200,
         opacity: 1,
+        lineHeight: 1.2,
       },
     ];
     
