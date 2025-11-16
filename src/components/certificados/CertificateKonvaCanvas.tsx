@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { Stage, Layer, Image as KonvaImage, Transformer } from "react-konva";
+import { Stage, Layer, Image as KonvaImage } from "react-konva";
 import useImage from "use-image";
 import { DraggableImage } from "./konva/DraggableImage";
 import { DraggableText } from "./konva/DraggableText";
@@ -11,15 +11,6 @@ interface Element {
   x: number;
   y: number;
   [key: string]: any;
-}
-
-interface BackgroundSettings {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  scaleX: number;
-  scaleY: number;
 }
 
 interface CertificateKonvaCanvasProps {
@@ -44,19 +35,8 @@ export const CertificateKonvaCanvas = ({
   showRulers = false,
 }: CertificateKonvaCanvasProps) => {
   const stageRef = useRef<any>(null);
-  const bgRef = useRef<any>(null);
-  const bgTrRef = useRef<any>(null);
   const [bgImage] = useImage(backgroundImage || "");
   const [backgroundOpacity, setBackgroundOpacity] = useState(1);
-  const [backgroundSettings, setBackgroundSettings] = useState<BackgroundSettings>({
-    x: 0,
-    y: 0,
-    width: 900,
-    height: 600,
-    scaleX: 1,
-    scaleY: 1,
-  });
-  const [bgSelected, setBgSelected] = useState(false);
 
   const width = orientation === "landscape" ? 900 : 600;
   const height = orientation === "landscape" ? 600 : 900;
@@ -67,52 +47,30 @@ export const CertificateKonvaCanvas = ({
     }
   }, [stageRef.current]);
 
-  useEffect(() => {
-    setBackgroundSettings({
-      x: 0,
-      y: 0,
-      width,
-      height,
-      scaleX: 1,
-      scaleY: 1,
-    });
-  }, [width, height]);
+  // Calcular scale automático do background para cobrir todo o canvas
+  const getBackgroundScale = () => {
+    if (!bgImage) return { scaleX: 1, scaleY: 1, x: 0, y: 0 };
+    
+    const scaleX = width / bgImage.width;
+    const scaleY = height / bgImage.height;
+    
+    // Usar o maior scale para cobrir todo o canvas (cover)
+    const scale = Math.max(scaleX, scaleY);
+    
+    // Centralizar a imagem
+    const x = (width - bgImage.width * scale) / 2;
+    const y = (height - bgImage.height * scale) / 2;
+    
+    return { scaleX: scale, scaleY: scale, x, y };
+  };
 
-  useEffect(() => {
-    if (bgSelected && bgTrRef.current && bgRef.current) {
-      bgTrRef.current.nodes([bgRef.current]);
-      bgTrRef.current.getLayer()?.batchDraw();
-    }
-  }, [bgSelected]);
+  const backgroundScale = getBackgroundScale();
 
   const checkDeselect = (e: any) => {
     const clickedOnEmpty = e.target === e.target.getStage();
     if (clickedOnEmpty) {
       onSelectElement(null);
-      setBgSelected(false);
     }
-  };
-
-  const handleBgSelect = () => {
-    setBgSelected(true);
-    onSelectElement(null);
-  };
-
-  const handleBgTransform = () => {
-    const node = bgRef.current;
-    if (!node) return;
-    
-    setBackgroundSettings({
-      x: node.x(),
-      y: node.y(),
-      width: node.width() * node.scaleX(),
-      height: node.height() * node.scaleY(),
-      scaleX: 1,
-      scaleY: 1,
-    });
-    
-    node.scaleX(1);
-    node.scaleY(1);
   };
 
   return (
@@ -132,11 +90,6 @@ export const CertificateKonvaCanvas = ({
             className="w-full"
           />
         </div>
-        {bgSelected && (
-          <div className="text-sm text-primary font-medium">
-            ✓ Fundo selecionado - Arraste ou redimensione usando os controles
-          </div>
-        )}
       </div>
 
       <div className="bg-muted/30 rounded-lg p-8 shadow-xl">
@@ -150,41 +103,15 @@ export const CertificateKonvaCanvas = ({
         >
           <Layer>
             {bgImage && (
-              <>
-                <KonvaImage
-                  image={bgImage}
-                  x={backgroundSettings.x}
-                  y={backgroundSettings.y}
-                  width={backgroundSettings.width}
-                  height={backgroundSettings.height}
-                  scaleX={backgroundSettings.scaleX}
-                  scaleY={backgroundSettings.scaleY}
-                  opacity={backgroundOpacity}
-                  draggable
-                  ref={bgRef}
-                  onClick={handleBgSelect}
-                  onTap={handleBgSelect}
-                  onDragEnd={(e) => {
-                    setBackgroundSettings({
-                      ...backgroundSettings,
-                      x: e.target.x(),
-                      y: e.target.y(),
-                    });
-                  }}
-                  onTransformEnd={handleBgTransform}
-                />
-                {bgSelected && (
-                  <Transformer
-                    ref={bgTrRef}
-                    boundBoxFunc={(oldBox, newBox) => {
-                      if (newBox.width < 50 || newBox.height < 50) {
-                        return oldBox;
-                      }
-                      return newBox;
-                    }}
-                  />
-                )}
-              </>
+              <KonvaImage
+                image={bgImage}
+                x={backgroundScale.x}
+                y={backgroundScale.y}
+                scaleX={backgroundScale.scaleX}
+                scaleY={backgroundScale.scaleY}
+                opacity={backgroundOpacity}
+                listening={false}
+              />
             )}
 
             {elements.map((el) => {
@@ -196,7 +123,6 @@ export const CertificateKonvaCanvas = ({
                     isSelected={selectedId === el.id}
                     onSelect={() => {
                       onSelectElement(el.id);
-                      setBgSelected(false);
                     }}
                     onChange={onUpdateElement}
                   />
@@ -209,7 +135,6 @@ export const CertificateKonvaCanvas = ({
                     isSelected={selectedId === el.id}
                     onSelect={() => {
                       onSelectElement(el.id);
-                      setBgSelected(false);
                     }}
                     onChange={onUpdateElement}
                   />
@@ -224,8 +149,8 @@ export const CertificateKonvaCanvas = ({
 
       <div className="text-xs text-muted-foreground max-w-[600px] text-center">
         <p>
-          Clique duplo no texto para editar. Clique no fundo para selecioná-lo e redimensioná-lo.
-          Arraste elementos para reposicionar. Use os pontos de controle para redimensionar.
+          Clique duplo no texto para editar. Arraste elementos para reposicionar. 
+          Use os pontos de controle para redimensionar. O fundo se ajusta automaticamente.
         </p>
       </div>
     </div>
