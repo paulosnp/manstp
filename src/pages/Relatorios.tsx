@@ -200,9 +200,10 @@ const Relatorios = () => {
       // Cabeçalhos da tabela
       pdf.setFontSize(9);
       pdf.text("Nome Completo", 20, yPos);
-      pdf.text("Graduação", 80, yPos);
-      pdf.text("Curso", 115, yPos);
-      pdf.text("Ano", 140, yPos);
+      pdf.text("Graduação", 75, yPos);
+      pdf.text("Curso", 105, yPos);
+      pdf.text("Local", 125, yPos);
+      pdf.text("Ano", 150, yPos);
       pdf.text("OM", 165, yPos);
       pdf.text("Status", 185, yPos);
       yPos += 6;
@@ -231,14 +232,19 @@ const Relatorios = () => {
         const grad = aluno.graduacao.length > 12 
           ? aluno.graduacao.substring(0, 9) + '...' 
           : aluno.graduacao;
-        pdf.text(grad, 80, yPos);
+        pdf.text(grad, 75, yPos);
         
         // Curso (sigla)
-        pdf.text((aluno as any).sigla_curso || 'N/A', 115, yPos);
+        const curso = (aluno as any).sigla_curso || 'N/A';
+        pdf.text(curso.length > 8 ? curso.substring(0, 8) + '...' : curso, 105, yPos);
+        
+        // Local do curso
+        const local = (aluno as any).local_curso || 'N/A';
+        pdf.text(local.length > 10 ? local.substring(0, 10) + '...' : local, 125, yPos);
         
         // Ano
         const ano = selectedTurma?.ano ? selectedTurma.ano.toString() : 'N/A';
-        pdf.text(ano, 140, yPos);
+        pdf.text(ano, 150, yPos);
         
         // OM de registro (local_servico)
         const om = aluno.local_servico 
