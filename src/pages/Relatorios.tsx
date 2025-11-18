@@ -202,7 +202,7 @@ const Relatorios = () => {
       pdf.text("Nome Completo", 20, yPos);
       pdf.text("Graduação", 80, yPos);
       pdf.text("Curso", 115, yPos);
-      pdf.text("Período", 140, yPos);
+      pdf.text("Ano", 140, yPos);
       pdf.text("OM", 165, yPos);
       pdf.text("Status", 185, yPos);
       yPos += 6;
@@ -236,9 +236,9 @@ const Relatorios = () => {
         // Curso (sigla)
         pdf.text((aluno as any).sigla_curso || 'N/A', 115, yPos);
         
-        // Período
-        const periodo = (aluno as any).data_duracao_curso || 'N/A';
-        pdf.text(periodo, 140, yPos);
+        // Ano
+        const ano = selectedTurma?.ano ? selectedTurma.ano.toString() : 'N/A';
+        pdf.text(ano, 140, yPos);
         
         // OM de registro (local_servico)
         const om = aluno.local_servico 
