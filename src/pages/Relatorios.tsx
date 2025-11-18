@@ -14,6 +14,10 @@ interface Aluno {
   nome_completo: string;
   graduacao: string;
   matricula: number;
+  local_servico?: string;
+  status?: string;
+  sigla_curso?: string;
+  data_duracao_curso?: string;
 }
 
 interface Turma {
@@ -83,7 +87,13 @@ const Relatorios = () => {
     try {
       const { data: alunoTurmaData, error: alunoTurmaError } = await supabase
         .from("aluno_turma")
-        .select("aluno_id")
+        .select(`
+          aluno_id,
+          status,
+          sigla_curso,
+          local_curso,
+          data_duracao_curso
+        `)
         .eq("turma_id", selectedTurmaId);
 
       if (alunoTurmaError) throw alunoTurmaError;
@@ -102,7 +112,19 @@ const Relatorios = () => {
         .order("nome_completo");
 
       if (alunosError) throw alunosError;
-      setAlunosTurma(alunosData || []);
+      
+      // Combinar dados dos alunos com informações do vínculo
+      const alunosComVinculo = alunosData?.map(aluno => {
+        const vinculo = alunoTurmaData?.find(at => at.aluno_id === aluno.id);
+        return {
+          ...aluno,
+          status: vinculo?.status || 'N/A',
+          sigla_curso: vinculo?.sigla_curso || 'N/A',
+          data_duracao_curso: vinculo?.data_duracao_curso || 'N/A',
+        };
+      }) || [];
+      
+      setAlunosTurma(alunosComVinculo);
     } catch (error) {
       console.error("Erro ao buscar alunos da turma:", error);
       toast({
@@ -175,18 +197,23 @@ const Relatorios = () => {
       pdf.text(`Total de Alunos: ${alunosTurma.length}`, 20, yPos);
       yPos += 10;
 
-      pdf.setFontSize(11);
+      // Cabeçalhos da tabela
+      pdf.setFontSize(9);
       pdf.text("Nome Completo", 20, yPos);
-      pdf.text("Graduação", 140, yPos);
-      yPos += 8;
+      pdf.text("Graduação", 80, yPos);
+      pdf.text("Curso", 115, yPos);
+      pdf.text("Período", 140, yPos);
+      pdf.text("OM", 165, yPos);
+      pdf.text("Status", 185, yPos);
+      yPos += 6;
 
       pdf.setLineWidth(0.5);
       pdf.line(20, yPos, pageWidth - 20, yPos);
-      yPos += 8;
+      yPos += 6;
 
       // Listar alunos
       pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(10);
+      pdf.setFontSize(8);
 
       alunosTurma.forEach((aluno, index) => {
         if (yPos > 270) {
@@ -194,9 +221,37 @@ const Relatorios = () => {
           yPos = 20;
         }
 
-        pdf.text(`${index + 1}. ${aluno.nome_completo}`, 20, yPos);
-        pdf.text(aluno.graduacao, 140, yPos);
-        yPos += 7;
+        // Nome completo (truncado se necessário)
+        const nome = aluno.nome_completo.length > 25 
+          ? aluno.nome_completo.substring(0, 22) + '...' 
+          : aluno.nome_completo;
+        pdf.text(`${index + 1}. ${nome}`, 20, yPos);
+        
+        // Graduação (truncado)
+        const grad = aluno.graduacao.length > 12 
+          ? aluno.graduacao.substring(0, 9) + '...' 
+          : aluno.graduacao;
+        pdf.text(grad, 80, yPos);
+        
+        // Curso (sigla)
+        pdf.text((aluno as any).sigla_curso || 'N/A', 115, yPos);
+        
+        // Período
+        const periodo = (aluno as any).data_duracao_curso || 'N/A';
+        pdf.text(periodo, 140, yPos);
+        
+        // OM de registro (local_servico)
+        const om = aluno.local_servico 
+          ? (aluno.local_servico.length > 8 ? aluno.local_servico.substring(0, 6) + '...' : aluno.local_servico)
+          : 'N/A';
+        pdf.text(om, 165, yPos);
+        
+        // Status
+        const status = (aluno as any).status || 'N/A';
+        const statusText = status.length > 10 ? status.substring(0, 8) + '...' : status;
+        pdf.text(statusText, 185, yPos);
+        
+        yPos += 6;
       });
 
       // Rodapé
