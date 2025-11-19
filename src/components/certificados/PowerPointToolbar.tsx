@@ -68,6 +68,7 @@ interface PowerPointToolbarProps {
   onTemplateNameChange: (name: string) => void;
   selectedTemplateId: string;
   onSelectTemplate: (template: any) => void;
+  onDeleteTemplate: () => void;
   onAddStudentName: () => void;
   onAddCourseName: () => void;
   onAddInstructor: () => void;
@@ -104,6 +105,7 @@ export const PowerPointToolbar = ({
   onTemplateNameChange,
   selectedTemplateId,
   onSelectTemplate,
+  onDeleteTemplate,
   onAddStudentName,
   onAddCourseName,
   onAddInstructor,
@@ -251,6 +253,20 @@ export const PowerPointToolbar = ({
             <Redo className="w-4 h-4" />
           </Button>
           <Separator orientation="vertical" className="h-6" />
+          {selectedTemplateId !== "new" && (
+            <>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onDeleteTemplate}
+                title="Deletar Template"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Deletar
+              </Button>
+              <Separator orientation="vertical" className="h-6" />
+            </>
+          )}
           <Button variant="outline" size="sm" onClick={onPreview}>
             <Eye className="w-4 h-4 mr-2" />
             Visualizar

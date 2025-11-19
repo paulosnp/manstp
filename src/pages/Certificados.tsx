@@ -44,7 +44,7 @@ interface Template {
 }
 
 export default function Certificados() {
-  const { saveTemplate: saveTemplateToDb, updateTemplate } = useCertificateTemplates();
+  const { saveTemplate: saveTemplateToDb, updateTemplate, deleteTemplate } = useCertificateTemplates();
   const [slides, setSlides] = useState<Slide[]>([
     {
       id: uuidv4(),
@@ -511,6 +511,34 @@ export default function Certificados() {
     toast.success("Template carregado");
   };
 
+  const handleDeleteTemplate = async () => {
+    if (!selectedTemplate || selectedTemplate.id === "new") {
+      toast.error("Nenhum template selecionado para deletar");
+      return;
+    }
+
+    if (!confirm(`Tem certeza que deseja excluir o template "${selectedTemplate.name}"?`)) {
+      return;
+    }
+
+    const success = await deleteTemplate(selectedTemplate.id);
+    if (success) {
+      setSelectedTemplate(null);
+      setSlides([
+        {
+          id: uuidv4(),
+          elements: [],
+          orientation: "landscape",
+          backgroundImage: "",
+          thumbnail: undefined,
+        },
+      ]);
+      setActiveSlideId(slides[0]?.id || uuidv4());
+      setTemplateName("");
+      setSelectedTurmaId(null);
+    }
+  };
+
   const handleAddSlide = () => {
     const newSlide: Slide = {
       id: uuidv4(),
@@ -732,6 +760,7 @@ export default function Certificados() {
             onTemplateNameChange={setTemplateName}
             selectedTemplateId={selectedTemplate?.id || "new"}
             onSelectTemplate={handleSelectTemplate}
+            onDeleteTemplate={handleDeleteTemplate}
             onAddStudentName={addStudentName}
             onAddCourseName={addCourseName}
             onAddInstructor={addInstructor}
