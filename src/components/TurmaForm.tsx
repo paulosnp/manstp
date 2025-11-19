@@ -39,6 +39,8 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
     curso_id: string;
     ano: number;
     tipo_militar: string;
+    tipo_militar_outro: string;
+    om_registro: string;
     data_inicio: string;
     data_fim: string;
     situacao: string;
@@ -48,6 +50,8 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
     curso_id: turma?.curso_id || "",
     ano: turma?.ano || new Date().getFullYear(),
     tipo_militar: turma?.tipo_militar || "",
+    tipo_militar_outro: (turma as any)?.tipo_militar_outro || "",
+    om_registro: (turma as any)?.om_registro || "",
     data_inicio: (turma as any)?.data_inicio || "",
     data_fim: (turma as any)?.data_fim || "",
     situacao: (turma as any)?.situacao || "Em Andamento",
@@ -103,6 +107,8 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
           curso_id: "",
           ano: new Date().getFullYear(),
           tipo_militar: "",
+          tipo_militar_outro: "",
+          om_registro: "",
           data_inicio: "",
           data_fim: "",
           situacao: "Em Andamento",
@@ -191,10 +197,33 @@ export function TurmaForm({ turma, onSuccess }: TurmaFormProps) {
                   "Marinheiro",
                   "Exercito",
                   "Bombeiro",
-                  "Civil"
+                  "Civil",
+                  "Outros"
                 ]}
                 placeholder={t("selectType")}
                 storageKey="custom_tipo_militar_turmas"
+              />
+            </div>
+
+            {formData.tipo_militar === "Outros" && (
+              <div className="space-y-2">
+                <Label htmlFor="tipo_militar_outro">Especificar Tipo Militar</Label>
+                <Input
+                  id="tipo_militar_outro"
+                  value={formData.tipo_militar_outro}
+                  onChange={(e) => setFormData({ ...formData, tipo_militar_outro: e.target.value })}
+                  placeholder="Digite o tipo militar"
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="om_registro">OM de Registro</Label>
+              <Input
+                id="om_registro"
+                value={formData.om_registro}
+                onChange={(e) => setFormData({ ...formData, om_registro: e.target.value })}
+                placeholder="Digite a OM de registro"
               />
             </div>
 

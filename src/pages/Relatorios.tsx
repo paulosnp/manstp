@@ -197,24 +197,24 @@ const Relatorios = () => {
       pdf.text(`Total de Alunos: ${alunosTurma.length}`, 20, yPos);
       yPos += 10;
 
-      // Cabeçalhos da tabela
-      pdf.setFontSize(9);
-      pdf.text("Nome Completo", 20, yPos);
-      pdf.text("Graduação", 75, yPos);
-      pdf.text("Curso", 105, yPos);
-      pdf.text("Local", 125, yPos);
-      pdf.text("Ano", 150, yPos);
-      pdf.text("OM", 165, yPos);
-      pdf.text("Status", 185, yPos);
+      // Cabeçalhos da tabela - Layout em modo paisagem
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Nome Completo", 14, yPos);
+      pdf.text("Graduação", 70, yPos);
+      pdf.text("Período", 105, yPos);
+      pdf.text("Nº Reg", 130, yPos);
+      pdf.text("Local Curso", 150, yPos);
+      pdf.text("Status", 180, yPos);
       yPos += 6;
 
       pdf.setLineWidth(0.5);
-      pdf.line(20, yPos, pageWidth - 20, yPos);
+      pdf.line(14, yPos, pageWidth - 14, yPos);
       yPos += 6;
 
       // Listar alunos
       pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(8);
+      pdf.setFontSize(9);
 
       alunosTurma.forEach((aluno, index) => {
         if (yPos > 270) {
@@ -222,42 +222,35 @@ const Relatorios = () => {
           yPos = 20;
         }
 
-        // Nome completo (truncado se necessário)
-        const nome = aluno.nome_completo.length > 25 
-          ? aluno.nome_completo.substring(0, 22) + '...' 
-          : aluno.nome_completo;
-        pdf.text(`${index + 1}. ${nome}`, 20, yPos);
+        // Nome completo
+        const nome = aluno.nome_completo;
+        const nomeLines = pdf.splitTextToSize(nome, 52);
+        pdf.text(nomeLines[0], 14, yPos);
         
-        // Graduação (truncado)
-        const grad = aluno.graduacao.length > 12 
-          ? aluno.graduacao.substring(0, 9) + '...' 
-          : aluno.graduacao;
-        pdf.text(grad, 75, yPos);
+        // Graduação
+        const grad = aluno.graduacao;
+        const gradLines = pdf.splitTextToSize(grad, 32);
+        pdf.text(gradLines[0], 70, yPos);
         
-        // Curso (sigla)
-        const curso = (aluno as any).sigla_curso || 'N/A';
-        pdf.text(curso.length > 8 ? curso.substring(0, 8) + '...' : curso, 105, yPos);
+        // Período (data_duracao_curso)
+        const periodo = (aluno as any).data_duracao_curso || 'N/A';
+        const periodoText = periodo.toString().length > 10 ? periodo.toString().substring(0, 10) : periodo.toString();
+        pdf.text(periodoText, 105, yPos);
         
-        // Local do curso
-        const local = (aluno as any).local_curso || 'N/A';
-        pdf.text(local.length > 10 ? local.substring(0, 10) + '...' : local, 125, yPos);
+        // Número de Registro (matricula)
+        const registro = aluno.matricula ? aluno.matricula.toString() : 'N/A';
+        pdf.text(registro, 130, yPos);
         
-        // Ano
-        const ano = selectedTurma?.ano ? selectedTurma.ano.toString() : 'N/A';
-        pdf.text(ano, 150, yPos);
-        
-        // OM de registro (local_servico)
-        const om = aluno.local_servico 
-          ? (aluno.local_servico.length > 8 ? aluno.local_servico.substring(0, 6) + '...' : aluno.local_servico)
-          : 'N/A';
-        pdf.text(om, 165, yPos);
+        // Local do Curso
+        const localCurso = (aluno as any).local_curso || 'N/A';
+        const localLines = pdf.splitTextToSize(localCurso, 26);
+        pdf.text(localLines[0], 150, yPos);
         
         // Status
         const status = (aluno as any).status || 'N/A';
-        const statusText = status.length > 10 ? status.substring(0, 8) + '...' : status;
-        pdf.text(statusText, 185, yPos);
+        pdf.text(status, 180, yPos);
         
-        yPos += 6;
+        yPos += 7;
       });
 
       // Rodapé

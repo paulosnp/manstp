@@ -800,8 +800,10 @@ export type Database = {
           id: string
           nome: string
           observacoes: string | null
+          om_registro: string | null
           situacao: Database["public"]["Enums"]["situacao_curso"] | null
           tipo_militar: Database["public"]["Enums"]["tipo_militar"]
+          tipo_militar_outro: string | null
           updated_at: string | null
           user_id: string
         }
@@ -814,8 +816,10 @@ export type Database = {
           id?: string
           nome: string
           observacoes?: string | null
+          om_registro?: string | null
           situacao?: Database["public"]["Enums"]["situacao_curso"] | null
           tipo_militar: Database["public"]["Enums"]["tipo_militar"]
+          tipo_militar_outro?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -828,8 +832,10 @@ export type Database = {
           id?: string
           nome?: string
           observacoes?: string | null
+          om_registro?: string | null
           situacao?: Database["public"]["Enums"]["situacao_curso"] | null
           tipo_militar?: Database["public"]["Enums"]["tipo_militar"]
+          tipo_militar_outro?: string | null
           updated_at?: string | null
           user_id?: string
         }
