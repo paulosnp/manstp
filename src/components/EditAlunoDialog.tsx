@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CustomizableSelect } from "@/components/ui/customizable-select";
 import { Textarea } from "@/components/ui/textarea";
 import { Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -42,54 +42,16 @@ export function EditAlunoDialog({ aluno, onSuccess }: EditAlunoDialogProps) {
     sigla_curso: aluno.sigla_curso || "",
   });
 
-  const rankKeys = [
-    "brigadeiro", "coronel", "capitao_mar_guerra", "tenente_coronel",
-    "capitao_fragata", "major", "capitao_tenente", "capitao",
-    "primeiro_tenente", "tenente", "segundo_tenente", "alferes",
-    "guarda_marinha", "aspirante", "subtenente", "primeiro_cabo", "sargento_mor", "sargento_chefe",
-    "sargento_ajudante", "primeiro_sargento", "segundo_sargento", "terceiro_sargento",
-    "furriel", "primeiro_subsargento", "segundo_furriel", "suboficial",
-    "subsargento", "cabo_secao", "cabo", "segundo_cabo", "segundo_marinheiro",
-    "marinheiro", "soldado", "grumete", "civil"
+  const rankOptions = [
+    "Brigadeiro", "Coronel", "Capitão de Mar e Guerra", "Tenente Coronel",
+    "Capitão de Fragata", "Major", "Capitão Tenente", "Capitão",
+    "Primeiro Tenente", "Tenente", "Segundo Tenente", "Alferes",
+    "Guarda Marinha", "Aspirante", "Subtenente", "Primeiro Cabo", "Sargento Mor", "Sargento Chefe",
+    "Sargento Ajudante", "Primeiro Sargento", "Segundo Sargento", "Terceiro Sargento",
+    "Furriel", "Primeiro Subsargento", "Segundo Furriel", "Suboficial",
+    "Subsargento", "Cabo de Seção", "Cabo", "Segundo Cabo", "Segundo Marinheiro",
+    "Marinheiro", "Soldado", "Grumete", "Civil", "Armada"
   ];
-
-  const rankMap: { [key: string]: string } = {
-    "Brigadeiro": "Brigadeiro",
-    "Coronel": "Coronel",
-    "Capitão de Mar e Guerra": "Capitão de Mar e Guerra",
-    "Tenente Coronel": "Tenente Coronel",
-    "Capitão de Fragata": "Capitão de Fragata",
-    "Major": "Major",
-    "Capitão Tenente": "Capitão Tenente",
-    "Capitão": "Capitão",
-    "Primeiro Tenente": "Primeiro Tenente",
-    "Tenente": "Tenente",
-    "Segundo Tenente": "Segundo Tenente",
-    "Alferes": "Alferes",
-    "Guarda Marinha": "Guarda Marinha",
-    "Aspirante": "Aspirante",
-    "Subtenente": "Subtenente",
-    "Primeiro Cabo": "Primeiro Cabo",
-    "Sargento Mor": "Sargento Mor",
-    "Sargento Chefe": "Sargento Chefe",
-    "Sargento Ajudante": "Sargento Ajudante",
-    "Primeiro Sargento": "Primeiro Sargento",
-    "Segundo Sargento": "Segundo Sargento",
-    "Terceiro Sargento": "Terceiro Sargento",
-    "Furriel": "Furriel",
-    "Primeiro Subsargento": "Primeiro Subsargento",
-    "Segundo Furriel": "Segundo Furriel",
-    "Suboficial": "Suboficial",
-    "Subsargento": "Subsargento",
-    "Cabo de Seção": "Cabo de Seção",
-    "Cabo": "Cabo",
-    "Segundo Cabo": "Segundo Cabo",
-    "Segundo Marinheiro": "Segundo Marinheiro",
-    "Marinheiro": "Marinheiro",
-    "Soldado": "Soldado",
-    "Grumete": "Grumete",
-    "Civil": "Civil"
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,28 +120,20 @@ export function EditAlunoDialog({ aluno, onSuccess }: EditAlunoDialogProps) {
 
             <div className="space-y-2">
               <Label>Posto / Graduação *</Label>
-              <Select
+              <CustomizableSelect
                 required
                 value={formData.graduacao}
                 onValueChange={(value) => setFormData({ ...formData, graduacao: value })}
                 disabled={formData.tipo_militar === "Civil"}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o posto" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px] overflow-y-auto bg-background">
-                  {Object.entries(rankMap).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>
-                      {value}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                defaultOptions={rankOptions}
+                placeholder="Selecione o posto"
+                storageKey="custom_graduacao_alunos"
+              />
             </div>
 
             <div className="space-y-2">
               <Label>Tipo Militar *</Label>
-              <Select
+              <CustomizableSelect
                 required
                 value={formData.tipo_militar}
                 onValueChange={(value) => {
@@ -190,81 +144,75 @@ export function EditAlunoDialog({ aluno, onSuccess }: EditAlunoDialogProps) {
                     local_servico: value === "Civil" ? "Nenhuma" : formData.local_servico
                   });
                 }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="Fuzileiro Naval">Fuzileiro Naval</SelectItem>
-                  <SelectItem value="Marinheiro">Marinheiro</SelectItem>
-                  <SelectItem value="Marinha do Brasil">Marinha do Brasil</SelectItem>
-                  <SelectItem value="Exercito">Exército</SelectItem>
-                  <SelectItem value="Bombeiro">Bombeiro</SelectItem>
-                  <SelectItem value="EMAP">EMAP</SelectItem>
-                  <SelectItem value="Civil">Civil</SelectItem>
-                </SelectContent>
-              </Select>
+                defaultOptions={[
+                  "Fuzileiro Naval",
+                  "Marinheiro",
+                  "Marinha do Brasil",
+                  "Exercito",
+                  "Bombeiro",
+                  "EMAP",
+                  "Civil"
+                ]}
+                placeholder="Selecione o tipo"
+                storageKey="custom_tipo_militar_alunos"
+              />
             </div>
 
             <div className="space-y-2 md:col-span-2">
               <Label>OM de Registro</Label>
-              <Select
+              <CustomizableSelect
                 value={formData.local_servico}
                 onValueChange={(value) => setFormData({ ...formData, local_servico: value })}
                 disabled={formData.tipo_militar === "Civil"}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a OM" />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="Nenhuma">Nenhuma</SelectItem>
-                  <SelectItem value="Guarda Costeira">Guarda Costeira</SelectItem>
-                  <SelectItem value="Quartel de Fuzileiros">Quartel de Fuzileiros</SelectItem>
-                  <SelectItem value="Exército">Exército</SelectItem>
-                  <SelectItem value="Palácio do Governo">Palácio do Governo</SelectItem>
-                  <SelectItem value="Bombeiros">Bombeiros</SelectItem>
-                  <SelectItem value="Polícia">Polícia</SelectItem>
-                </SelectContent>
-              </Select>
+                defaultOptions={[
+                  "Nenhuma",
+                  "Guarda Costeira",
+                  "Quartel de Fuzileiros",
+                  "Exército",
+                  "Palácio do Governo",
+                  "Bombeiros",
+                  "Polícia",
+                  "Ministério da Defesa",
+                  "Missão UPDE"
+                ]}
+                placeholder="Selecione a OM"
+                storageKey="custom_local_servico_alunos"
+              />
             </div>
 
             <div className="space-y-2 md:col-span-2">
               <Label>Status na Turma</Label>
-              <Select
+              <CustomizableSelect
                 value={formData.status}
                 onValueChange={(value) => setFormData({ ...formData, status: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Aguardando">Aguardando</SelectItem>
-                  <SelectItem value="Planejado">Planejado</SelectItem>
-                  <SelectItem value="Cursando">Cursando</SelectItem>
-                  <SelectItem value="Estagiando">Estagiando</SelectItem>
-                  <SelectItem value="Concluído">Concluído</SelectItem>
-                  <SelectItem value="Cancelado">Cancelado</SelectItem>
-                  <SelectItem value="Reprovado">Reprovado</SelectItem>
-                  <SelectItem value="Desligado">Desligado</SelectItem>
-                  <SelectItem value="Desertor">Desertor</SelectItem>
-                </SelectContent>
-              </Select>
+                defaultOptions={[
+                  "Aguardando",
+                  "Planejado",
+                  "Cursando",
+                  "Estagiando",
+                  "Concluído",
+                  "Cancelado",
+                  "Reprovado",
+                  "Desligado",
+                  "Desertor"
+                ]}
+                placeholder="Selecione o status"
+                storageKey="custom_status_aluno_turma"
+              />
             </div>
 
             <div className="space-y-2">
               <Label>Local</Label>
-              <Select
+              <CustomizableSelect
                 value={formData.local_curso}
                 onValueChange={(value) => setFormData({ ...formData, local_curso: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o local" />
-                </SelectTrigger>
-                <SelectContent className="bg-background">
-                  <SelectItem value="BRASIL">BRASIL</SelectItem>
-                  <SelectItem value="SÃO TOMÉ E PRÍNCIPE">SÃO TOMÉ E PRÍNCIPE</SelectItem>
-                </SelectContent>
-              </Select>
+                defaultOptions={[
+                  "BRASIL",
+                  "SÃO TOMÉ E PRÍNCIPE"
+                ]}
+                placeholder="Selecione o local"
+                storageKey="custom_local_curso"
+              />
             </div>
 
             <div className="space-y-2">

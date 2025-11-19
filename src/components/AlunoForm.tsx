@@ -33,15 +33,15 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
   const { user } = useAuth();
   const { t } = useTranslation();
 
-  const rankKeys = [
-    "brigadeiro", "coronel", "capitao_mar_guerra", "tenente_coronel",
-    "capitao_fragata", "major", "capitao_tenente", "capitao",
-    "primeiro_tenente", "tenente", "segundo_tenente", "alferes",
-    "guarda_marinha", "aspirante", "subtenente", "primeiro_cabo", "sargento_mor", "sargento_chefe",
-    "sargento_ajudante", "primeiro_sargento", "segundo_sargento", "terceiro_sargento",
-    "furriel", "primeiro_subsargento", "segundo_furriel", "suboficial",
-    "subsargento", "cabo_secao", "cabo", "segundo_cabo", "segundo_marinheiro",
-    "marinheiro", "soldado", "grumete", "civil", "armada"
+  const rankOptions = [
+    "Brigadeiro", "Coronel", "Capitão de Mar e Guerra", "Tenente Coronel",
+    "Capitão de Fragata", "Major", "Capitão Tenente", "Capitão",
+    "Primeiro Tenente", "Tenente", "Segundo Tenente", "Alferes",
+    "Guarda Marinha", "Aspirante", "Subtenente", "Primeiro Cabo", "Sargento Mor", "Sargento Chefe",
+    "Sargento Ajudante", "Primeiro Sargento", "Segundo Sargento", "Terceiro Sargento",
+    "Furriel", "Primeiro Subsargento", "Segundo Furriel", "Suboficial",
+    "Subsargento", "Cabo de Seção", "Cabo", "Segundo Cabo", "Segundo Marinheiro",
+    "Marinheiro", "Soldado", "Grumete", "Civil", "Armada"
   ];
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -145,23 +145,15 @@ export function AlunoForm({ aluno, onSuccess }: AlunoFormProps) {
 
             <div className="space-y-2">
               <Label htmlFor="graduacao">{t("rank")} *</Label>
-              <Select
+              <CustomizableSelect
                 required
                 value={formData.graduacao}
                 onValueChange={(value) => setFormData({ ...formData, graduacao: value })}
                 disabled={formData.tipo_militar === "Civil"}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t("selectRank")} />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px] overflow-y-auto bg-background">
-                  {rankKeys.map((key) => (
-                    <SelectItem key={key} value={t(`ranks.${key}`)}>
-                      {t(`ranks.${key}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                defaultOptions={rankOptions}
+                placeholder={t("selectRank")}
+                storageKey="custom_graduacao_alunos"
+              />
             </div>
 
             <div className="space-y-2">
