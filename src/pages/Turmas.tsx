@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Users, X, GraduationCap, FileDown, StickyNote } from "lucide-react";
+import { Search, Users, X, GraduationCap, FileDown, StickyNote, Printer } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import { BulkCourseInfoUpdate } from "@/components/BulkCourseInfoUpdate";
 import { EditAlunoDialog } from "@/components/EditAlunoDialog";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
+import { useReactToPrint } from "react-to-print";
 
 interface Turma {
   id: string;
@@ -84,6 +85,13 @@ export default function Turmas() {
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [notasDialogOpen, setNotasDialogOpen] = useState(false);
   const [selectedAlunoNotas, setSelectedAlunoNotas] = useState<{ id: string; nome: string } | null>(null);
+  const [printingAluno, setPrintingAluno] = useState<any>(null);
+  const alunoRef = useRef<HTMLDivElement>(null);
+
+  const handlePrintAluno = useReactToPrint({
+    contentRef: alunoRef,
+    documentTitle: printingAluno ? `Aluno - ${printingAluno.nome_completo}` : "Aluno",
+  });
 
   useEffect(() => {
     fetchTurmas();
@@ -602,6 +610,17 @@ export default function Turmas() {
                               variant="outline"
                               size="sm"
                               onClick={() => {
+                                setPrintingAluno(aluno);
+                                setTimeout(() => handlePrintAluno(), 100);
+                              }}
+                              className="gap-2"
+                            >
+                              <Printer className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
                                 setSelectedAlunoNotas({ id: aluno.id, nome: aluno.nome_completo });
                                 setNotasDialogOpen(true);
                               }}
@@ -725,6 +744,140 @@ export default function Turmas() {
           open={notasDialogOpen}
           onOpenChange={setNotasDialogOpen}
         />
+      )}
+
+      {/* Hidden printable aluno card */}
+      {printingAluno && (
+        <div style={{ display: "none" }}>
+          <div ref={alunoRef} className="print-aluno-content p-8">
+            <style>
+              {`
+                @media print {
+                  @page {
+                    size: A4;
+                    margin: 20mm;
+                  }
+                  
+                  .print-aluno-content {
+                    background: white;
+                    color: black;
+                  }
+                  
+                  .print-aluno-title {
+                    font-size: 24px;
+                    font-weight: bold;
+                    margin-bottom: 20px;
+                    text-align: center;
+                  }
+                  
+                  .print-aluno-photo {
+                    width: 150px;
+                    height: 200px;
+                    object-fit: cover;
+                    border: 2px solid black;
+                    margin: 0 auto 20px;
+                    display: block;
+                  }
+                  
+                  .print-aluno-field {
+                    margin-bottom: 12px;
+                    font-size: 14px;
+                  }
+                  
+                  .print-aluno-label {
+                    font-weight: bold;
+                    color: black;
+                  }
+                  
+                  .print-aluno-value {
+                    color: black;
+                  }
+                }
+              `}
+            </style>
+            
+            <h1 className="print-aluno-title">Ficha do Aluno</h1>
+            
+            {printingAluno.foto_url && (
+              <img 
+                src={printingAluno.foto_url} 
+                alt="Foto do aluno"
+                className="print-aluno-photo"
+              />
+            )}
+            
+            <div className="print-aluno-field">
+              <span className="print-aluno-label">Nome Completo: </span>
+              <span className="print-aluno-value">{printingAluno.nome_completo}</span>
+            </div>
+            
+            <div className="print-aluno-field">
+              <span className="print-aluno-label">Matrícula: </span>
+              <span className="print-aluno-value">{printingAluno.matricula}</span>
+            </div>
+            
+            <div className="print-aluno-field">
+              <span className="print-aluno-label">Graduação: </span>
+              <span className="print-aluno-value">{printingAluno.graduacao}</span>
+            </div>
+            
+            <div className="print-aluno-field">
+              <span className="print-aluno-label">Tipo Militar: </span>
+              <span className="print-aluno-value">{printingAluno.tipo_militar}</span>
+            </div>
+            
+            {printingAluno.email && (
+              <div className="print-aluno-field">
+                <span className="print-aluno-label">Email: </span>
+                <span className="print-aluno-value">{printingAluno.email}</span>
+              </div>
+            )}
+            
+            {printingAluno.telefone && (
+              <div className="print-aluno-field">
+                <span className="print-aluno-label">Telefone: </span>
+                <span className="print-aluno-value">{printingAluno.telefone}</span>
+              </div>
+            )}
+            
+            {printingAluno.whatsapp && (
+              <div className="print-aluno-field">
+                <span className="print-aluno-label">WhatsApp: </span>
+                <span className="print-aluno-value">{printingAluno.whatsapp}</span>
+              </div>
+            )}
+            
+            {printingAluno.data_nascimento && (
+              <div className="print-aluno-field">
+                <span className="print-aluno-label">Data de Nascimento: </span>
+                <span className="print-aluno-value">
+                  {new Date(printingAluno.data_nascimento).toLocaleDateString("pt-BR")}
+                </span>
+              </div>
+            )}
+            
+            {printingAluno.funcao && (
+              <div className="print-aluno-field">
+                <span className="print-aluno-label">Função: </span>
+                <span className="print-aluno-value">{printingAluno.funcao}</span>
+              </div>
+            )}
+            
+            {printingAluno.local_servico && (
+              <div className="print-aluno-field">
+                <span className="print-aluno-label">Local de Serviço: </span>
+                <span className="print-aluno-value">{printingAluno.local_servico}</span>
+              </div>
+            )}
+            
+            {printingAluno.observacoes && (
+              <div className="print-aluno-field">
+                <span className="print-aluno-label">Observações: </span>
+                <span className="print-aluno-value">{printingAluno.observacoes}</span>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -7,8 +7,9 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Plus, Trash2, Save, X } from "lucide-react";
+import { Plus, Trash2, Save, X, Printer } from "lucide-react";
 import { format } from "date-fns";
+import { useReactToPrint } from "react-to-print";
 
 interface Nota {
   id: string;
@@ -207,17 +208,80 @@ function ViewingNote({
   canEdit: boolean;
   canDelete: boolean;
 }) {
+  const notaRef = useRef<HTMLDivElement>(null);
+  
+  const handlePrint = useReactToPrint({
+    contentRef: notaRef,
+    documentTitle: `Nota - ${nota.titulo}`,
+  });
+
   return (
     <>
-      <div className="flex justify-between items-start">
-        <div className="flex-1">
-          <h3 className="text-xl font-semibold">{nota.titulo}</h3>
-          <p className="text-sm text-muted-foreground">
-            Atualizado em {format(new Date(nota.updated_at), "dd/MM/yyyy HH:mm")}
-          </p>
-        </div>
-        {(canEdit || canDelete) && (
-          <div className="flex gap-2">
+      <div ref={notaRef} className="print-nota-content">
+        <style>
+          {`
+            @media print {
+              @page {
+                size: A4;
+                margin: 20mm;
+              }
+              
+              body * {
+                visibility: hidden;
+              }
+              
+              .print-nota-content,
+              .print-nota-content * {
+                visibility: visible;
+              }
+              
+              .print-nota-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white;
+              }
+              
+              .no-print {
+                display: none !important;
+              }
+              
+              .print-nota-title {
+                font-size: 24px;
+                font-weight: bold;
+                color: black;
+                margin-bottom: 10px;
+              }
+              
+              .print-nota-date {
+                font-size: 12px;
+                color: #666;
+                margin-bottom: 20px;
+              }
+              
+              .print-nota-content-text {
+                font-size: 14px;
+                color: black;
+                white-space: pre-wrap;
+                line-height: 1.6;
+              }
+            }
+          `}
+        </style>
+        
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <h3 className="text-xl font-semibold print-nota-title">{nota.titulo}</h3>
+            <p className="text-sm text-muted-foreground print-nota-date">
+              Atualizado em {format(new Date(nota.updated_at), "dd/MM/yyyy HH:mm")}
+            </p>
+          </div>
+          <div className="flex gap-2 no-print">
+            <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2">
+              <Printer className="h-4 w-4" />
+              Imprimir
+            </Button>
             {canEdit && (
               <Button variant="outline" size="sm" onClick={onEdit}>
                 Editar
@@ -234,11 +298,11 @@ function ViewingNote({
               </Button>
             )}
           </div>
+        </div>
+        {nota.conteudo && (
+          <p className="whitespace-pre-wrap text-foreground print-nota-content-text">{nota.conteudo}</p>
         )}
       </div>
-      {nota.conteudo && (
-        <p className="whitespace-pre-wrap text-foreground">{nota.conteudo}</p>
-      )}
     </>
   );
 }
