@@ -121,3 +121,41 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Print styles */
+@media print {
+  /* Hide non-printable elements */
+  .no-print,
+  button:not(.print-content button),
+  nav,
+  header:not(.print-content header),
+  footer:not(.print-content footer),
+  .sidebar {
+    display: none !important;
+  }
+
+  /* Force white background and black text */
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Optimize table printing */
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  /* Remove shadows and borders that waste ink */
+  .shadow-card {
+    box-shadow: none !important;
+  }
+}
