@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, StickyNote } from "lucide-react";
+import { Search, StickyNote, Printer } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -20,6 +20,8 @@ import { DeleteDialog } from "@/components/DeleteDialog";
 import { ImportarAlunos } from "@/components/ImportarAlunos";
 import { AlunoNotasDialog } from "@/components/AlunoNotasDialog";
 import { useTranslation } from "react-i18next";
+import { useReactToPrint } from "react-to-print";
+import { PrintableList } from "@/components/PrintableList";
 
 interface Aluno {
   id: string;
@@ -41,6 +43,12 @@ export default function Alunos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [notasDialogOpen, setNotasDialogOpen] = useState(false);
   const [selectedAluno, setSelectedAluno] = useState<{ id: string; nome: string } | null>(null);
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Lista_Alunos_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}`,
+  });
 
   // Mapeamento reverso de graduações portuguesas para chaves de tradução
   const rankToKeyMap: { [key: string]: string } = {
@@ -189,12 +197,18 @@ export default function Alunos() {
             Total de Alunos Cadastrados: {alunos.length}
           </p>
         </div>
-        {isCoordenador && (
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <ImportarAlunos onSuccess={fetchAlunos} />
-            <AlunoForm onSuccess={fetchAlunos} />
-          </div>
-        )}
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button onClick={handlePrint} variant="outline" className="gap-2">
+            <Printer className="h-4 w-4" />
+            Imprimir Lista
+          </Button>
+          {isCoordenador && (
+            <>
+              <ImportarAlunos onSuccess={fetchAlunos} />
+              <AlunoForm onSuccess={fetchAlunos} />
+            </>
+          )}
+        </div>
       </div>
 
       <Card className="shadow-card">
@@ -232,7 +246,7 @@ export default function Alunos() {
                     <TableHead className="min-w-[140px]">Tipo</TableHead>
                     <TableHead className="min-w-[120px] hidden sm:table-cell">OM ONDE SERVE</TableHead>
                     <TableHead className="min-w-[150px] hidden md:table-cell">Contato</TableHead>
-                    <TableHead className="text-right min-w-[100px]">Ações</TableHead>
+                    <TableHead className="text-right min-w-[100px] no-print">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -260,7 +274,7 @@ export default function Alunos() {
                         {aluno.telefone && <div className="text-muted-foreground">{aluno.telefone}</div>}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right no-print">
                       {isCoordenador && (
                         <div className="flex justify-end gap-1 sm:gap-2">
                           <Button
@@ -303,6 +317,27 @@ export default function Alunos() {
           onOpenChange={setNotasDialogOpen}
         />
       )}
+
+      {/* Printable version - hidden on screen */}
+      <div className="hidden">
+        <PrintableList
+          ref={printRef}
+          title="Lista de Alunos Cadastrados"
+          subtitle={`Total: ${filteredAlunos.length} alunos - Gerado em ${new Date().toLocaleDateString('pt-BR')}`}
+          headers={["Nome", "Graduação", "Tipo", "OM Onde Serve", "Email", "Telefone"]}
+          data={filteredAlunos}
+          renderRow={(aluno) => (
+            <TableRow key={aluno.id}>
+              <TableCell>{aluno.nome_completo}</TableCell>
+              <TableCell>{translateRank(aluno.graduacao)}</TableCell>
+              <TableCell>{aluno.tipo_militar}</TableCell>
+              <TableCell>{aluno.local_servico || "-"}</TableCell>
+              <TableCell>{aluno.email || "-"}</TableCell>
+              <TableCell>{aluno.telefone || "-"}</TableCell>
+            </TableRow>
+          )}
+        />
+      </div>
     </div>
   );
 }
