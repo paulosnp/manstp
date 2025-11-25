@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { HashRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PresenceProvider } from "./contexts/PresenceContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -53,7 +53,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <HashRouter>
+      <BrowserRouter>
         <AuthProvider>
           <PresenceProvider>
             <RouteManager>
@@ -69,123 +69,123 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/cursos"
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout>
-                        <Cursos />
-                      </MainLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/turmas"
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout>
-                        <Turmas />
-                      </MainLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/instrutores"
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout>
-                        <Instrutores />
-                      </MainLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/certificados"
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout>
-                        <Certificados />
-                      </MainLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/notas"
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout>
-                        <Notas />
-                      </MainLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/horarios"
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout>
-                        <Horarios />
-                      </MainLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/estatisticas"
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout>
-                        <Estatisticas />
-                      </MainLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/relatorios"
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout>
-                        <Relatorios />
-                      </MainLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/usuarios"
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout>
-                        <Usuarios />
-                      </MainLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/presencas"
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout>
-                        <Presencas />
-                      </MainLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/notas-pessoais"
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout>
-                        <NotasPessoais />
-                      </MainLayout>
-                    </ProtectedRoute>
-                  }
-                />
+            <Route
+              path="/cursos"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Cursos />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/turmas"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Turmas />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/instrutores"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Instrutores />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/certificados"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Certificados />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notas"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Notas />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/horarios"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Horarios />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/estatisticas"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Estatisticas />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/relatorios"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Relatorios />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/usuarios"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Usuarios />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/presencas"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Presencas />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notas-pessoais"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <NotasPessoais />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </RouteManager>
           </PresenceProvider>
         </AuthProvider>
-      </HashRouter>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );

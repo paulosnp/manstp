@@ -62,20 +62,7 @@ This project is built with:
 
 ## How can I deploy this project?
 
-This project is configured to automatically deploy to GitHub Pages.
-
-### Deployment to GitHub Pages
-
-This project includes a GitHub Actions workflow that automatically builds and deploys the application to GitHub Pages whenever you push to the `main` branch.
-
-To make the deployment work, you need to add the following secrets to your GitHub repository:
-
-1.  **`VITE_SUPABASE_URL`**: Your Supabase project URL.
-2.  **`VITE_SUPABASE_PUBLISHABLE_KEY`**: Your Supabase project's `anon` key.
-
-You can add these secrets by going to your repository's **Settings**, then navigating to **Secrets and variables** > **Actions** and clicking **New repository secret** for each of the keys above.
-
-Once the secrets are set up, your application will be deployed automatically on the next push to the `main` branch.
+Simply open [Lovable](https://lovable.dev/projects/1e4d3759-4cee-46ba-8836-10804a033000) and click on Share -> Publish.
 
 ## Can I connect a custom domain to my Lovable project?
 
