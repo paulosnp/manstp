@@ -1,3 +1,6 @@
+// =======================
+// 📦 package.json COMPLETO
+// =======================
 {
   "name": "vite_react_shadcn_ts",
   "private": true,
@@ -16,47 +19,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@radix-ui/react-alert-dialog": "^1.1.15",
-    "@radix-ui/react-avatar": "^1.1.11",
-    "@radix-ui/react-dialog": "^1.1.15",
-    "@radix-ui/react-label": "^2.1.8",
-    "@radix-ui/react-popover": "^1.1.15",
-    "@radix-ui/react-scroll-area": "^1.2.10",
-    "@radix-ui/react-select": "^2.2.6",
-    "@radix-ui/react-separator": "^1.1.8",
-    "@radix-ui/react-slider": "^1.3.6",
-    "@radix-ui/react-slot": "^1.2.4",
-    "@radix-ui/react-toast": "^1.2.15",
-    "@radix-ui/react-tooltip": "^1.2.8",
-    "@supabase/supabase-js": "^2.58.0",
-    "@tanstack/react-query": "^5.90.11",
-    "chart.js": "^4.5.1",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "date-fns": "^4.1.0",
-    "docx": "^9.5.1",
-    "file-saver": "^2.0.5",
-    "html2canvas": "^1.4.1",
-    "i18next": "^25.6.3",
-    "i18next-browser-languagedetector": "^8.2.0",
-    "jspdf": "^3.0.4",
-    "lovable-tagger": "^1.1.11",
-    "lucide-react": "^0.462.0",
-    "next-themes": "^0.4.6",
     "react": "^18.3.1",
-    "react-chartjs-2": "^5.3.1",
     "react-dom": "^18.3.1",
-    "react-i18next": "^16.3.5",
-    "react-konva": "^19.2.0",
     "react-router-dom": "^6.30.1",
-    "react-to-print": "^3.2.0",
-    "recharts": "^3.5.0",
-    "sonner": "^2.0.7",
     "tailwind-merge": "^2.6.0",
-    "typescript-eslint": "^8.48.0",
-    "use-image": "^1.1.4",
-    "uuid": "^13.0.0",
-    "xlsx": "^0.18.5",
+    "@supabase/supabase-js": "^2.58.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.462.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -76,3 +45,141 @@
     "@tailwindcss/typography": "^0.5.16"
   }
 }
+// =======================
+// ⚡ vite.config.ts COMPLETO OTIMIZADO
+// =======================
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173,
+    open: true,
+    proxy: {
+      "/api": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  },
+  build: {
+    sourcemap: true,
+    minify: "esbuild"
+  }
+});
+// =======================
+// 🧩 tsconfig.json
+// =======================
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.app.json" }
+  ]
+}
+// =======================
+// 🧩 tsconfig.app.json
+// =======================
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["DOM", "DOM.Iterable", "ES2021"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": false,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx"
+  },
+  "include": ["src"]
+}
+// =======================
+// 🧩 tsconfig.node.json
+// =======================
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+// =======================
+// 🎨 tailwind.config.js
+// =======================
+module.exports = {
+  content: ["./index.html", "./src/**/*.{ts,tsx}"],
+  theme: {
+    extend: {}
+  },
+  plugins: [require("@tailwindcss/typography")]
+};
+// =======================
+// 🎨 postcss.config.js
+// =======================
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {}
+  }
+};
+// =======================
+// 💅 .prettierrc
+// =======================
+{
+  "singleQuote": true,
+  "semi": false,
+  "trailingComma": "none",
+  "printWidth": 90
+}
+<!-- =======================
+📄 src/index.html
+======================= -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Projeto Vite React</title>
+  </head>
+  <body class="bg-gray-950 text-white">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+// =======================
+// 📄 src/App.tsx
+// =======================
+export default function App() {
+  return (
+    <div className="p-10 text-3xl font-bold">
+      Projeto Vite + React + Tailwind rodando! 🚀🔥
+    </div>
+  )
+}
+/* =======================
+📄 src/index.css
+======================= */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-950 text-white;
+}
+
+
+ 
+    
+    
